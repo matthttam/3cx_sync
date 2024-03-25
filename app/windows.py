@@ -1,9 +1,8 @@
 import tkinter as tk
-from app.api import API
+from tcx_api.tcx_api_connection import TCX_API_Connection
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
 from app.widgets import Checkbox, ExtensionMappingFieldSet
-from collections import namedtuple
 from app.config import TCXConfig
 from app.mapping import CSVMapping
 
@@ -116,15 +115,16 @@ class Window3cxConfig(tk.Toplevel):
         )
 
     def test_connection(self):
-        api = API(server_url=self.server_url)
-        response = api.authenticate(
-            username=self.var_3cx_username.get(),
-            password=self.var_3cx_password.get(),
-        )
-        if response:
+        api = TCX_API_Connection(server_url=self.server_url)
+
+        try:
+            api.authenticate(
+                username=self.var_3cx_username.get(),
+                password=self.var_3cx_password.get(),
+            )
             messagebox.showinfo(title="Success", message="Test Successful")
-        else:
-            messagebox.showinfo(title="Failure", message="Test Failed")
+        except Exception as e:
+            messagebox.showinfo(title="Failure", message=f"Test Failed. {str(e)}")
 
     def handle_cancel_click(self):
         self.destroy()
@@ -132,6 +132,7 @@ class Window3cxConfig(tk.Toplevel):
     def handle_save_click(self):
         self.write_config_file()
         messagebox.showinfo(title="Saved!", message="Config saved!")
+        self.destroy()
 
     def write_config_file(self):
         self.tcx_config["3cx"]["scheme"] = self.var_3cx_scheme.get()

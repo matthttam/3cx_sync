@@ -1,14 +1,7 @@
-import os
-from pathlib import Path
-import json
 import tkinter as tk
-from tkinter import messagebox
-from configparser import ConfigParser
-from app.api import API
-from app.mapping import CSVMapping
 from app.windows import WindowCSVMapping, Window3cxConfig
 from app.config import AppConfig
-from app.sync import SyncCSV
+from sync.sync_csv import SyncCSV
 
 
 class App(tk.Tk):
