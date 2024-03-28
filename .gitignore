@@ -161,3 +161,5 @@ cython_debug/
 
 3cx_conf.ini
 csv_mapping.json
+.vscode
+launch.json
