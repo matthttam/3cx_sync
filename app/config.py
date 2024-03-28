@@ -5,7 +5,7 @@ from configparser import ConfigParser
 class TCXConfig(ConfigParser):
     @property
     def defaults_config_file_path(self):
-        return os.path.join(os.getcwd(), "conf", "defaults.ini")
+        return os.path.join(os.getcwd(), "conf", "3cx_defaults.ini")
 
     @property
     def config_file_path(self):

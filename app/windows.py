@@ -49,7 +49,6 @@ class Window3cxConfig(tk.Toplevel):
         frm_3cx_url = tk.Frame(master=frm_3cx_options)
         frm_3cx_url.grid_columnconfigure(2, weight=1)
         frm_3cx_url.grid(row=0, column=1)
-        # frm_3cx_url.pack(anchor="w")
 
         opt_3cx_scheme = tk.OptionMenu(
             frm_3cx_url, self.var_3cx_scheme, *["https", "http"]
@@ -167,12 +166,12 @@ class WindowCSVMapping(tk.Toplevel):
 
         # Frame: window
         frm_window = tk.Frame(master=self, name="window")
-        frm_window.pack()
+        frm_window.pack(fill="both", expand=True)
 
         # Frame: Mapping
         frm_csv_mapping = tk.Frame(master=frm_window)
-        frm_csv_mapping.config(width=300, height=400, relief="ridge", borderwidth=2)
-        frm_csv_mapping.pack(side="top", fill="x", ipady=frame_iy_padding)
+        frm_csv_mapping.config(relief="ridge", borderwidth=2)
+        frm_csv_mapping.pack(side="top", fill="both", ipady=frame_iy_padding, expand=True)
 
         # Extension Header
         lbl_extension_header = tk.Label(
@@ -199,29 +198,29 @@ class WindowCSVMapping(tk.Toplevel):
         # Frame: CSV Mapping Fields
         frm_csv_mapping_fields = tk.Frame(master=frm_window, name="csv_mapping_fields")
         frm_csv_mapping_fields.config(
-            width=300, height=400, relief="sunken", borderwidth=2
+            relief="sunken", borderwidth=2
         )
-        frm_csv_mapping_fields.pack(side="top", fill="x", ipady=frame_iy_padding)
+        frm_csv_mapping_fields.pack(side="top", fill="both", ipady=frame_iy_padding, expand=True)
 
         # CSV Mapping Headers
         # Header: 3cx Field
         lbl_csv_mapping_3cx_field = tk.Label(
-            master=frm_csv_mapping_fields, text="3cx Field"
+            master=frm_csv_mapping_fields, text="3cx Field", width=20
         )
         lbl_csv_mapping_3cx_field.grid(row=1, column=1, sticky="w")
 
         # Header: CSV Header
         lbl_csv_mapping_header = tk.Label(
-            master=frm_csv_mapping_fields, text="CSV Header"
+            master=frm_csv_mapping_fields, text="CSV Header", width=20
         )
         lbl_csv_mapping_header.grid(row=1, column=2, sticky="w")
 
         # Header: Update
-        lbl_csv_mapping_update = tk.Label(master=frm_csv_mapping_fields, text="Update")
+        lbl_csv_mapping_update = tk.Label(master=frm_csv_mapping_fields, text="Update", width=5)
         lbl_csv_mapping_update.grid(row=1, column=3, sticky="w")
 
         # Header: Key
-        lbl_csv_mapping_key = tk.Label(master=frm_csv_mapping_fields, text="Key")
+        lbl_csv_mapping_key = tk.Label(master=frm_csv_mapping_fields, text="Key", width=5)
         lbl_csv_mapping_key.grid(row=1, column=4, sticky="w")
 
         # self.add_mapping_field_set()
@@ -229,7 +228,7 @@ class WindowCSVMapping(tk.Toplevel):
 
         # Frame: Add Remove Fields
         frm_add_delete_fields = tk.Frame(master=frm_window)
-        frm_add_delete_fields.pack(side="top", anchor="center")
+        frm_add_delete_fields.pack(side="top", anchor="center", expand=True, fill="both")
 
         # Button: Add +
         btn_add_field = tk.Button(
@@ -247,7 +246,7 @@ class WindowCSVMapping(tk.Toplevel):
 
         # Frame: Navigation
         frm_navigation = tk.Frame(master=frm_window)
-        frm_navigation.pack(side="bottom", anchor="e")
+        frm_navigation.pack(side="bottom", anchor="e", expand=True)
 
         btn_save = tk.Button(
             master=frm_navigation, text="Save", command=self.handle_save_click
@@ -286,12 +285,12 @@ class WindowCSVMapping(tk.Toplevel):
         self.var_csv_mapping_extension_path.set(filename)
 
     def initialize_mapping_field_sets(self):
-        for field, header in self.mapping["Extension"]["New"].items():
+        for field, header in self.mapping.get("Extension",{}).get("New",{}).items():
             key = False
             update = False
-            if header == self.mapping["Extension"]["Key"]:
+            if header == self.mapping.get("Extension",{}).get("Key",None):
                 key = True
-            if header in self.mapping["Extension"]["Update"].values():
+            if header in self.mapping.get("Extension",{}).get("Update",{}).values():
                 update = True
 
             self.add_mapping_field_set(
