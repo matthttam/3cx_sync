@@ -22,6 +22,7 @@ class SyncCSV(Sync):
         self.output("Fetching Users")
         users = self.User.list_user(
             select=[
+                UserProperties.Number,
                 UserProperties.AuthID,
                 UserProperties.FirstName,
                 UserProperties.LastName,

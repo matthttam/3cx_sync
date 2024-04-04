@@ -76,6 +76,56 @@ class UserProperties(StrEnum):
     WebMeetingFriendlyName = auto()
 
 
+class ScheduleType(StrEnum):
+    AllHours = auto()
+    OfficeHOurs = auto()
+    OutOfOfficeHours = auto()
+    SpecificHours = auto()
+    SpecificHoursExcludingHolidays = auto()
+    OutOfSpecificHours = auto()
+    OutOfSpecificHoursIncludingHolidays = auto()
+    Never = auto()
+    BreakTime = auto()
+
+
+class UserEntity:
+    def __init__(self, **kwargs):
+        self.properties = {}
+        for key, value in kwargs.items():
+            if key not in UserProperties.__members__:
+                raise ValueError(f"Invalid property: {key}")
+
+            match key:
+                case "BreakTime":
+                    value = BreakTime(**value)
+
+            setattr(self, key, value)
+
+
+class BreakTime:
+    def __init__(self, **kwargs):
+        self.allOf = Schedule(**kwargs.get("allOf", {}))
+
+
+class Schedule:
+
+    def __init(
+        self,
+        IgnoreHolidays: bool = None,
+        Periods: list = [],
+        Type: str | ScheduleType = "",
+    ):
+        self.IgnoreHolidays = IgnoreHolidays
+        self.Periods = []
+        self.Type = Type
+
+
+class UserFactory:
+    @staticmethod
+    def create_user(**kwargs):
+        return UserEntity(**kwargs)
+
+
 class ListUserParameters(TypedDict):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
@@ -90,7 +140,7 @@ class ListUserParameters(TypedDict):
     expand: str = None
 
 
-class User(APIResource):
+class UserResource(APIResource):
 
     def __init__(self, api: API):
         super().__init__(api=api)
