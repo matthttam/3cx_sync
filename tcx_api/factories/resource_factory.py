@@ -1,7 +1,7 @@
 from tcx_api.tcx_api_connection import TCX_API_Connection
-from .user import UserResource
+from ..resources.user import UserResource
 from typing import Any
-from .api_resource import APIResource
+from ..resources.api_resource import APIResource
 
 
 class ResourceFactory:

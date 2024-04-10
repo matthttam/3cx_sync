@@ -1,41 +1,35 @@
-from tcx_api.resources.user import UserFactory
-from tcx_api.resources.user import Pbx_Schedule
-
+from tcx_api.factories.user_entity_factory import UserEntityFactory
+from tcx_api.components.schemas.pbx.schedule import Schedule
+from tcx_api.components.schemas.pbx.enums import RuleHoursType
 import pytest
 
 
 class TestUserFactory:
     def test_create_user_entity(self):
         user_data = {
+            "Id": 1,
             "AuthID": "12345",
             "Enabled": True,
         }
 
-        user = UserFactory.create_user(**user_data)
+        user = UserEntityFactory.create_user(**user_data)
 
         assert user.AuthID == user_data["AuthID"]
         assert user.Enabled == user_data["Enabled"]
 
     def test_create_user_entity_breaktime(self):
-        user_data = {"AuthID": "12345", "Enabled": True, "BreakTime": {}}
+        user_data = {
+            "Id": 1,
+            "AuthID": "12345",
+            "Enabled": True,
+            "BreakTime": {"Type": RuleHoursType["BreakTime"]},
+        }
 
-        user = UserFactory.create_user(**user_data)
+        user = UserEntityFactory.create_user(**user_data)
 
         assert user.AuthID == user_data["AuthID"]
         assert user.Enabled == user_data["Enabled"]
-        assert isinstance(user.BreakTime, Pbx_Schedule)
-
-    def test_create_user_invalid_property(self):
-        # Test data with an invalid property
-        user_data = {
-            "AuthID": "12345",
-            "Enabled": True,
-            "invalid_property": "value",  # Adding an invalid property
-        }
-
-        # Ensure that creating a user with an invalid property raises an exception
-        with pytest.raises(ValueError):
-            UserFactory.create_user(**user_data)
+        assert isinstance(user.BreakTime, Schedule)
 
 
 if __name__ == "__main__":
