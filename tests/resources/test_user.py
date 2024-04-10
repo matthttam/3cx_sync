@@ -1,5 +1,5 @@
 from tcx_api.resources.user import UserFactory
-from tcx_api.resources.user import BreakTime
+from tcx_api.resources.user import Pbx_Schedule
 
 import pytest
 
@@ -23,7 +23,7 @@ class TestUserFactory:
 
         assert user.AuthID == user_data["AuthID"]
         assert user.Enabled == user_data["Enabled"]
-        assert isinstance(user.BreakTime, BreakTime)
+        assert isinstance(user.BreakTime, Pbx_Schedule)
 
     def test_create_user_invalid_property(self):
         # Test data with an invalid property

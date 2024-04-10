@@ -3,7 +3,7 @@ import tkinter as tk
 from app.config import TCXConfig
 from app.mapping import CSVMapping
 from tcx_api.tcx_api_connection import TCX_API_Connection
-from tcx_api.resources.user import UserProperties
+from tcx_api.resources.user import UserFactory
 from tcx_api.resources.resource_factory import ResourceFactory
 
 
@@ -21,12 +21,6 @@ class SyncCSV(Sync):
 
         self.output("Fetching Users")
         users = self.User.list_user(
-            select=[
-                UserProperties.Number,
-                UserProperties.AuthID,
-                UserProperties.FirstName,
-                UserProperties.LastName,
-            ],
             top=10,
         )
         self.output(str(users))
@@ -34,6 +28,8 @@ class SyncCSV(Sync):
             return False
         self.output(f"Fetched {len(users)} users")
 
+        user_entity = UserFactory.create_user(**users[0])
+        print(user_entity)
         self.output("Sync Complete")
 
     def initialize(self):
