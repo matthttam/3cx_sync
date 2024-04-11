@@ -82,3 +82,55 @@ class UserTag(TcxStrEnum):
     Teams = auto()
     Google = auto()
     WakeUp = auto()
+
+
+class ProvType(TcxStrEnum):
+    LocalLan = auto()
+    RemoteExt = auto()
+    RemoteExtSipProxyMgr = auto()
+    SBC = auto()
+
+
+class PhoneDeviceVlanType(TcxStrEnum):
+    Wan = auto()
+    Pc = auto()
+
+
+class XferTypeEnum(TcxStrEnum):
+    BXfer = auto()
+    AttXfer = auto()
+
+
+class ProfileType(TcxStrEnum):
+    Default = auto()
+    Available = auto()
+    Away = auto()
+    OutOfOffice = auto()
+    Available2 = auto()
+    OutOfOffice2 = auto()
+
+
+class DnType(TcxStrEnum):
+    NONE = auto()
+    Extension = auto()
+    Queue = auto()
+    RingGroup = auto()
+    IVR = auto()
+    Fax = auto()
+    Conference = auto()
+    Parking = auto()
+    ExternalLine = auto()
+    SpecialMenu = auto()
+
+
+class VMEmailOptionsType(TcxStrEnum):
+    NONE = auto()
+    Notification = auto()
+    Attachment = auto()
+    AttachmentAndDelete = auto()
+
+
+class VMPlayMsgDateTimeType(TcxStrEnum):
+    NONE = auto()
+    Play12Hr = auto()
+    Play24Hr = auto()

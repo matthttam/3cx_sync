@@ -1,5 +1,5 @@
 from enum import StrEnum, auto, EnumMeta
-from typing import List
+from typing import List, Any, Callable, TypeVar
 
 
 class TcxStrEnumMeta(EnumMeta):
@@ -18,3 +18,19 @@ class TcxStrEnum(StrEnum, metaclass=TcxStrEnumMeta):
         if name == "NONE":
             return "None"
         return name
+
+
+class Util:
+    T = TypeVar("T")
+
+    @staticmethod
+    def instanciate_object(var: Any, object_class: Callable[[type], T]) -> T | None:
+        return (
+            var
+            if isinstance(var, object_class)
+            else object_class(**var) if isinstance(var, dict) else None
+        )
+
+    @staticmethod
+    def instanciate_str_enum(var: str, enum_var: TcxStrEnum) -> str | None:
+        ([enum_var[e] for e in var] if var else None)

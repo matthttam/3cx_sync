@@ -1,4 +1,5 @@
-from tcx_api.components.schemas.pbx.schemas import AvailableRouting, AwayRouting
+from tcx_api.components.schemas.pbx.available_routing import AvailableRouting
+from tcx_api.components.schemas.pbx.away_routing import AwayRouting
 
 
 class ForwardingProfile:

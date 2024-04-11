@@ -22,7 +22,7 @@ class TestUserFactory:
             "Id": 1,
             "AuthID": "12345",
             "Enabled": True,
-            "BreakTime": {"Type": RuleHoursType["BreakTime"]},
+            "BreakTime": {"Type": RuleHoursType.BreakTime},
         }
 
         user = UserEntityFactory.create_user(**user_data)
