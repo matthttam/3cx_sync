@@ -1,5 +1,5 @@
-from enum import StrEnum, auto, EnumMeta
-from typing import List, Any, Callable, TypeVar
+from enum import StrEnum, EnumMeta
+from typing import Any, Callable, TypeVar
 
 
 class TcxStrEnumMeta(EnumMeta):
@@ -32,5 +32,26 @@ class Util:
         )
 
     @staticmethod
+    def instanciate_list_of_objects(
+        var: list, object_class: Callable[[type], T]
+    ) -> list[T] | list:
+        return (
+            var
+            if var is not None and all(isinstance(v, object_class) for v in var)
+            else [object_class(**v) for v in var] if var else list()
+        )
+
+    @staticmethod
     def instanciate_str_enum(var: str, enum_var: TcxStrEnum) -> str | None:
-        ([enum_var[e] for e in var] if var else None)
+        # ([enum_var[v] for v in var] if var else None)
+        return enum_var[var] if var else None
+
+    @staticmethod
+    def instanciate_list_of_str_enum(
+        var: list, enum_var: TcxStrEnum
+    ) -> list[str] | list:
+        return (
+            var
+            if var is not None and all(isinstance(v, enum_var) for v in var)
+            else [enum_var[v] for v in var] if var else list()
+        )

@@ -1,4 +1,4 @@
-from tcx_api.util.util import TcxStrEnum
+from tcx_api.util import TcxStrEnum
 from enum import auto
 
 

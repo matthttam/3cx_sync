@@ -1,4 +1,3 @@
-from tcx_api.factories.resource_factory import ResourceFactory
 from tcx_api.components.schemas.pbx.custom_queue_ringtone import CustomQueueRingtone
 from tcx_api.components.schemas.pbx.phone_lldp_info import PhoneLldpInfo
 from tcx_api.components.schemas.pbx.phone_device_vlan_info import PhoneDeviceVlanInfo
@@ -6,7 +5,7 @@ from tcx_api.components.schemas.pbx.phone_device_vlan_info import PhoneDeviceVla
 from tcx_api.components.schemas.pbx.enums import ProvType, XferTypeEnum
 from typing import List
 
-from tcx_api.util.util import Util
+from tcx_api.util import Util
 
 
 class PhoneSettings:
@@ -16,13 +15,13 @@ class PhoneSettings:
         Backlight: str = None,
         Codecs: list[str] = [],
         CustomLogo: str = None,
-        CustomQueueRingtones: list[CustomQueueRingtone] = [],
+        CustomQueueRingtones: list[CustomQueueRingtone | dict] = [],
         DateFormat: str = None,
         Firmware: str = None,
         FirmwareLang: str = None,
         IsLogoCustomizable: bool = None,
         IsSBC: bool = None,
-        LlDpInfo: PhoneLldpInfo = None,
+        LlDpInfo: PhoneLldpInfo | dict = None,
         LocalRTPPortEnd: int = None,
         LocalRTPPortStart: int = None,
         LocalSipPort: int = None,
@@ -43,20 +42,22 @@ class PhoneSettings:
         Srtp: str = None,
         TimeFormat: str = None,
         TimeZone: str = None,
-        VlanInfos: list[PhoneDeviceVlanInfo] = [],
+        VlanInfos: list[PhoneDeviceVlanInfo | dict] = [],
         XferType: XferTypeEnum | str = None,
     ) -> None:
         self.AllowCustomQueueRingtones = AllowCustomQueueRingtones
         self.Backlight = Backlight
         self.Codecs = Codecs
         self.CustomLogo = CustomLogo
-        self.CustomQueueRingtones = CustomQueueRingtones
+        self.CustomQueueRingtones = Util.instanciate_list_of_objects(
+            CustomQueueRingtones, CustomQueueRingtone
+        )
         self.DateFormat = DateFormat
         self.Firmware = Firmware
         self.FirmwareLang = FirmwareLang
         self.IsLogoCustomizable = IsLogoCustomizable
         self.IsSBC = IsSBC
-        self.LlDpInfo = LlDpInfo
+        self.LlDpInfo = Util.instanciate_object(LlDpInfo, PhoneLldpInfo)
         self.LocalRTPPortEnd = LocalRTPPortEnd
         self.LocalRTPPortStart = LocalRTPPortStart
         self.LocalSipPort = LocalSipPort
@@ -77,5 +78,7 @@ class PhoneSettings:
         self.Srtp = Srtp
         self.TimeFormat = TimeFormat
         self.TimeZone = TimeZone
-        self.VlanInfos = VlanInfos
-        self.XferType = XferType
+        self.VlanInfos = Util.instanciate_list_of_objects(
+            VlanInfos, PhoneDeviceVlanInfo
+        )
+        self.XferType = Util.inXferTypeEnum(XferType, XferTypeEnum)

@@ -1,7 +1,6 @@
-from tcx_api.factories.user_entity_factory import UserEntityFactory
-from tcx_api.components.schemas.pbx.schedule import Schedule
+from sync.factories.user_entity_factory import UserEntityFactory
 from tcx_api.components.schemas.pbx.enums import RuleHoursType
-import pytest
+from tcx_api.components.schemas.pbx.schedule import Schedule
 
 
 class TestUserFactory:
@@ -30,7 +29,3 @@ class TestUserFactory:
         assert user.AuthID == user_data["AuthID"]
         assert user.Enabled == user_data["Enabled"]
         assert isinstance(user.BreakTime, Schedule)
-
-
-if __name__ == "__main__":
-    pytest.main()

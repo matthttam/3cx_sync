@@ -1,5 +1,5 @@
 from tcx_api.components.schemas.pbx.enums import ProfileType
-from tcx_api.util.util import Util
+from tcx_api.util import Util
 
 
 class Greeting:

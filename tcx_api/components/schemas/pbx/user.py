@@ -1,4 +1,3 @@
-from typing import List
 from tcx_api.components.schemas.pbx.user_group import UserGroup
 from tcx_api.components.schemas.pbx.greeting import Greeting
 from tcx_api.components.schemas.pbx.phone import Phone
@@ -14,9 +13,12 @@ from tcx_api.components.schemas.pbx.enums import (
     VMPlayMsgDateTimeType,
 )
 
-from tcx_api.util.util import Util
+from tcx_api.util import Util
+
+from dataclasses import dataclass
 
 
+@dataclass
 class User:
     def __init__(
         self,
@@ -43,14 +45,14 @@ class User:
         Enabled: bool = None,
         EnableHotdesking: bool = None,
         FirstName: str = None,
-        ForwardingExceptions: list[ExtensionRule] = None,
-        ForwardingProfiles: list[ForwardingProfile] = None,
+        ForwardingExceptions: list[ExtensionRule | dict] = None,
+        ForwardingProfiles: list[ForwardingProfile | dict] = None,
         GoogleSignInEnabled: bool = None,
-        Greetings: list[Greeting] = None,
-        Groups: list[UserGroup] = None,
+        Greetings: list[Greeting | dict] = None,
+        Groups: list[UserGroup | dict] = None,
         HideInPhonebook: bool = None,
         HotdeskingAssignment: str = None,
-        Hours: list[Schedule] = None,
+        Hours: Schedule | dict = None,
         Internal: bool = None,
         IsRegistered: bool = None,
         Language: str = None,
@@ -65,7 +67,7 @@ class User:
         MyPhonePush: bool = None,
         MyPhoneShowRecordings: bool = None,
         Number: str = None,
-        OfficeHoursProps: list[OfficeHoursBits] = None,
+        OfficeHoursProps: list[OfficeHoursBits | str] = None,
         OutboundCallerID: str = None,
         Phones: list[Phone | dict] = None,
         PinProtected: bool = None,
@@ -101,7 +103,9 @@ class User:
         self.CallUsEnableChat = CallUsEnableChat
         self.CallUsEnablePhone = CallUsEnablePhone
         self.CallUsEnableVideo = CallUsEnableVideo
-        self.CallUsRequirement = Util.instanciate_str_enum(CallUsRequirement)
+        self.CallUsRequirement = Util.instanciate_str_enum(
+            CallUsRequirement, Authentication
+        )
         self.ClickToCallId = ClickToCallId
         self.ContactImage = ContactImage
         self.CurrentProfileName = CurrentProfileName
@@ -112,14 +116,18 @@ class User:
         self.Enabled = Enabled
         self.EnableHotdesking = EnableHotdesking
         self.FirstName = FirstName
-        self.ForwardingExceptions = ForwardingExceptions
-        self.ForwardingProfiles = ForwardingProfiles
+        self.ForwardingExceptions = Util.instanciate_list_of_objects(
+            ForwardingExceptions, ExtensionRule
+        )
+        self.ForwardingProfiles = Util.instanciate_list_of_objects(
+            ForwardingProfiles, ForwardingProfile
+        )
         self.GoogleSignInEnabled = GoogleSignInEnabled
-        self.Greetings = Greetings
-        self.Groups = Groups
+        self.Greetings = Util.instanciate_list_of_objects(Greetings, Greeting)
+        self.Groups = Util.instanciate_list_of_objects(Groups, UserGroup)
         self.HideInPhonebook = HideInPhonebook
         self.HotdeskingAssignment = HotdeskingAssignment
-        self.Hours = Hours
+        self.Hours = Util.instanciate_object(Hours, Schedule)
         self.Internal = Internal
         self.IsRegistered = IsRegistered
         self.Language = Language
@@ -134,13 +142,12 @@ class User:
         self.MyPhonePush = MyPhonePush
         self.MyPhoneShowRecordings = MyPhoneShowRecordings
         self.Number = Number
-        self.OfficeHoursProps = Util.instanciate_str_enum(
+        self.OfficeHoursProps = Util.instanciate_list_of_str_enum(
             OfficeHoursProps, OfficeHoursBits
         )
 
         self.OutboundCallerID = OutboundCallerID
-        self.Phones = Phones
-        # self.Phones = [Phone(e) for e in Phones if Phones else Phones]
+        self.Phones = Util.instanciate_list_of_objects(Phones, Phone)
         self.PinProtected = PinProtected
         self.PinProtectTimeout = PinProtectTimeout
         self.PrimaryGroupId = PrimaryGroupId
@@ -152,12 +159,16 @@ class User:
         self.Require2FA = Require2FA
         self.SendEmailMissedCalls = SendEmailMissedCalls
         self.SIPID = SIPID
-        self.Tags = Util.instanciate_str_enum(Tags)
+        self.Tags = Util.instanciate_list_of_str_enum(Tags, UserTag)
         self.VMDisablePinAuth = VMDisablePinAuth
-        self.VMEmailOptions = Util.instanciate_str_enum(VMEmailOptions)
+        self.VMEmailOptions = Util.instanciate_str_enum(
+            VMEmailOptions, VMEmailOptionsType
+        )
         self.VMEnabled = VMEnabled
         self.VMPIN = VMPIN
         self.VMPlayCallerID = VMPlayCallerID
-        self.VMPlayMsgDateTime = Util.instanciate_str_enum(VMPlayMsgDateTime)
+        self.VMPlayMsgDateTime = Util.instanciate_str_enum(
+            VMPlayMsgDateTime, VMPlayMsgDateTimeType
+        )
         self.WebMeetingApproveParticipants = WebMeetingApproveParticipants
         self.WebMeetingFriendlyName = WebMeetingFriendlyName

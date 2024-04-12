@@ -1,11 +1,142 @@
 from tcx_api.api import API
+from tcx_api.components.parameters import Parameters
 from .api_resource import APIResource
-from enum import auto, StrEnum
-from typing import List, Optional, Dict
-from typing import TypedDict, Unpack
+from tcx_api.components.schemas.pbx.user import User
+from enum import auto
+from tcx_api.util import TcxStrEnum
+from sync.factories.user_entity_factory import UserEntityFactory
+from dataclasses import dataclass, asdict, field
+from tcx_api.tcx_api_connection import TCX_API_Connection
 
 
-class UserProperties(StrEnum):
+@dataclass
+class ListUserParameters(Parameters):
+    """
+    Parameters for listing users.
+
+    Attributes:
+        top (int): The number of items to retrieve from the top.
+        skip (int): The number of items to skip.
+        search (str): The search query.
+        filter (str): The filter to apply.
+        count (bool): Indicates if a count should be returned or not.
+        orderby (str): The field to order by.
+        select (list): Select properties to be returned.
+        expand (str): Expand related entities.
+
+    """
+
+    top: int = None
+    skip: int = None
+    search: str = None
+    filter: str = None
+    count: bool = None
+    orderby: str = None
+    select: list[str] = None
+    expand: str = None
+
+    def __post_init__(self):
+        if self.select is not None:
+            self.validate_field(self.select)
+
+        if self.top:
+            self.validate_top(self.top)
+
+        if self.skip:
+            self.validate_skip(self.skip)
+
+    def to_dict(self):
+        """
+        Convert Parameters instance to a dictionary, excluding attributes with value None.
+        """
+        return {k.lstrip("_"): v for k, v in asdict(self).items() if v is not None}
+
+    def validate_field(self, value: list | str):
+        if value is None:
+            return
+
+        if isinstance(value, list):
+            invalid_fields = [field for field in value if field not in UserProperties]
+        else:
+            invalid_fields = value if value not in UserProperties else None
+        if invalid_fields:
+            raise ValueError(
+                f"The following fields are not valid attributes of the User class: {invalid_fields}"
+            )
+
+    def validate_top(self, top: int):
+        if top < 0:
+            raise ValueError("top must be greater than or equal to 0")
+
+    def validate_skip(self, skip: int):
+        if skip < 0:
+            raise ValueError("skip must be greater than or equal to 0")
+
+
+class UserResource(APIResource):
+    endpoint = "Users"
+
+    def __init__(self, api: TCX_API_Connection):
+        super().__init__(api=api)
+
+    def list_user(self, params: ListUserParameters):
+        """Get entities from Users"""
+        try:
+            response = self.api.get("Users", params)
+            users = response.json().get("value", None)
+            if users:
+                return [UserEntityFactory.create_user(**user) for user in users]
+            else:
+                return None
+        except Exception as e:
+            print(f"Failed to fetch users: {e}")
+            return None
+
+    def create_user(self, user: User):
+        """Add new entity to Users"""
+        pass
+
+    def get_user(self, id):
+        try:
+            response = self.api.get("Users")
+            users = response.json()["value"]
+            return users
+        except Exception as e:
+            # Handle exceptions appropriately
+            print(f"Failed to fetch users: {e}")
+            return None
+
+    def update_user(self, user: User):
+        """Update entity in Users"""
+        try:
+            response = self.api.patch(endpoint=self.endpoint, params=user.Id, data=user)
+            return response.json()["value"]
+        except Exception as e:
+            print(f"Failed to update user: {e}")
+            return None
+
+    def delete_user(self, user: User | int):
+        if isinstance(user, User):
+            self.delete_user_directly(user=user)
+        else:
+            self.delete_user_by_id(id=user.Id)
+
+    def delete_user_directly(self, user: User):
+        self.delete_user_by_id(id=user.Id)
+
+    def delete_user_by_id(self, id: int):
+        """Delete entity from Users"""
+        self.api.delete(endpoint=self.endpoint, params=id)
+        # Looks like it takes a header value called If-Match that is a string of an etag.
+        # Not sure if it is required.
+        # - name: If-Match
+        #  in: header
+        #  description: ETag
+        #  schema:
+        #    type: string
+
+
+class UserProperties(TcxStrEnum):
     AccessPassword = auto()
     AllowLanOnly = auto()
     AllowOwnRecordings = auto()
@@ -74,78 +205,3 @@ class UserProperties(StrEnum):
     VMPlayMsgDateTime = auto()
     WebMeetingApproveParticipants = auto()
     WebMeetingFriendlyName = auto()
-
-
-# class UserEntity:
-#    def __init__(self, **kwargs):
-#        self.properties = {}
-#        for key, value in kwargs.items():
-#            if key not in UserProperties.__members__:
-#                raise ValueError(f"Invalid property: {key}")
-#
-#            match key:
-#                case "BreakTime":
-#                    value = Pbx_Schedule(**value)
-#                case "CallUsRequirement":
-#                    value = Pbx_Authentication(value)
-#
-#            setattr(self, key, value)
-
-
-class ListUserParameters(TypedDict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-
-    top: int = None
-    skip: int = None
-    search: str = None
-    filter: str = None
-    count: bool = None
-    orderby: str = None
-    select: Optional[List[UserProperties]] = None
-    expand: str = None
-
-
-class UserResource(APIResource):
-
-    def __init__(self, api: API):
-        super().__init__(api=api)
-
-    # Methods
-    def list_user(self, **kwargs: Unpack[ListUserParameters]) -> List[Dict]:
-        """Get entities from Users"""
-        try:
-
-            # Validate select
-            if kwargs.get("select"):
-                self.validate_user_properties(kwargs["select"])
-
-            response = self.api.get("Users", ListUserParameters(kwargs))
-            return response.json()["value"]
-        except Exception as e:
-            print(f"Failed to fetch users: {e}")
-            return None
-
-    def create_user(self, user):
-        pass
-
-    def get_user(self, id):
-        try:
-            response = self.api.get("Users")
-            users = response.json()["value"]
-            return users
-        except Exception as e:
-            # Handle exceptions appropriately
-            print(f"Failed to fetch users: {e}")
-            return None
-
-    def update_user(self, user):
-        pass
-
-    def delete_user(self, id):
-        pass
-
-    # Validate User Properties
-    def validate_user_properties(self, properties: List[str]):
-        if not set(UserProperties).issuperset(properties):
-            raise ValueError(f"Only {[v.value for v in UserProperties]} are allowed.")

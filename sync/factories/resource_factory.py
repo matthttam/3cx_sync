@@ -1,7 +1,6 @@
 from tcx_api.tcx_api_connection import TCX_API_Connection
-from ..resources.user import UserResource
-from typing import Any
-from ..resources.api_resource import APIResource
+from tcx_api.resources.user import UserResource
+from tcx_api.resources.api_resource import APIResource
 
 
 class ResourceFactory:

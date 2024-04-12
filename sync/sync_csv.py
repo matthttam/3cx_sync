@@ -1,10 +1,13 @@
+import os
 from .sync import Sync
 import tkinter as tk
 from app.config import TCXConfig
 from app.mapping import CSVMapping
 from tcx_api.tcx_api_connection import TCX_API_Connection
-from tcx_api.factories.user_entity_factory import UserEntityFactory
-from tcx_api.factories.resource_factory import ResourceFactory
+from sync.factories.user_entity_factory import UserEntityFactory
+from tcx_api.resources.user import UserResource
+import csv
+from tcx_api.resources.user import ListUserParameters
 
 
 class SyncCSV(Sync):
@@ -20,9 +23,7 @@ class SyncCSV(Sync):
             return False
 
         self.output("Fetching Users")
-        users = self.User.list_user(
-            top=10,
-        )
+        users = self.User.list_user(params=ListUserParameters(top=10))
         self.output(str(users))
         if not users:
             return False
@@ -49,13 +50,25 @@ class SyncCSV(Sync):
         self.output("3CX Config Loaded")
 
     def load_resources(self):
-        self.resource_factory = ResourceFactory(api_connection=self.api_connection)
-        self.User = self.resource_factory.get_resource("User")
+        # self.resource_factory = ResourceFactory(api_connection=self.api_connection)
+        # self.User = self.resource_factory.get_resource("User")
+        self.User = UserResource(self.api_connection)
 
     def load_csv_mapping(self):
         self.output("Loading CSV Mapping")
         self.mapping = CSVMapping()
         self.output("CSV Mapping Loaded")
+
+    def load_csv_data(self):
+        self.output("Loading CSV Data")
+        csv_data_path = self.mapping.get("Extension", {}).get("Path", "")
+        if not os.path.isfile(csv_data_path):
+            self.output(f"Unable to find file at: {csv_data_path}")
+            raise (FileNotFoundError)
+
+        with open(csv_data_path) as csv_file:
+            self.data = csv.reader(csv_file)
+        self.output("CSV Data Loaded")
 
     def authenticate(self):
         self.output("Authenticating to 3CX")

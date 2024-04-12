@@ -163,3 +163,4 @@ cython_debug/
 csv_mapping.json
 .vscode
 launch.json
+**/*.csv

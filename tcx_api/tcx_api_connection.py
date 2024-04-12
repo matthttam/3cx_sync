@@ -2,6 +2,8 @@ import json
 import requests
 from typing import NamedTuple
 from .api import API
+from tcx_api.components.parameters import Parameters
+from tcx_api.util import Util
 
 
 class TCX_API_Connection(API):
@@ -24,11 +26,15 @@ class TCX_API_Connection(API):
         self.api_path = api_path
         self.session = requests.Session()
 
-    def get(self, endpoint: str, query_params: dict = {}) -> requests.Response:
+    def get(
+        self, endpoint: str, params: Parameters = Parameters()
+    ) -> requests.Response:
+
         url = self.get_api_endpoint_url(endpoint)
         response = self.session.get(
             url=url,
-            params=query_params,
+            params=params.to_dict(),
+            # params={"top": 5},
             headers=self.get_headers(),
         )
         response.raise_for_status()
@@ -39,6 +45,16 @@ class TCX_API_Connection(API):
         response = self.session.post(url=url, data=data)
         response.raise_for_status()
         return response
+
+    def patch(self, endpoint: str, params, data: dict) -> requests.Response:
+        url = self.get_api_endpoint_url(endpoint)
+        response = self.session.patch(url=url, params=params, data=data)
+        response.raise_for_status()
+        return response
+
+    def delete(self, endpoint: str, id: int) -> requests.Response:
+        url = self.get_api_endpoint_url(endpoint)
+        response = self.session.delete(url=url, params=id)
 
     def authenticate(self, username, password):
         # Get Access Token
