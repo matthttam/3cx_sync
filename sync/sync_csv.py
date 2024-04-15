@@ -4,10 +4,10 @@ import tkinter as tk
 from app.config import TCXConfig
 from app.mapping import CSVMapping
 from tcx_api.tcx_api_connection import TCX_API_Connection
-from sync.factories.user_entity_factory import UserEntityFactory
 from tcx_api.resources.user import UserResource
 import csv
-from tcx_api.resources.user import ListUserParameters, GetUserParameters
+from tcx_api.resources.user import ListUserParameters
+from tcx_api import exceptions as TCX_Exceptions
 
 
 class SyncCSV(Sync):
@@ -15,48 +15,40 @@ class SyncCSV(Sync):
         super().__init__(text=text)
 
     def sync(self):
-        self.initialize()
-        self.output_spacer()
-        self.output("Starting CSV Sync")
-        self.output("Authenticating to API")
-        if not self.authenticate():
-            return False
-
-        self.output("Fetching Users")
-        users = self.User.list_user(params=ListUserParameters(top=10))
-        self.User.get_user(id=47, params=GetUserParameters())
-        if not users:
-            return False
-        self.output(f"Fetched {len(users)} users")
-        self.output("Sync Complete")
-
-    def initialize(self):
         self.output("Initializing CSV Sync")
-        # Load 3CX Config
-        self.load_3cx_config()
+        self.output("Loading 3CX Config")
+        self.config = TCXConfig()
+        self.output("3CX Config Loaded")
         self.output("Initializing API Connection")
         self.api_connection = TCX_API_Connection(
             server_url=self.config.get_server_url()
         )
-        self.load_resources()
-        self.load_csv_mapping()
-
-    def load_3cx_config(self):
-        self.output("Loading 3CX Config")
-        self.config = TCXConfig()
-        self.output("3CX Config Loaded")
-
-    def load_resources(self):
-        # self.resource_factory = ResourceFactory(api_connection=self.api_connection)
-        # self.User = self.resource_factory.get_resource("User")
         self.User = UserResource(api=self.api_connection)
-
-    def load_csv_mapping(self):
         self.output("Loading CSV Mapping")
         self.mapping = CSVMapping()
         self.output("CSV Mapping Loaded")
 
-    def load_csv_data(self):
+        ### Use CSV Mapping to parse CSV data into usable 3CX Schema Objects
+        self.output_spacer()
+        self.output("Starting CSV Sync")
+
+        self.load_data()
+        self.parse_data()
+        return  # TEMP RETURN TO STOP
+        if not self.authenticate():
+            return False
+
+        try:
+            self.output("Fetching Users")
+            users = self.User.list_user(params=ListUserParameters(top=10))
+        except TCX_Exceptions.APIError as e:
+            self.output("Failed to fetch users: {e}")
+            return False
+        self.output(f"Fetched {len(users)} users")
+
+        self.output("Sync Complete")
+
+    def load_data(self):
         self.output("Loading CSV Data")
         csv_data_path = self.mapping.get("Extension", {}).get("Path", "")
         if not os.path.isfile(csv_data_path):
@@ -64,7 +56,15 @@ class SyncCSV(Sync):
             raise (FileNotFoundError)
 
         with open(csv_data_path) as csv_file:
-            self.data = csv.reader(csv_file)
+            csv_reader = csv.reader(csv_file)
+            user_mapping = self.mapping.get("Extension").get("New")
+            headers = next(csv_reader)
+            headers = [user_mapping[key] for key in headers]
+
+            for row in csv_reader:
+                row_dict = dict(zip(headers, row))
+                self.user_data.append(row_dict)
+
         self.output("CSV Data Loaded")
 
     def authenticate(self):
@@ -77,6 +77,6 @@ class SyncCSV(Sync):
             )
             self.output("Authentication Successful")
             return True
-        except Exception as e:
-            self.output(f"Authentication Failed. {str(e)}")
+        except TCX_Exceptions.APIAuthenticationError as e:
+            self.output("Failed to authenticate: {e}")
             return False

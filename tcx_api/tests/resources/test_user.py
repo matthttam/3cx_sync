@@ -2,6 +2,12 @@ import pytest
 from tcx_api.resources.user import ListUserParameters, UserProperties
 from tcx_api.components.parameters import ListParameters
 from pydantic import ValidationError
+from tcx_api.resources.user import UserResource
+from unittest.mock import MagicMock
+from tcx_api.tcx_api_connection import TCX_API_Connection
+from tcx_api.components.schemas.pbx.user import User
+from tcx_api import exceptions as TCX_Exceptions
+import requests
 
 
 class TestListUserParameters:
@@ -55,9 +61,107 @@ class TestListUserParameters:
             test_params = ListUserParameters(skip=-1)
 
         test_params = ListUserParameters(skip=1)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValidationError):
             test_params.skip = -1
 
 
-if __name__ == "__main__":
-    pytest.main()
+class TestUserResource:
+    @pytest.fixture
+    def user_resource(self):
+        return UserResource(api=MagicMock(spec=TCX_API_Connection))
+
+    def test_list_user_single_success(self, user_resource):
+        # Mocking the API response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "value": [
+                User(
+                    Id=1, FirstName="TestFirstName", LastName="TestLastName"
+                ).model_dump()
+            ]
+        }
+        user_resource.api.get.return_value = mock_response
+
+        # Calling the method under test
+        params = ListUserParameters()
+        users = user_resource.list_user(params)
+
+        # Assertions
+        assert len(users) == 1
+        assert users[0].Id == 1
+        assert users[0].FirstName == "TestFirstName"
+        assert users[0].LastName == "TestLastName"
+
+        # Asserting that the API was called with the correct parameters
+        user_resource.api.get.assert_called_once_with("Users", params)
+
+    def test_list_user_multiple_success(self, user_resource):
+        # Mocking the API response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "value": [
+                User(
+                    Id=1, FirstName="TestFirstName", LastName="TestLastName"
+                ).model_dump(),
+                User(
+                    Id=2, FirstName="TestFirstName2", LastName="TestLastName2"
+                ).model_dump(),
+            ]
+        }
+        user_resource.api.get.return_value = mock_response
+
+        # Calling the method under test
+        params = ListUserParameters()
+        users = user_resource.list_user(params)
+
+        # Assertions
+        assert len(users) == 2
+        assert users[1].Id == 2
+        assert users[1].FirstName == "TestFirstName2"
+        assert users[1].LastName == "TestLastName2"
+
+        # Asserting that the API was called with the correct parameters
+        user_resource.api.get.assert_called_once_with("Users", params)
+
+    def test_list_user_failure(self, user_resource):
+        # Mocking the API response to simulate an error
+        user_resource.api.get.side_effect = requests.HTTPError
+
+        # Calling the method under test
+        params = ListUserParameters()
+        with pytest.raises(TCX_Exceptions.UserListError):
+            users = user_resource.list_user(params)
+
+        # Asserting that the API was called with the correct parameters
+        user_resource.api.get.assert_called_once_with("Users", params)
+
+    def test_get_user_success(self, user_resource):
+        id = 1
+        mock_response = MagicMock()
+        mock_response.json.return_value = User(
+            Id=1, FirstName="TestFirstName", LastName="TestLastName"
+        ).model_dump()
+        user_resource.api.get.return_value = mock_response
+
+        params = ListUserParameters()
+        user = user_resource.get_user(id=id, params=params)
+
+        assert isinstance(user, User)
+        assert user.FirstName == "TestFirstName"
+        assert user.LastName == "TestLastName"
+
+        user_resource.api.get.assert_called_once_with(
+            endpoint=f"Users({id})", params=params
+        )
+
+    def test_get_user_failure(self, user_resource):
+        id = 1
+        user_resource.api.get.side_effect = requests.HTTPError
+
+        params = ListUserParameters()
+        with pytest.raises(TCX_Exceptions.UserGetError):
+            user = user_resource.get_user(id=id, params=params)
+
+        user_resource.api.get.assert_called_once_with(
+            endpoint=f"Users({id})", params=params
+        )

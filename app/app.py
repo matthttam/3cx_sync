@@ -13,7 +13,6 @@ class App(tk.Tk):
 
         # Window Options
         self.wm_title("3cx Sync Config")
-        #self.config(height=500, width=500)
 
         # Create a window frame
         frm_window = tk.Frame(master=self)

@@ -3,6 +3,7 @@ from datetime import datetime
 
 
 class Sync:
+    user_data = list()
 
     def __init__(self, text: tk.Text = None) -> None:
         self.text = text

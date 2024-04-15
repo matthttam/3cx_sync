@@ -1,5 +1,7 @@
 import requests
 from typing import NamedTuple
+
+from tcx_api.exceptions import APIAuthenticationError
 from .api import API
 from tcx_api.components.parameters import ListParameters
 
@@ -16,7 +18,11 @@ class TCX_API_Connection(API):
         return {
             "Authorization": f"Bearer {self.token.access_token}",
             "content-type": "application/json",
+            "Accept": "application/json",
         }
+
+    def get_unauthenticated_headers(self) -> dict:
+        return {"Content-type": "application/json", "Accept": "application/json"}
 
     def __init__(self, *args, server_url, api_path="/xapi/v1", **kwargs):
         self.server_url = server_url
@@ -52,14 +58,12 @@ class TCX_API_Connection(API):
         return response
 
     def authenticate(self, username, password):
-        # Get Access Token
         data = {"SecurityCode": "", "Username": username, "Password": password}
-        headers = {"Content-type": "application/json", "Accept": "application/json"}
         try:
             response = self.session.post(
-                self.server_url + "/webclient/api/Login/GetAccessToken",
+                url=self.server_url + "/webclient/api/Login/GetAccessToken",
                 json=data,
-                headers=headers,
+                headers=self.get_unauthenticated_headers(),
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -70,12 +74,10 @@ class TCX_API_Connection(API):
     def refresh_authentication(self):
         # Get Access Token
         data = {"client_id": "Webclient", "grant_type": "refresh_token"}
-        # data = json.dumps(data_dict, indent=4)
-        headers = {"Content-type": "application/json", "Accept": "application/json"}
-        response = requests.post(
-            self.server_url + "/webclient/api/Login/GetAccessToken",
+        response = self.session.post(
+            url=self.server_url + "/webclient/api/Login/GetAccessToken",
             json=data,
-            headers=headers,
+            headers=self.get_unauthenticated_headers(),
         )
         return response
 
@@ -85,16 +87,3 @@ class AuthenticationToken(NamedTuple):
     expires_in: int
     access_token: str
     refresh_token: str
-
-
-class APIAuthenticationError(Exception):
-    """Exception raised when authentication fails
-
-    Attributes:
-        HTTP Response Error Message
-        HTTP Response Code
-    """
-
-    def __init__(self, http_response_status_code, http_response_error_message):
-        self.message = f"Authentication Failure. {http_response_error_message} ({http_response_status_code})"
-        super().__init__(self.message)

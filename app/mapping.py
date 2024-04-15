@@ -1,6 +1,6 @@
 import os
 import json
-from collections import UserDict, defaultdict
+from collections import UserDict
 from typing import Any
 
 
@@ -40,3 +40,6 @@ class CSVMapping(UserDict):
         with open(self.mapping_file_path, "w") as mapping_file:
             json.dump(self.__dict__["data"], mapping_file)
         mapping_file.close()
+
+    def inverted_mapping(self, mapping: dict):
+        return {v: k for k, v in mapping.items()}

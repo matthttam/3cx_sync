@@ -1,11 +1,12 @@
+import requests
 from tcx_api.components.parameters import GetParameters, ListParameters
 from .api_resource import APIResource
 from tcx_api.components.schemas.pbx.user import User
 from enum import auto
 from tcx_api.util import TcxStrEnum
-from sync.factories.user_entity_factory import UserEntityFactory
 from typing import List
 from pydantic import TypeAdapter
+from tcx_api import exceptions as TCX_Exceptions
 
 
 class UserProperties(TcxStrEnum):
@@ -113,22 +114,19 @@ class UserResource(APIResource):
             response = self.api.get(self.endpoint, params)
             response_value = response.json().get("value")
             return TypeAdapter(List[User]).validate_python(response_value)
-        except Exception as e:
-            print(f"Unknown Error. Failed to fetch users: {e}")
-            return None
+        except requests.HTTPError as e:
+            raise TCX_Exceptions.UserListError(f"Failed to fetch users: {e}")
 
     def create_user(self, user: User):
         """Add new entity to Users"""
         self.api.post(self.endpoint, user.model_dump())
 
-    def get_user(self, params: GetUserParameters, id: int) -> User:
+    def get_user(self, id: int, params: GetUserParameters) -> User:
         try:
-            response = self.api.get(f"Users({id})", params=params)
+            response = self.api.get(endpoint=f"Users({id})", params=params)
             return TypeAdapter(User).validate_python(response.json())
-        except Exception as e:
-            # Handle exceptions appropriately
-            print(f"Unknown Error. Failed to fetch user with id {id}: {e}")
-            return None
+        except requests.HTTPError as e:
+            raise TCX_Exceptions.UserGetError(f"Failed to fetch user: {e}")
 
     def update_user(self, user: User):
         """Update entity in Users"""
