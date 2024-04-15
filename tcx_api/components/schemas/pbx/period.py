@@ -1,10 +1,9 @@
-from tcx_api.components.schemas.pbx.enums import DayOfWeek
+from tcx_api.components.schemas.pbx.enums import DayOfWeek as DayOfWeekEnum
+
+from tcx_api.components.schemas.schema import Schema
 
 
-class Period:
-    def __init__(
-        self, DayOfWeek: DayOfWeek = None, Start: str = None, Stop: str = None
-    ) -> None:
-        self.DayOfWeek = DayOfWeek
-        self.Start = Start
-        self.Stop = Stop
+class Period(Schema):
+    DayOfWeek: DayOfWeekEnum = None
+    Start: str = None
+    Stop: str = None

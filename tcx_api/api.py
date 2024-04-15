@@ -1,6 +1,7 @@
 import requests
 from abc import ABC, abstractmethod
-from tcx_api.components.parameters import Parameters
+from tcx_api.components.parameters import ListParameters
+from pydantic import BaseModel
 
 
 class API(ABC):

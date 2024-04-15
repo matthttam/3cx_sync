@@ -7,7 +7,7 @@ from tcx_api.tcx_api_connection import TCX_API_Connection
 from sync.factories.user_entity_factory import UserEntityFactory
 from tcx_api.resources.user import UserResource
 import csv
-from tcx_api.resources.user import ListUserParameters
+from tcx_api.resources.user import ListUserParameters, GetUserParameters
 
 
 class SyncCSV(Sync):
@@ -24,13 +24,10 @@ class SyncCSV(Sync):
 
         self.output("Fetching Users")
         users = self.User.list_user(params=ListUserParameters(top=10))
-        self.output(str(users))
+        self.User.get_user(id=47, params=GetUserParameters())
         if not users:
             return False
         self.output(f"Fetched {len(users)} users")
-
-        user_entity = UserEntityFactory.create_user(**users[0])
-        print(user_entity)
         self.output("Sync Complete")
 
     def initialize(self):
@@ -52,7 +49,7 @@ class SyncCSV(Sync):
     def load_resources(self):
         # self.resource_factory = ResourceFactory(api_connection=self.api_connection)
         # self.User = self.resource_factory.get_resource("User")
-        self.User = UserResource(self.api_connection)
+        self.User = UserResource(api=self.api_connection)
 
     def load_csv_mapping(self):
         self.output("Loading CSV Mapping")

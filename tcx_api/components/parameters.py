@@ -1,45 +1,19 @@
 from abc import ABC
-from dataclasses import dataclass
+from pydantic import BaseModel, Field
 
 
-@dataclass
-class Parameters(ABC):
-    pass
+class ListParameters(BaseModel, ABC, validate_assignment=True):
+    top: int = Field(None, ge=0)
+    skip: int = Field(None, ge=0)
+    search: str = None
+    filter: str = None
+    count: bool = None
+    # def to_dict(self):
+    #    """
+    #    Convert Parameters instance to a dictionary, excluding attributes with value None.
+    #    """
+    #    return {k.lstrip("_"): v for k, v in asdict(self).items() if v is not None}
 
 
-# def __init__(
-#    self,
-#    top: int = None,
-#    skip: int = None,
-#    count: bool = None,
-#    filter: str = None,
-#    search: str = None,
-# ):
-#    self.top = top
-#    self.skip = skip
-#    self.count = count
-#    self.filter = filter
-#    self.search = search
-
-# @property
-# def top(self):
-#    return self._top
-
-
-#
-# @top.setter
-# def top(self, value):
-#    if value is not None and value < 0:
-#        raise ValueError("top must be >= 0")
-#    self._top = value
-#
-# @property
-# def skip(self):
-#    return self._skip
-#
-# @skip.setter
-# def skip(self, value):
-#    if value is not None and value < 0:
-#        raise ValueError("skip must be >= 0")
-#    self._skip = value
-#
+class GetParameters(BaseModel, ABC, validate_assignment=True):
+    expand: str = None

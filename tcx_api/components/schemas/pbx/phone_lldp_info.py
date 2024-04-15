@@ -1,4 +1,6 @@
-class PhoneLldpInfo:
-    def __init__(self, Configurable: bool = None, Value: bool = None) -> None:
-        self.Configurable = Configurable
-        self.Value = Value
+from tcx_api.components.schemas.schema import Schema
+
+
+class PhoneLldpInfo(Schema):
+    Configurable: bool = None
+    Value: bool = None

@@ -1,13 +1,10 @@
-import json
 import requests
 from typing import NamedTuple
 from .api import API
-from tcx_api.components.parameters import Parameters
-from tcx_api.util import Util
+from tcx_api.components.parameters import ListParameters
 
 
 class TCX_API_Connection(API):
-
     def get_api_endpoint_url(self, endpoint):
         return self.api_url + "/" + endpoint
 
@@ -15,7 +12,7 @@ class TCX_API_Connection(API):
     def api_url(self):
         return self.server_url + self.api_path
 
-    def get_headers(self):
+    def get_headers(self) -> dict:
         return {
             "Authorization": f"Bearer {self.token.access_token}",
             "content-type": "application/json",
@@ -26,15 +23,11 @@ class TCX_API_Connection(API):
         self.api_path = api_path
         self.session = requests.Session()
 
-    def get(
-        self, endpoint: str, params: Parameters = Parameters()
-    ) -> requests.Response:
-
+    def get(self, endpoint: str, params: ListParameters) -> requests.Response:
         url = self.get_api_endpoint_url(endpoint)
         response = self.session.get(
             url=url,
-            params=params.to_dict(),
-            # params={"top": 5},
+            params=params.model_dump(exclude_none=True),
             headers=self.get_headers(),
         )
         response.raise_for_status()
@@ -55,6 +48,8 @@ class TCX_API_Connection(API):
     def delete(self, endpoint: str, id: int) -> requests.Response:
         url = self.get_api_endpoint_url(endpoint)
         response = self.session.delete(url=url, params=id)
+        response.raise_for_status()
+        return response
 
     def authenticate(self, username, password):
         # Get Access Token

@@ -1,14 +1,10 @@
-from tcx_api.components.schemas.pbx.period import Period
-from tcx_api.components.schemas.pbx.enums import RuleHoursType
+from tcx_api.components.schemas.pbx.period import Period as PeriodObject
+from tcx_api.components.schemas.pbx.enums import RuleHoursType as RuleHoursTypeEnum
+from tcx_api.components.schemas.schema import Schema
+from pydantic import conlist
 
 
-class Schedule:
-    def __init__(
-        self,
-        Type: RuleHoursType,
-        IgnoreHolidays: bool = None,
-        Periods: list[Period] = None,
-    ) -> None:
-        self.Type = Type
-        self.IgnoreHolidays = IgnoreHolidays
-        self.Periods = Periods
+class Schedule(Schema):
+    Type: RuleHoursTypeEnum
+    IgnoreHolidays: bool = None
+    Periods: conlist(PeriodObject) = None

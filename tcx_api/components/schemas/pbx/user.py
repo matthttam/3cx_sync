@@ -1,174 +1,93 @@
-from tcx_api.components.schemas.pbx.user_group import UserGroup
-from tcx_api.components.schemas.pbx.greeting import Greeting
-from tcx_api.components.schemas.pbx.phone import Phone
-from tcx_api.components.schemas.pbx.extension_rule import ExtensionRule
-from tcx_api.components.schemas.pbx.forwarding_profile import ForwardingProfile
-from tcx_api.components.schemas.pbx.schedule import Schedule
+from tcx_api.components.schemas.pbx.user_group import UserGroup as UserGroupObject
+from tcx_api.components.schemas.pbx.greeting import Greeting as GreetingObject
+from tcx_api.components.schemas.pbx.phone import Phone as PhoneObject
+from tcx_api.components.schemas.pbx.extension_rule import (
+    ExtensionRule as ExtensionRuleObject,
+)
+from tcx_api.components.schemas.pbx.forwarding_profile import (
+    ForwardingProfile as ForwardingProfileObject,
+)
+from tcx_api.components.schemas.pbx.schedule import Schedule as ScheduleObject
 
 from tcx_api.components.schemas.pbx.enums import (
-    Authentication,
-    OfficeHoursBits,
-    UserTag,
-    VMEmailOptionsType,
-    VMPlayMsgDateTimeType,
+    Authentication as AuthenticationEnum,
+    OfficeHoursBits as OfficeHoursBitsEnum,
+    UserTag as UserTagEnum,
+    VMEmailOptionsType as VMEmailOptionsTypeEnum,
+    VMPlayMsgDateTimeType as VMPlayMsgDateTimeTypeEnum,
 )
 
-from tcx_api.util import Util
+from tcx_api.components.schemas.schema import Schema
+from pydantic import conlist
 
-from dataclasses import dataclass
 
-
-@dataclass
-class User:
-    def __init__(
-        self,
-        Id: int,
-        AccessPassword: str = None,
-        AllowLanOnly: bool = None,
-        AllowOwnRecordings: bool = None,
-        AuthID: str = None,
-        AuthPassword: str = None,
-        Blfs: str = None,
-        BreakTime: Schedule | dict = None,
-        CallScreening: bool = None,
-        CallUsEnableChat: bool = None,
-        CallUsEnablePhone: bool = None,
-        CallUsEnableVideo: bool = None,
-        CallUsRequirement: Authentication = None,
-        ClickToCallId: str = None,
-        ContactImage: str = None,
-        CurrentProfileName: str = None,
-        DeskphonePassword: str = None,
-        DisplayName: str = None,
-        EmailAddress: str = None,
-        Enable2FA: bool = None,
-        Enabled: bool = None,
-        EnableHotdesking: bool = None,
-        FirstName: str = None,
-        ForwardingExceptions: list[ExtensionRule | dict] = None,
-        ForwardingProfiles: list[ForwardingProfile | dict] = None,
-        GoogleSignInEnabled: bool = None,
-        Greetings: list[Greeting | dict] = None,
-        Groups: list[UserGroup | dict] = None,
-        HideInPhonebook: bool = None,
-        HotdeskingAssignment: str = None,
-        Hours: Schedule | dict = None,
-        Internal: bool = None,
-        IsRegistered: bool = None,
-        Language: str = None,
-        LastName: str = None,
-        Mobile: str = None,
-        MS365CalendarEnabled: bool = None,
-        MS365ContactsEnabled: bool = None,
-        MS365SignInEnabled: bool = None,
-        MS365TeamsEnabled: bool = None,
-        MyPhoneAllowDeleteRecordings: bool = None,
-        MyPhoneHideForwardings: bool = None,
-        MyPhonePush: bool = None,
-        MyPhoneShowRecordings: bool = None,
-        Number: str = None,
-        OfficeHoursProps: list[OfficeHoursBits | str] = None,
-        OutboundCallerID: str = None,
-        Phones: list[Phone | dict] = None,
-        PinProtected: bool = None,
-        PinProtectTimeout: int = None,
-        PrimaryGroupId: int = None,
-        PromptSet: str = None,
-        ProvFile: str = None,
-        ProvLink: str = None,
-        RecordCalls: bool = None,
-        RecordExternalCallsOnly: bool = None,
-        Require2FA: bool = None,
-        SendEmailMissedCalls: bool = None,
-        SIPID: str = None,
-        Tags: list[UserTag | str] = None,
-        VMDisablePinAuth: bool = None,
-        VMEmailOptions: VMEmailOptionsType | str = None,
-        VMEnabled: bool = None,
-        VMPIN: str = None,
-        VMPlayCallerID: bool = None,
-        VMPlayMsgDateTime: VMPlayMsgDateTimeType | str = None,
-        WebMeetingApproveParticipants: bool = None,
-        WebMeetingFriendlyName: str = None,
-    ):
-        self.Id = Id
-        self.AccessPassword = AccessPassword
-        self.AllowLanOnly = AllowLanOnly
-        self.AllowOwnRecordings = AllowOwnRecordings
-        self.AuthID = AuthID
-        self.AuthPassword = AuthPassword
-        self.Blfs = Blfs
-        self.BreakTime = Util.instanciate_object(BreakTime, Schedule)
-        self.CallScreening = CallScreening
-        self.CallUsEnableChat = CallUsEnableChat
-        self.CallUsEnablePhone = CallUsEnablePhone
-        self.CallUsEnableVideo = CallUsEnableVideo
-        self.CallUsRequirement = Util.instanciate_str_enum(
-            CallUsRequirement, Authentication
-        )
-        self.ClickToCallId = ClickToCallId
-        self.ContactImage = ContactImage
-        self.CurrentProfileName = CurrentProfileName
-        self.DeskphonePassword = DeskphonePassword
-        self.DisplayName = DisplayName
-        self.EmailAddress = EmailAddress
-        self.Enable2FA = Enable2FA
-        self.Enabled = Enabled
-        self.EnableHotdesking = EnableHotdesking
-        self.FirstName = FirstName
-        self.ForwardingExceptions = Util.instanciate_list_of_objects(
-            ForwardingExceptions, ExtensionRule
-        )
-        self.ForwardingProfiles = Util.instanciate_list_of_objects(
-            ForwardingProfiles, ForwardingProfile
-        )
-        self.GoogleSignInEnabled = GoogleSignInEnabled
-        self.Greetings = Util.instanciate_list_of_objects(Greetings, Greeting)
-        self.Groups = Util.instanciate_list_of_objects(Groups, UserGroup)
-        self.HideInPhonebook = HideInPhonebook
-        self.HotdeskingAssignment = HotdeskingAssignment
-        self.Hours = Util.instanciate_object(Hours, Schedule)
-        self.Internal = Internal
-        self.IsRegistered = IsRegistered
-        self.Language = Language
-        self.LastName = LastName
-        self.Mobile = Mobile
-        self.MS365CalendarEnabled = MS365CalendarEnabled
-        self.MS365ContactsEnabled = MS365ContactsEnabled
-        self.MS365SignInEnabled = MS365SignInEnabled
-        self.MS365TeamsEnabled = MS365TeamsEnabled
-        self.MyPhoneAllowDeleteRecordings = MyPhoneAllowDeleteRecordings
-        self.MyPhoneHideForwardings = MyPhoneHideForwardings
-        self.MyPhonePush = MyPhonePush
-        self.MyPhoneShowRecordings = MyPhoneShowRecordings
-        self.Number = Number
-        self.OfficeHoursProps = Util.instanciate_list_of_str_enum(
-            OfficeHoursProps, OfficeHoursBits
-        )
-
-        self.OutboundCallerID = OutboundCallerID
-        self.Phones = Util.instanciate_list_of_objects(Phones, Phone)
-        self.PinProtected = PinProtected
-        self.PinProtectTimeout = PinProtectTimeout
-        self.PrimaryGroupId = PrimaryGroupId
-        self.PromptSet = PromptSet
-        self.ProvFile = ProvFile
-        self.ProvLink = ProvLink
-        self.RecordCalls = RecordCalls
-        self.RecordExternalCallsOnly = RecordExternalCallsOnly
-        self.Require2FA = Require2FA
-        self.SendEmailMissedCalls = SendEmailMissedCalls
-        self.SIPID = SIPID
-        self.Tags = Util.instanciate_list_of_str_enum(Tags, UserTag)
-        self.VMDisablePinAuth = VMDisablePinAuth
-        self.VMEmailOptions = Util.instanciate_str_enum(
-            VMEmailOptions, VMEmailOptionsType
-        )
-        self.VMEnabled = VMEnabled
-        self.VMPIN = VMPIN
-        self.VMPlayCallerID = VMPlayCallerID
-        self.VMPlayMsgDateTime = Util.instanciate_str_enum(
-            VMPlayMsgDateTime, VMPlayMsgDateTimeType
-        )
-        self.WebMeetingApproveParticipants = WebMeetingApproveParticipants
-        self.WebMeetingFriendlyName = WebMeetingFriendlyName
+# @dataclass
+class User(Schema):
+    Id: int
+    AccessPassword: str = None
+    AllowLanOnly: bool = None
+    AllowOwnRecordings: bool = None
+    AuthID: str = None
+    AuthPassword: str = None
+    Blfs: str = None
+    BreakTime: ScheduleObject = None
+    CallScreening: bool = None
+    CallUsEnableChat: bool = None
+    CallUsEnablePhone: bool = None
+    CallUsEnableVideo: bool = None
+    CallUsRequirement: AuthenticationEnum = None
+    ClickToCallId: str = None
+    ContactImage: str = None
+    CurrentProfileName: str = None
+    DeskphonePassword: str = None
+    DisplayName: str = None
+    EmailAddress: str = None
+    Enable2FA: bool = None
+    Enabled: bool = None
+    EnableHotdesking: bool = None
+    FirstName: str = None
+    ForwardingExceptions: conlist(ExtensionRuleObject) = None
+    ForwardingProfiles: conlist(ForwardingProfileObject) = None
+    GoogleSignInEnabled: bool = None
+    Greetings: conlist(GreetingObject) = None
+    Groups: conlist(UserGroupObject) = None
+    HideInPhonebook: bool = None
+    HotdeskingAssignment: str = None
+    Hours: ScheduleObject = None
+    Internal: bool = None
+    IsRegistered: bool = None
+    Language: str = None
+    LastName: str = None
+    Mobile: str = None
+    MS365CalendarEnabled: bool = None
+    MS365ContactsEnabled: bool = None
+    MS365SignInEnabled: bool = None
+    MS365TeamsEnabled: bool = None
+    MyPhoneAllowDeleteRecordings: bool = None
+    MyPhoneHideForwardings: bool = None
+    MyPhonePush: bool = None
+    MyPhoneShowRecordings: bool = None
+    Number: str = None
+    OfficeHoursProps: conlist(OfficeHoursBitsEnum) = None
+    OutboundCallerID: str = None
+    Phones: conlist(PhoneObject) = None
+    PinProtected: bool = None
+    PinProtectTimeout: int = None
+    PrimaryGroupId: int = None
+    PromptSet: str = None
+    ProvFile: str = None
+    ProvLink: str = None
+    RecordCalls: bool = None
+    RecordExternalCallsOnly: bool = None
+    Require2FA: bool = None
+    SendEmailMissedCalls: bool = None
+    SIPID: str = None
+    Tags: conlist(UserTagEnum) = None
+    VMDisablePinAuth: bool = None
+    VMEmailOptions: VMEmailOptionsTypeEnum = None
+    VMEnabled: bool = None
+    VMPIN: str = None
+    VMPlayCallerID: bool = None
+    VMPlayMsgDateTime: VMPlayMsgDateTimeTypeEnum = None
+    WebMeetingApproveParticipants: bool = None
+    WebMeetingFriendlyName: str = None

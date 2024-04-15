@@ -1,7 +1,9 @@
-from tcx_api.api import API
 from abc import ABC
+from tcx_api.tcx_api_connection import TCX_API_Connection
+from pydantic import BaseModel, ConfigDict
 
 
-class APIResource(ABC):
-    def __init__(self, api: API):
-        self.api = api
+class APIResource(BaseModel, ABC):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    endpoint: str
+    api: TCX_API_Connection
