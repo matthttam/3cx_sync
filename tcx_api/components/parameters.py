@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field
 
 
 class ListParameters(BaseModel, ABC, validate_assignment=True):
-    top: int = Field(None, ge=0)
-    skip: int = Field(None, ge=0)
+    top: int = Field(default=None, ge=0)
+    skip: int = Field(default=None, ge=0)
     search: str = None
     filter: str = None
     count: bool = None

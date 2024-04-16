@@ -8,6 +8,8 @@ class TcxStrEnumMeta(EnumMeta):
     def __getitem__(self, name):
         if name == "None":
             name = "NONE"
+        if name == "-INF":
+            name = "NEGATIVE_INF"
         return super().__getitem__(name).value
 
 
@@ -16,4 +18,6 @@ class TcxStrEnum(StrEnum, metaclass=TcxStrEnumMeta):
     def _generate_next_value_(name, start, count, last_values):
         if name == "NONE":
             return "None"
+        if name == "NEGATIVE_INF":
+            name = "-INF"
         return name
