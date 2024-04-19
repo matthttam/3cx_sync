@@ -1,5 +1,3 @@
-from tcx_api.components.schemas.pbx.schedule import Schedule
-from tcx_api.components.schemas.pbx.enums import RuleHoursType
 import pytest
 from tcx_api.util import TcxStrEnum, TcxStrEnumMeta
 from enum import auto, StrEnum

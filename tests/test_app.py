@@ -1,7 +1,5 @@
-import pytest
 from unittest.mock import Mock, patch
 from app.app import App
-from app.config import TCXConfig, AppConfig
 
 
 class TestApp:

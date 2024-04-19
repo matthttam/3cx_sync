@@ -1,14 +1,10 @@
-from pydantic import BaseModel, conlist, Field
+from decimal import Decimal
 from uuid import UUID
 from datetime import datetime
 from typing import Optional
-from tcx_api.components.schemas.pbx.enums import *
-from typing import Any
-from decimal import Decimal
-
-
-class Schema(BaseModel):
-    pass
+from pydantic import conlist, Field
+from tcx_api.components.schema import Schema
+from tcx_api.components.schemas.enums import *
 
 
 class OauthStateParam(Schema):
@@ -500,9 +496,9 @@ class UserGroup(Schema):
 
 class Receptionist(Schema):
     BreakRoute: Optional[Route] = None
-    Forwards: conlist(ReceptionistForward)
+    Forwards: conlist(ReceptionistForward) = Field(default_factory=list)
     ForwardSmsTo: Optional[str] = None
-    Groups: conlist(UserGroup)
+    Groups: conlist(UserGroup) = Field(default_factory=list)
     HolidaysRoute: Optional[Route] = None
     Id: int
     InvalidKeyForwardDN: Optional[str] = None
@@ -535,11 +531,11 @@ class RingGroup(Schema):
     CallUsRequirement: Optional[Authentication] = None
     ClickToCallId: Optional[str] = None
     ForwardNoAnswer: Optional[Destination] = None
-    Groups: conlist(UserGroup)
+    Groups: conlist(UserGroup) = Field(default_factory=list)
     HolidaysRoute: Optional[Route] = None
     Id: int
     IsRegistered: Optional[bool] = None
-    Members: conlist(RingGroupMember)
+    Members: conlist(RingGroupMember) = Field(default_factory=list)
     MulticastAddress: Optional[str] = None
     MulticastCodec: Optional[str] = None
     MulticastPacketTime: Optional[int] = None
@@ -600,7 +596,7 @@ class QueueManager(Schema):
 
 class Queue(Schema):
     AgentAvailabilityMode: Optional[bool] = None
-    Agents: conlist(QueueAgent)
+    Agents: conlist(QueueAgent) = Field(default_factory=list)
     AnnouncementInterval: Optional[int] = None
     AnnounceQueuePosition: Optional[bool] = None
     BreakRoute: Optional[Route] = None
@@ -613,16 +609,16 @@ class Queue(Schema):
     ClickToCallId: Optional[str] = None
     EnableIntro: Optional[bool] = None
     ForwardNoAnswer: Optional[Destination] = None
-    Groups: conlist(UserGroup)
+    Groups: conlist(UserGroup) = Field(default_factory=list)
     HolidaysRoute: Optional[Route] = None
     Id: int
     IntroFile: Optional[str] = None
     IsRegistered: Optional[bool] = None
-    Managers: conlist(QueueManager)
+    Managers: conlist(QueueManager) = Field(default_factory=list)
     MasterTimeout: Optional[int] = None
     MaxCallersInQueue: Optional[int] = None
     Name: Optional[str] = None
-    NotifyCodes: conlist(QueueNotifyCode)
+    NotifyCodes: conlist(QueueNotifyCode) = Field(default_factory=list)
     Number: Optional[str] = None
     OfficeRoute: Optional[Route] = None
     OnHoldFile: Optional[str] = None
@@ -763,7 +759,7 @@ class TrunkTemplate(Schema):
     Content: Optional[str] = None
     Countries: Optional[conlist(str)] = None
     Description: Optional[str] = None
-    Editors: conlist(TrunkEditorType)
+    Editors: conlist(TrunkEditorType) = Field(default_factory=list)
     Id: str
     MessagingTemplate: Optional[TrunkMessagingTemplate] = None
     Name: str
@@ -833,7 +829,7 @@ class Group(Schema):
     AnswerAfter: Optional[int] = None
     BreakRoute: Optional[Route] = None
     BreakTime: Optional[Schedule] = None
-    CallHandlingMode: conlist(CallHandlingFlags)
+    CallHandlingMode: conlist(CallHandlingFlags) = Field(default_factory=list)
     CallUsEnableChat: Optional[bool] = None
     CallUsEnablePhone: Optional[bool] = None
     CallUsEnableVideo: Optional[bool] = None
@@ -844,7 +840,7 @@ class Group(Schema):
     CustomPrompt: Optional[str] = None
     DisableCustomPrompt: Optional[bool] = None
     GloballyVisible: Optional[bool] = None
-    Groups: conlist(UserGroup)
+    Groups: conlist(UserGroup) = Field(default_factory=list)
     HasMembers: Optional[bool] = None
     HolidaysRoute: Optional[Route] = None
     Hours: Optional[Schedule] = None
@@ -852,10 +848,10 @@ class Group(Schema):
     IsDefault: Optional[bool] = None
     Language: Optional[str] = None
     LastLoginTime: Optional[datetime]
-    Members: conlist(UserGroup)
+    Members: conlist(UserGroup) = Field(default_factory=list)
     Name: Optional[str] = None
     Number: Optional[str] = None
-    OfficeHolidays: conlist(Holiday)
+    OfficeHolidays: conlist(Holiday) = Field(default_factory=list)
     OfficeRoute: Optional[Route] = None
     OutOfOfficeRoute: Optional[Route] = None
     OverrideExpiresAt: Optional[datetime]
@@ -863,6 +859,8 @@ class Group(Schema):
     PromptSet: Optional[str] = None
     Props: Optional[GroupProps] = None
     Rights: conlist(Rights)
+    # Rights: conlist(Rights) = Field(default_factory=list)
+    # Rights: List[Rights] = Field(default_factory=list)
     TimeZoneId: Optional[str] = None
 
 
@@ -2122,11 +2120,12 @@ class User(Schema):
     Enabled: Optional[bool] = None
     EnableHotdesking: Optional[bool] = None
     FirstName: Optional[str] = None
-    ForwardingExceptions: conlist(ExtensionRule)
-    ForwardingProfiles: conlist(ForwardingProfile)
+    ForwardingExceptions: conlist(ExtensionRule) = Field(default_factory=list)
+    ForwardingProfiles: conlist(
+        ForwardingProfile) = Field(default_factory=list)
     GoogleSignInEnabled: Optional[bool] = None
-    Greetings: conlist(Greeting)
-    Groups: conlist(UserGroup)
+    Greetings: conlist(Greeting) = Field(default_factory=list)
+    Groups: conlist(UserGroup) = Field(default_factory=list)
     HideInPhonebook: Optional[bool] = None
     HotdeskingAssignment: Optional[str] = None
     Hours: Optional[Schedule] = None
@@ -2145,9 +2144,9 @@ class User(Schema):
     MyPhonePush: Optional[bool] = None
     MyPhoneShowRecordings: Optional[bool] = None
     Number: Optional[str] = None
-    OfficeHoursProps: conlist(OfficeHoursBits)
+    OfficeHoursProps: conlist(OfficeHoursBits) = Field(default_factory=list)
     OutboundCallerID: Optional[str] = None
-    Phones: conlist(Phone)
+    Phones: conlist(Phone) = Field(default_factory=list)
     PinProtected: Optional[bool] = None
     PinProtectTimeout: Optional[int] = None
     PrimaryGroupId: Optional[int] = None
@@ -2159,7 +2158,7 @@ class User(Schema):
     Require2FA: Optional[bool] = None
     SendEmailMissedCalls: Optional[bool] = None
     SIPID: Optional[str] = None
-    Tags: conlist(UserTag)
+    Tags: conlist(UserTag) = Field(default_factory=list)
     VMDisablePinAuth: Optional[bool] = None
     VMEmailOptions: Optional[VMEmailOptionsType] = None
     VMEnabled: Optional[bool] = None
@@ -2356,7 +2355,7 @@ class PhonesSettings(Schema):
 class OfficeHours(Schema):
     BreakTime: Optional[Schedule] = None
     Hours: Optional[Schedule] = None
-    OfficeHolidays: conlist(Holiday)
+    OfficeHolidays: conlist(Holiday) = Field(default_factory=list)
     SystemLanguage: Optional[str] = None
     TimeZoneId: Optional[str] = None
 
@@ -2416,7 +2415,7 @@ class CrmIntegration(Schema):
     Name: str
     PhonebookPriorityOptions: Optional[PhonebookPriorityOptions] = None
     PhonebookSynchronization: Optional[bool] = None
-    PossibleValues: conlist(CrmSelectableValue)
+    PossibleValues: conlist(CrmSelectableValue) = Field(default_factory=list)
     VariableChoices: Optional[conlist(CrmChoice)] = None
 
 
@@ -2425,508 +2424,3 @@ class CrmTestResult(Schema):
     Log: Optional[str] = None
     Message: Optional[str] = None
     SearchResult: Optional[conlist(CrmContact)] = None
-
-
-class Response(BaseModel):
-    # '@odata.context': str
-    # '@odata.count': int
-    context: str
-    count: int
-
-
-class ODataCountResponse:
-    type: int
-    format: int
-
-
-class ReceptionistCollectionResponse(Response):
-    value: conlist(Receptionist)
-
-
-class BlackListNumberCollectionResponse(Response):
-    value: conlist(BlackListNumber)
-
-
-class BlocklistAddrCollectionResponse(Response):
-    value: conlist(BlocklistAddr)
-
-
-class RingGroupCollectionResponse(Response):
-    value: conlist(RingGroup)
-
-
-class ContactCollectionResponse(Response):
-    value: conlist(Contact)
-
-
-class QueueCollectionResponse(Response):
-    value: conlist(Queue)
-
-
-class UserCollectionResponse(Response):
-    value: conlist(User)
-
-
-class PhoneTemplateCollectionResponse(Response):
-    value: conlist(PhoneTemplate)
-
-
-class TrunkTemplateCollectionResponse(Response):
-    value: conlist(TrunkTemplate)
-
-
-class RecordingCollectionResponse(Response):
-    value: conlist(Recording)
-
-
-class GroupCollectionResponse(Response):
-    value: conlist(Group)
-
-
-class OutboundRuleCollectionResponse(Response):
-    value: conlist(OutboundRule)
-
-
-class ParameterCollectionResponse(Response):
-    value: conlist(Parameter)
-
-
-class DNPropertyCollectionResponse(Response):
-    value: conlist(DNProperty)
-
-
-class PeerCollectionResponse(Response):
-    value: conlist(Peer)
-
-
-class TrunkCollectionResponse(Response):
-    value: conlist(Trunk)
-
-
-class InboundRuleCollectionResponse(Response):
-    value: conlist(InboundRule)
-
-
-class CountryCollectionResponse(Response):
-    value: conlist(Country)
-
-
-class FxsCollectionResponse(Response):
-    value: conlist(Fxs)
-
-
-class PromptSetCollectionResponse(Response):
-    value: conlist(PromptSet)
-
-
-class CustomPromptCollectionResponse(Response):
-    value: conlist(CustomPrompt)
-
-
-class PropertyCollectionResponse(Response):
-    value: conlist(Property)
-
-
-class FxsTemplateCollectionResponse(Response):
-    value: conlist(FxsTemplate)
-
-
-class WeblinkCollectionResponse(Response):
-    value: conlist(Weblink)
-
-
-class ParkingCollectionResponse(Response):
-    value: conlist(Parking)
-
-
-class BackupsCollectionResponse(Response):
-    value: conlist(Backups)
-
-
-class SbcCollectionResponse(Response):
-    value: conlist(Sbc)
-
-
-class CallHistoryViewCollectionResponse(Response):
-    value: conlist(CallHistoryView)
-
-
-class ChatHistoryViewCollectionResponse(Response):
-    value: conlist(ChatHistoryView)
-
-
-class ChatMessagesHistoryViewCollectionResponse(Response):
-    value: conlist(ChatMessagesHistoryView)
-
-
-class RingGroupStatisticsCollectionResponse(Response):
-    value: conlist(RingGroupStatistics)
-
-
-class ExtensionsStatisticsByRingGroupsCollectionResponse(Response):
-    value: conlist(ExtensionsStatisticsByRingGroups)
-
-
-class CallLogDataCollectionResponse(Response):
-    value: conlist(CallLogData)
-
-
-class RegistrarFxsCollectionResponse(Response):
-    value: conlist(RegistrarFxs)
-
-
-class ExtensionStatisticsCollectionResponse(Response):
-    value: conlist(ExtensionStatistics)
-
-
-class ReportExtensionStatisticsByGroupCollectionResponse(Response):
-    value: conlist(ReportExtensionStatisticsByGroup)
-
-
-class CallCostByExtensionGroupCollectionResponse(Response):
-    value: conlist(CallCostByExtensionGroup)
-
-
-class QueuePerformanceOverviewCollectionResponse(Response):
-    value: conlist(QueuePerformanceOverview)
-
-
-class QueuePerformanceTotalsCollectionResponse(Response):
-    value: conlist(QueuePerformanceTotals)
-
-
-class TeamQueueGeneralStatisticsCollectionResponse(Response):
-    value: conlist(TeamQueueGeneralStatistics)
-
-
-class DetailedQueueStatisticsCollectionResponse(Response):
-    value: conlist(DetailedQueueStatistics)
-
-
-class AbandonedQueueCallsCollectionResponse(Response):
-    value: conlist(AbandonedQueueCalls)
-
-
-class QueueAnsweredCallsByWaitTimeCollectionResponse(Response):
-    value: conlist(QueueAnsweredCallsByWaitTime)
-
-
-class QueueCallbacksCollectionResponse(Response):
-    value: conlist(QueueCallbacks)
-
-
-class AgentsInQueueStatisticsCollectionResponse(Response):
-    value: conlist(AgentsInQueueStatistics)
-
-
-class QueueFailedCallbacksCollectionResponse(Response):
-    value: conlist(QueueFailedCallbacks)
-
-
-class StatisticSlaCollectionResponse(Response):
-    value: conlist(StatisticSla)
-
-
-class BreachesSlaCollectionResponse(Response):
-    value: conlist(BreachesSla)
-
-
-class CallFlowAppCollectionResponse(Response):
-    value: conlist(CallFlowApp)
-
-
-class QueueChatPerformanceCollectionResponse(Response):
-    value: conlist(QueueChatPerformance)
-
-
-class QueueAgentsChatStatisticsCollectionResponse(Response):
-    value: conlist(QueueAgentsChatStatistics)
-
-
-class QueueAgentsChatStatisticsTotalsCollectionResponse(Response):
-    value: conlist(QueueAgentsChatStatisticsTotals)
-
-
-class AbandonedChatsStatisticsCollectionResponse(Response):
-    value: conlist(AbandonedChatsStatistics)
-
-
-class AgentLoginHistoryCollectionResponse(Response):
-    value: conlist(AgentLoginHistory)
-
-
-class AuditLogCollectionResponse(Response):
-    value: conlist(AuditLog)
-
-
-class InboundRuleReportCollectionResponse(Response):
-    value: conlist(InboundRuleReport)
-
-
-class CrmTemplateCollectionResponse(Response):
-    value: conlist(CrmTemplate)
-
-
-class CallCostSettingsCollectionResponse(Response):
-    value: conlist(CallCostSettings)
-
-
-class PhoneLogoCollectionResponse(Response):
-    value: conlist(PhoneLogo)
-
-
-class TimeReportDataCollectionResponse(Response):
-    value: conlist(TimeReportData)
-
-
-class ReportGroupCollectionResponse(Response):
-    value: conlist(ReportGroup)
-
-
-class EventLogCollectionResponse(Response):
-    value: conlist(EventLog)
-
-
-class ServiceInfoCollectionResponse(Response):
-    value: conlist(ServiceInfo)
-
-
-class EmailTemplateCollectionResponse(Response):
-    value: conlist(EmailTemplate)
-
-
-class PlaylistCollectionResponse(Response):
-    value: conlist(Playlist)
-
-
-class FaxCollectionResponse(Response):
-    value: conlist(Fax)
-
-
-class DeviceInfoCollectionResponse(Response):
-    value: conlist(DeviceInfo)
-
-
-class SipDeviceCollectionResponse(Response):
-    value: conlist(SipDevice)
-
-
-class NetworkInterfaceCollectionResponse(Response):
-    value: conlist(NetworkInterface)
-
-
-class ReceptionistForwardCollectionResponse(Response):
-    value: conlist(ReceptionistForward)
-
-
-class UserGroupCollectionResponse(Response):
-    value: conlist(UserGroup)
-
-
-class RingGroupMemberCollectionResponse(Response):
-    value: conlist(RingGroupMember)
-
-
-class QueueAgentCollectionResponse(Response):
-    value: conlist(QueueAgent)
-
-
-class QueueManagerCollectionResponse(Response):
-    value: conlist(QueueManager)
-
-
-class GreetingCollectionResponse(Response):
-    value: conlist(Greeting)
-
-
-class ForwardingProfileCollectionResponse(Response):
-    value: conlist(ForwardingProfile)
-
-
-class ExtensionRuleCollectionResponse(Response):
-    value: conlist(ExtensionRule)
-
-
-class PhoneCollectionResponse(Response):
-    value: conlist(Phone)
-
-
-class RightsCollectionResponse(Response):
-    value: conlist(Rights)
-
-
-class HolidayCollectionResponse(Response):
-    value: conlist(Holiday)
-
-
-class PeerGroupCollectionResponse(Response):
-    value: conlist(PeerGroup)
-
-
-class PromptCollectionResponse(Response):
-    value: conlist(Prompt)
-
-
-class CodecCollectionResponse(Response):
-    value: conlist(Codec)
-
-
-class GatewayParameterCollectionResponse(Response):
-    value: conlist(GatewayParameter)
-
-
-class TimeZoneCollectionResponse(Response):
-    value: conlist(TimeZone)
-
-
-class GatewayParameterValueCollectionResponse(Response):
-    value: conlist(GatewayParameterValue)
-
-
-class CrmSelectableValueCollectionResponse(Response):
-    value: conlist(CrmSelectableValue)
-
-
-class PhoneModelCollectionResponse(Response):
-    value: conlist(PhoneModel)
-
-
-class OutboundRouteCollectionResponse(Response):
-    value: conlist(OutboundRoute)
-
-
-class DNRangeCollectionResponse(Response):
-    value: conlist(DNRange)
-
-
-class CIDFormattingCollectionResponse(Response):
-    value: conlist(CIDFormatting)
-
-
-class SetRouteCollectionResponse(Response):
-    value: conlist(SetRoute)
-
-
-class KeyValuePair_2OfString_StringCollectionResponse(Response):
-    value: conlist(KeyValuePair_2OfString_String)
-
-
-class DeviceLineCollectionResponse(Response):
-    value: conlist(DeviceLine)
-
-
-class VariableCollectionResponse(Response):
-    value: conlist(Variable)
-
-
-class FxsModelCollectionResponse(Response):
-    value: conlist(FxsModel)
-
-
-class FxsVariableCollectionResponse(Response):
-    value: conlist(FxsVariable)
-
-
-class UpdateItemCollectionResponse(Response):
-    value: conlist(UpdateItem)
-
-
-class CategoryUpdateCollectionResponse(Response):
-    value: conlist(CategoryUpdate)
-
-
-class CrmParameterCollectionResponse(Response):
-    value: conlist(CrmParameter)
-
-
-class CDRSettingsFieldCollectionResponse(Response):
-    value: conlist(CDRSettingsField)
-
-
-class Microsoft365UserCollectionResponse(Response):
-    value: conlist(Microsoft365User)
-
-
-class GatewayParameterBindingCollectionResponse(Response):
-    value: conlist(GatewayParameterBinding)
-
-
-class ChoiceCollectionResponse(Response):
-    value: conlist(Choice)
-
-
-class PhoneDeviceVlanInfoCollectionResponse(Response):
-    value: conlist(PhoneDeviceVlanInfo)
-
-
-class CustomQueueRingtoneCollectionResponse(Response):
-    value: conlist(CustomQueueRingtone)
-
-
-class CrmChoiceCollectionResponse(Response):
-    value: conlist(CrmChoice)
-
-
-class CrmContactCollectionResponse(Response):
-    value: conlist(CrmContact)
-
-
-class PeriodCollectionResponse(Response):
-    value: conlist(Period)
-
-
-class TrunkVariableCollectionResponse(Response):
-    value: conlist(TrunkVariable)
-
-
-class FxsVariableChoiceCollectionResponse(Response):
-    value: conlist(FxsVariableChoice)
-
-
-class StringCollectionResponse(Response):
-    value: conlist(str)
-
-
-class ReferenceUpdate(Schema):
-    # '@odata.id': str = ''
-    # '@odata.type': Optional[str]
-    id: str
-    type: Optional[str] = None
-
-
-class ReferenceCreate(Schema):
-    # '@odata.id': str
-    id: str
-    additionalProperties: Any
-
-
-class ReplaceMyGroupLicenseKeyRequestBody(Schema):
-    licenseKey: str
-
-
-class LinkMyGroupPartnerRequestBody(Schema):
-    resellerId: str
-
-
-class Enable2FARequestBody(Schema):
-    enable: bool = False
-    code: str
-
-
-class RegenerateRequestBody(Schema):
-    SipAuth: bool = False
-    WebclientPassword: bool = False
-    VoicemailPIN: bool = False
-    DeskphonePassword: bool = False
-    SendWelcomeEmail: bool = False
-    ConfigurationLink: bool = False
-    RpsKey: bool = False
-
-
-class MakeCallUserRecordGreetingRequestBody(Schema):
-    dn: str
-    filename: str
-
-
-class SetMonitorStatusRequestBody(Schema):
-    days: int

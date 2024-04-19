@@ -1,11 +1,12 @@
 import requests
-from tcx_api.components.parameters import GetParameters, ListParameters
-from .api_resource import APIResource
-from tcx_api.components.schemas.pbx.user import User
-from enum import auto
-from tcx_api.util import TcxStrEnum
 from typing import List
+from enum import auto
+from tcx_api.resources.api_resource import APIResource
+from tcx_api.util import TcxStrEnum
+
 from pydantic import TypeAdapter
+from tcx_api.components.schemas.pbx import User
+from tcx_api.components.parameters import GetParameters, ListParameters
 from tcx_api import exceptions as TCX_Exceptions
 
 
@@ -131,7 +132,8 @@ class UserResource(APIResource):
     def update_user(self, user: User):
         """Update entity in Users"""
         try:
-            response = self.api.patch(endpoint=self.endpoint, params=user.Id, data=user)
+            response = self.api.patch(
+                endpoint=self.endpoint, params=user.Id, data=user)
             return response.json()["value"]
         except Exception as e:
             print(f"Failed to update user: {e}")

@@ -1,5 +1,5 @@
 from unittest.mock import patch
-from tests.test_app import TCXConfig, AppConfig
+from app.config import TCXConfig, AppConfig
 from unittest.mock import Mock, patch
 import pytest
 

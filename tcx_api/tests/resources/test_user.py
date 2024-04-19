@@ -1,13 +1,13 @@
+import requests
+from unittest.mock import MagicMock
 import pytest
+from pydantic import ValidationError
 from tcx_api.resources.user import ListUserParameters, UserProperties
 from tcx_api.components.parameters import ListParameters
-from pydantic import ValidationError
 from tcx_api.resources.user import UserResource
-from unittest.mock import MagicMock
 from tcx_api.tcx_api_connection import TCX_API_Connection
-from tcx_api.components.schemas.pbx.user import User
+from tcx_api.components.schemas.pbx import User
 from tcx_api import exceptions as TCX_Exceptions
-import requests
 
 
 class TestListUserParameters:
@@ -70,14 +70,24 @@ class TestUserResource:
     def user_resource(self):
         return UserResource(api=MagicMock(spec=TCX_API_Connection))
 
-    def test_list_user_single_success(self, user_resource):
+    @pytest.fixture
+    def simple_user(self):
+        user = User(Id=1, FirstName="TestFirstName",
+                    LastName="TestLastName")
+        yield user
+
+    @pytest.fixture
+    def simple_user2(self):
+        user = User(Id=2, FirstName="TestFirstName2",
+                    LastName="TestLastName2", )
+        yield user
+
+    def test_list_user_single_success(self, user_resource, simple_user):
         # Mocking the API response
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "value": [
-                User(
-                    Id=1, FirstName="TestFirstName", LastName="TestLastName"
-                ).model_dump()
+                simple_user.model_dump()
             ]
         }
         user_resource.api.get.return_value = mock_response
@@ -95,17 +105,13 @@ class TestUserResource:
         # Asserting that the API was called with the correct parameters
         user_resource.api.get.assert_called_once_with("Users", params)
 
-    def test_list_user_multiple_success(self, user_resource):
+    def test_list_user_multiple_success(self, user_resource, simple_user, simple_user2):
         # Mocking the API response
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "value": [
-                User(
-                    Id=1, FirstName="TestFirstName", LastName="TestLastName"
-                ).model_dump(),
-                User(
-                    Id=2, FirstName="TestFirstName2", LastName="TestLastName2"
-                ).model_dump(),
+                simple_user.model_dump(),
+                simple_user2.model_dump(),
             ]
         }
         user_resource.api.get.return_value = mock_response
@@ -135,12 +141,10 @@ class TestUserResource:
         # Asserting that the API was called with the correct parameters
         user_resource.api.get.assert_called_once_with("Users", params)
 
-    def test_get_user_success(self, user_resource):
+    def test_get_user_success(self, user_resource, simple_user):
         id = 1
         mock_response = MagicMock()
-        mock_response.json.return_value = User(
-            Id=1, FirstName="TestFirstName", LastName="TestLastName"
-        ).model_dump()
+        mock_response.json.return_value = simple_user.model_dump()
         user_resource.api.get.return_value = mock_response
 
         params = ListUserParameters()

@@ -2,6 +2,7 @@ import tkinter as tk
 from app.windows import WindowCSVMapping, Window3cxConfig
 from app.config import AppConfig
 from sync.sync_csv import SyncCSV
+from sync.sync import Sync
 
 
 class App(tk.Tk):
@@ -77,5 +78,7 @@ class App(tk.Tk):
         self.destroy()
 
     def handle_csv_sync_click(self):
-        sync = SyncCSV(text=self.txt_output)
+        # sync = SyncCSV(text=self.txt_output)
+        # sync.sync()
+        sync = Sync(sync_source=SyncCSV, text=self.txt_output)
         sync.sync()
