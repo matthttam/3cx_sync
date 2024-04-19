@@ -2,22 +2,19 @@ from enum import StrEnum, EnumMeta
 
 
 class TcxStrEnumMeta(EnumMeta):
-    # StrEnum from 3CX can contain teh word None which we can't use in Python
-    # So, we use NONE instead. This metaclass makes it so looking for None
-    # returns the value for NONE instead.
+    # Map special string values to their Python equivalents
+    SPECIAL_STRING_MAP = {
+        "None": "NONE",
+        "-INF": "NEGATIVE_INF"
+    }
+    SPECIAL_STRING_MAP_INV = {v: k for k, v in SPECIAL_STRING_MAP.items()}
+
     def __getitem__(self, name):
-        if name == "None":
-            name = "NONE"
-        if name == "-INF":
-            name = "NEGATIVE_INF"
+        name = self.SPECIAL_STRING_MAP.get(name, name)
         return super().__getitem__(name).value
 
 
 class TcxStrEnum(StrEnum, metaclass=TcxStrEnumMeta):
     @staticmethod
     def _generate_next_value_(name, start, count, last_values):
-        if name == "NONE":
-            return "None"
-        if name == "NEGATIVE_INF":
-            name = "-INF"
-        return name
+        return TcxStrEnumMeta.SPECIAL_STRING_MAP_INV.get(name, name)

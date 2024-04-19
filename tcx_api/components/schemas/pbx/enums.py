@@ -573,3 +573,9 @@ class PhonebookPriorityOptions(TcxStrEnum):
 class ContactType(TcxStrEnum):
     Company = auto()
     Personal = auto()
+
+
+class ReferenceNumeric(TcxStrEnum):
+    NEGATIVE_INF = "NEGATIVE_INFINITY"
+    INF = "INFINITY"
+    NaN = "NAN"

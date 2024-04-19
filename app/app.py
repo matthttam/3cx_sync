@@ -65,7 +65,6 @@ class App(tk.Tk):
         btn_exit = tk.Button(
             master=frm_navigation, text="Exit", command=self.handle_exit_click
         )
-        # btn_save.grid(row=0, column=0, padx=5)
         btn_exit.grid(row=0, column=1, padx=5)
 
     def show_Window3cxConfig(self):

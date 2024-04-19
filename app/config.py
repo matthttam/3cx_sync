@@ -13,6 +13,9 @@ class TCXConfig(ConfigParser):
 
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
+        self.read_config_files()
+
+    def read_config_files(self):
         self.read([self.defaults_config_file_path, self.config_file_path])
 
     def get_server_url(self):
