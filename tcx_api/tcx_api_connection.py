@@ -2,7 +2,7 @@ import requests
 from typing import NamedTuple
 
 from tcx_api.exceptions import APIAuthenticationError
-from .api import API
+from tcx_api.api import API
 from tcx_api.components.parameters import ListParameters
 
 

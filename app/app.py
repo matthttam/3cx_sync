@@ -78,7 +78,5 @@ class App(tk.Tk):
         self.destroy()
 
     def handle_csv_sync_click(self):
-        # sync = SyncCSV(text=self.txt_output)
-        # sync.sync()
         sync = Sync(sync_source=SyncCSV, text=self.txt_output)
         sync.sync()

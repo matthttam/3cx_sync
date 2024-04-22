@@ -21,7 +21,8 @@ class Window3cxConfig(tk.Toplevel):
         self.var_3cx_domain = tk.StringVar(
             self, self.tcx_config["3cx"].get("domain", "")
         )
-        self.var_3cx_port = tk.StringVar(self, self.tcx_config["3cx"].get("port", ""))
+        self.var_3cx_port = tk.StringVar(
+            self, self.tcx_config["3cx"].get("port", ""))
         self.var_3cx_username = tk.StringVar(
             self, self.tcx_config["3cx"].get("username", "")
         )
@@ -38,7 +39,8 @@ class Window3cxConfig(tk.Toplevel):
 
         # Create 3cx options frame
         frm_3cx_options = tk.Frame(master=frm_window)
-        frm_3cx_options.config(width=300, height=200, relief="ridge", borderwidth=2)
+        frm_3cx_options.config(width=300, height=200,
+                               relief="ridge", borderwidth=2)
         frm_3cx_options.pack()
 
         # 3cx URL
@@ -54,7 +56,8 @@ class Window3cxConfig(tk.Toplevel):
             frm_3cx_url, self.var_3cx_scheme, *["https", "http"]
         )
         lbl_3cx_scheme_ending = tk.Label(master=frm_3cx_url, text="://")
-        ent_3cx_domain = tk.Entry(master=frm_3cx_url, textvariable=self.var_3cx_domain)
+        ent_3cx_domain = tk.Entry(
+            master=frm_3cx_url, textvariable=self.var_3cx_domain)
         lbl_3cx_server_ending = tk.Label(master=frm_3cx_url, text=":")
         ent_3cx_port = tk.Entry(
             master=frm_3cx_url, textvariable=self.var_3cx_port, width=5
@@ -123,7 +126,8 @@ class Window3cxConfig(tk.Toplevel):
             )
             messagebox.showinfo(title="Success", message="Test Successful")
         except Exception as e:
-            messagebox.showinfo(title="Failure", message=f"Test Failed. {str(e)}")
+            messagebox.showinfo(
+                title="Failure", message=f"Test Failed. {str(e)}")
 
     def handle_cancel_click(self):
         self.destroy()
@@ -171,7 +175,8 @@ class WindowCSVMapping(tk.Toplevel):
         # Frame: Mapping
         frm_csv_mapping = tk.Frame(master=frm_window)
         frm_csv_mapping.config(relief="ridge", borderwidth=2)
-        frm_csv_mapping.pack(side="top", fill="both", ipady=frame_iy_padding, expand=True)
+        frm_csv_mapping.pack(side="top", fill="both",
+                             ipady=frame_iy_padding, expand=True)
 
         # Extension Header
         lbl_extension_header = tk.Label(
@@ -183,7 +188,8 @@ class WindowCSVMapping(tk.Toplevel):
 
         # Field: Extension Path
         lbl_extension_path = tk.Label(master=frm_csv_mapping, text="Path:")
-        lbl_extension_path.grid(row=2, column=1, padx=paragraph_x_padding, sticky="w")
+        lbl_extension_path.grid(
+            row=2, column=1, padx=paragraph_x_padding, sticky="w")
 
         ent_extension_path = tk.Entry(
             master=frm_csv_mapping,
@@ -196,11 +202,13 @@ class WindowCSVMapping(tk.Toplevel):
         btn_extension_path_browse.grid(row=2, column=3, sticky="w")
 
         # Frame: CSV Mapping Fields
-        frm_csv_mapping_fields = tk.Frame(master=frm_window, name="csv_mapping_fields")
+        frm_csv_mapping_fields = tk.Frame(
+            master=frm_window, name="csv_mapping_fields")
         frm_csv_mapping_fields.config(
             relief="sunken", borderwidth=2
         )
-        frm_csv_mapping_fields.pack(side="top", fill="both", ipady=frame_iy_padding, expand=True)
+        frm_csv_mapping_fields.pack(
+            side="top", fill="both", ipady=frame_iy_padding, expand=True)
 
         # CSV Mapping Headers
         # Header: 3cx Field
@@ -216,11 +224,13 @@ class WindowCSVMapping(tk.Toplevel):
         lbl_csv_mapping_header.grid(row=1, column=2, sticky="w")
 
         # Header: Update
-        lbl_csv_mapping_update = tk.Label(master=frm_csv_mapping_fields, text="Update", width=5)
+        lbl_csv_mapping_update = tk.Label(
+            master=frm_csv_mapping_fields, text="Update", width=5)
         lbl_csv_mapping_update.grid(row=1, column=3, sticky="w")
 
         # Header: Key
-        lbl_csv_mapping_key = tk.Label(master=frm_csv_mapping_fields, text="Key", width=5)
+        lbl_csv_mapping_key = tk.Label(
+            master=frm_csv_mapping_fields, text="Key", width=5)
         lbl_csv_mapping_key.grid(row=1, column=4, sticky="w")
 
         # self.add_mapping_field_set()
@@ -228,7 +238,8 @@ class WindowCSVMapping(tk.Toplevel):
 
         # Frame: Add Remove Fields
         frm_add_delete_fields = tk.Frame(master=frm_window)
-        frm_add_delete_fields.pack(side="top", anchor="center", expand=True, fill="both")
+        frm_add_delete_fields.pack(
+            side="top", anchor="center", expand=True, fill="both")
 
         # Button: Add +
         btn_add_field = tk.Button(
@@ -263,13 +274,15 @@ class WindowCSVMapping(tk.Toplevel):
             "Path": self.var_csv_mapping_extension_path.get(),
         }
         mapping_new = {}
-        mapping_update = {}
+        # mapping_update = {}
+        mapping_update = []
         for mapping_row in self.mapping_fields:
             if mapping_row.key.checked:
                 key = mapping_row.header.get()
             mapping_new[mapping_row.field.get()] = mapping_row.header.get()
             if mapping_row.update.checked:
-                mapping_update[mapping_row.field.get()] = mapping_row.header.get()
+                # mapping_update[mapping_row.field.get()] = mapping_row.header.get()
+                mapping_update.append(mapping_row.header.get())
         self.mapping["Extension"]["Key"] = key
         self.mapping["Extension"]["New"] = mapping_new
         self.mapping["Extension"]["Update"] = mapping_update
@@ -281,16 +294,17 @@ class WindowCSVMapping(tk.Toplevel):
         self.destroy()
 
     def browse_file_csv(self):
-        filename = askopenfilename(filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
+        filename = askopenfilename(filetypes=(
+            ("CSV", "*.csv"), ("All files", "*.*")))
         self.var_csv_mapping_extension_path.set(filename)
 
     def initialize_mapping_field_sets(self):
-        for field, header in self.mapping.get("Extension",{}).get("New",{}).items():
+        for field, header in self.mapping.get("Extension", {}).get("New", {}).items():
             key = False
             update = False
-            if header == self.mapping.get("Extension",{}).get("Key",None):
+            if header == self.mapping.get("Extension", {}).get("Key", None):
                 key = True
-            if header in self.mapping.get("Extension",{}).get("Update",{}).values():
+            if header in self.mapping.get("Extension", {}).get("Update", {}).values():
                 update = True
 
             self.add_mapping_field_set(
@@ -315,7 +329,8 @@ class WindowCSVMapping(tk.Toplevel):
         )
 
         # Update Checkbox
-        chk_csv_mapping_update = Checkbox(master=frm_csv_mapping_fields, value=update)
+        chk_csv_mapping_update = Checkbox(
+            master=frm_csv_mapping_fields, value=update)
         chk_csv_mapping_update.grid(
             row=len(self.mapping_fields) + 2, column=3, sticky="w"
         )
@@ -327,7 +342,8 @@ class WindowCSVMapping(tk.Toplevel):
             command=self.handle_checkbox_key_change,
             # value=key,
         )
-        chk_csv_mapping_key.grid(row=len(self.mapping_fields) + 2, column=4, sticky="w")
+        chk_csv_mapping_key.grid(
+            row=len(self.mapping_fields) + 2, column=4, sticky="w")
 
         if key:
             chk_csv_mapping_key.invoke()

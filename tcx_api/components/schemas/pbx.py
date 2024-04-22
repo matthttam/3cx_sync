@@ -628,18 +628,20 @@ class Queue(Schema):
     PriorityQueue: Optional[bool] = None
     PromptSet: Optional[str] = None
     Recording: Optional[QueueRecording] = None
-    ResetQueueStatisticsSchedule: Optional[ResetQueueStatisticsSchedule] = None
+    reset_queue_statistics_schedule: Optional[ResetQueueStatisticsSchedule] = Field(
+        None, alias="ResetQueueStatisticsSchedule")
     ResetStatisticsScheduleEnabled: Optional[bool] = None
     RingTimeout: Optional[int] = None
     SLATime: Optional[int] = None
-    TypeOfChatOwnershipType: Optional[TypeOfChatOwnershipType] = None
+    type_of_chat_ownership_type: Optional[TypeOfChatOwnershipType] = Field(
+        None, alias="TypeOfChatOwnershipType")
     WrapUpTime: Optional[int] = None
 
 
 class Period(Schema):
-    DayOfWeek: Optional[DayOfWeek] = None
-    Start: Optional[str] = None
-    Stop: Optional[str] = None
+    day_of_week: Optional[DayOfWeek] = Field(None, alias="DayOfWeek")
+    start: Optional[str] = Field(None, alias="Start")
+    stop: Optional[str] = Field(None, alias="Stop")
 
 
 class Schedule(Schema):
@@ -650,7 +652,7 @@ class Schedule(Schema):
 
 class ExtensionRule(Schema):
     CallerId: Optional[str] = None
-    Destination: Optional[Destination] = None
+    destination: Optional[Destination] = Field(None, alias="Destination")
     Hours: Optional[Schedule] = None
     Id: int
 
@@ -739,7 +741,7 @@ class PhoneTemplate(Schema):
     RingTones: Optional[conlist(str)] = None
     RpsEnabled: Optional[bool] = None
     ScreenSaverTimeouts: Optional[conlist(str)] = None
-    TemplateType: Optional[TemplateType] = None
+    template_type: Optional[TemplateType] = Field(None, alias="TemplateType")
     TimeFormats: Optional[conlist(str)] = None
     TimeZones: Optional[conlist(str)] = None
     URL: Optional[str] = None
@@ -858,8 +860,8 @@ class Group(Schema):
     OverrideHolidays: Optional[bool] = None
     PromptSet: Optional[str] = None
     Props: Optional[GroupProps] = None
-    Rights: conlist(Rights)
-    # Rights: conlist(Rights) = Field(default_factory=list)
+    # Rights: conlist(Rights)
+    rights: conlist(Rights) = Field(default_factory=list, alias="Rights")
     # Rights: List[Rights] = Field(default_factory=list)
     TimeZoneId: Optional[str] = None
 
@@ -944,6 +946,38 @@ class InboundRule(Schema):
     TrunkDN: Optional[Peer] = None
 
 
+class Gateway(Schema):
+    Codecs: Optional[conlist(str)] = None
+    DeliverAudio: Optional[bool] = None
+    DestNumberInRemotePartyIDCalled: Optional[bool] = None
+    DestNumberInRequestLineURI: Optional[bool] = None
+    DestNumberInTo: Optional[bool] = None
+    Host: Optional[str] = None
+    Id: Optional[int] = None
+    InboundParams: Optional[conlist(GatewayParameterBinding)] = None
+    Internal: Optional[bool] = None
+    IPInRegistrationContact: Optional[IPInRegistrationContactType] = None
+    Lines: Optional[int] = None
+    MatchingStrategy: Optional[MatchingStrategyType] = None
+    Name: Optional[str] = None
+    OutboundCallerID: Optional[str] = None
+    OutboundParams: Optional[conlist(GatewayParameterBinding)] = None
+    Port: Optional[int] = None
+    ProxyHost: Optional[str] = None
+    ProxyPort: Optional[int] = None
+    RequireRegistrationFor: Optional[RequireRegistrationForType] = None
+    SourceIdentification: Optional[conlist(GatewayParameterBinding)] = None
+    SpecifiedIPForRegistrationContact: Optional[str] = None
+    SRTPMode: Optional[SRTPModeType] = None
+    SupportReinvite: Optional[bool] = None
+    SupportReplaces: Optional[bool] = None
+    TemplateFilename: Optional[str] = None
+    TimeBetweenReg: Optional[int] = None
+    Type: GatewayType
+    UseIPInContact: Optional[bool] = None
+    VariableChoices: Optional[conlist(Choice)] = None
+
+
 class Trunk(Schema):
     AuthID: Optional[str] = None
     AuthPassword: Optional[str] = None
@@ -956,7 +990,7 @@ class Trunk(Schema):
     EnableInboundCalls: Optional[bool] = None
     EnableOutboundCalls: Optional[bool] = None
     ExternalNumber: Optional[str] = None
-    Gateway: Optional[Gateway] = None
+    gateway: Optional[Gateway] = Field(None, alias="Gateway")
     Groups: conlist(UserGroup)
     Id: int
     InCIDFormatting: Optional[conlist(CIDFormatting)] = None
@@ -1073,7 +1107,8 @@ class PromptSet(Schema):
     LanguageCode: Optional[str] = None
     Prompts: conlist(Prompt)
     PromptSetName: Optional[str] = None
-    PromptSetType: Optional[PromptSetType] = None
+    prompt_set_type: Optional[PromptSetType] = Field(
+        None, alias="PromptSetType")
     UseAlternateNumberPronunciation: Optional[bool] = None
     Version: Optional[str] = None
 
@@ -2016,38 +2051,6 @@ class LicenseInfo(Schema):
     Support: Optional[bool] = None
     Telephone: Optional[str] = None
     Version: Optional[str] = None
-
-
-class Gateway(Schema):
-    Codecs: Optional[conlist(str)] = None
-    DeliverAudio: Optional[bool] = None
-    DestNumberInRemotePartyIDCalled: Optional[bool] = None
-    DestNumberInRequestLineURI: Optional[bool] = None
-    DestNumberInTo: Optional[bool] = None
-    Host: Optional[str] = None
-    Id: Optional[int] = None
-    InboundParams: Optional[conlist(GatewayParameterBinding)] = None
-    Internal: Optional[bool] = None
-    IPInRegistrationContact: Optional[IPInRegistrationContactType] = None
-    Lines: Optional[int] = None
-    MatchingStrategy: Optional[MatchingStrategyType] = None
-    Name: Optional[str] = None
-    OutboundCallerID: Optional[str] = None
-    OutboundParams: Optional[conlist(GatewayParameterBinding)] = None
-    Port: Optional[int] = None
-    ProxyHost: Optional[str] = None
-    ProxyPort: Optional[int] = None
-    RequireRegistrationFor: Optional[RequireRegistrationForType] = None
-    SourceIdentification: Optional[conlist(GatewayParameterBinding)] = None
-    SpecifiedIPForRegistrationContact: Optional[str] = None
-    SRTPMode: Optional[SRTPModeType] = None
-    SupportReinvite: Optional[bool] = None
-    SupportReplaces: Optional[bool] = None
-    TemplateFilename: Optional[str] = None
-    TimeBetweenReg: Optional[int] = None
-    Type: GatewayType
-    UseIPInContact: Optional[bool] = None
-    VariableChoices: Optional[conlist(Choice)] = None
 
 
 class PhoneSettings(Schema):
