@@ -1,6 +1,5 @@
 from abc import ABC
 from tcx_api.components.parameters import ListParameters
-import pytest
 
 
 class TestParameters:

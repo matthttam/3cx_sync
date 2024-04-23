@@ -37,3 +37,11 @@ class TestSyncSchema:
         assert modified_comparison_a == modified_comparison_b
         modified_comparison_b.prop_b = "TEST"
         assert modified_comparison_a != modified_comparison_b
+
+
+class TestSyncCSV:
+    pass
+
+
+class testSync:
+    pass
