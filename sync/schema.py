@@ -3,12 +3,12 @@ from typing import Optional
 
 
 class SourceSchema:
-    _update_fields: list = None
+    _comparison_properties: list = None
 
     def __eq__(self, other):
-        if not CSVUser._update_fields:
+        if not self._comparison_properties:
             return super().__eq__(other)
-        for prop in CSVUser._update_fields:
+        for prop in self._comparison_properties:
             if getattr(self, prop) != getattr(other, prop):
                 return False
         return True

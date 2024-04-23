@@ -33,7 +33,7 @@ class SyncCSV(SyncSourceStrategy):
         self.output("Initializing CSV Source")
         self.output("Loading CSV Mapping")
         self.mapping = CSVMapping()
-        CSVUser._update_fields = self.mapping.get(
+        CSVUser._comparison_properties = self.mapping.get(
             "Extension", {}).get("Update", [])
         self.output("CSV Mapping Loaded")
 
