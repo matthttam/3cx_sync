@@ -1,59 +1,64 @@
-from unittest.mock import patch
+import unittest.mock
 from app.config import TCXConfig, AppConfig
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch, PropertyMock
 import pytest
 
 
 @pytest.fixture
-def my_TCXConfig():
-    with patch.object(TCXConfig, 'read', return_value=Mock()):
-        yield TCXConfig()
+def tcx_config():
+    yield TCXConfig()
 
 
 class TestTCXConfig:
+    # with patch.object(TCXConfig, 'read', return_value=Mock()):
+    @patch('app.config.TCXConfig.read')
+    def test_load(self, mock_read, tcx_config):
+        tcx_config.load()
+        mock_read.assert_called_once_with(
+            [tcx_config.defaults_config_file_path, tcx_config.config_file_path])
 
-    def test_init_reads_configs(self, my_TCXConfig):
-        my_TCXConfig.read.assert_called_once()
-        my_TCXConfig.read.assert_called_once_with(
-            [my_TCXConfig.defaults_config_file_path, my_TCXConfig.config_file_path])
+    @patch.object(TCXConfig, 'config_file_path', return_value='test', new_callable=PropertyMock)
+    # @patch('app.config.TCXConfig.config_file_path', return_value='test', new_callable=PropertyMock)
+    @patch('builtins.open', return_value=MagicMock())
+    @patch('app.config.TCXConfig.write')
+    def test_save(self, mock_write, mock_open, mock_config_file_path, tcx_config):
+        tcx_config.save()
+        mock_file = mock_open.return_value.__enter__()
+        mock_open.assert_called_once_with(
+            mock_config_file_path.return_value, 'w')
+        mock_write.assert_called_once_with(mock_file)
+        mock_file.close.assert_called_once_with()
 
-    def test_get_server_url(self, my_TCXConfig):
-        my_TCXConfig["3cx"] = {"scheme": "http",
-                               "domain": "example.com", "port": "8080"}
+    def test_server_url(self, tcx_config):
+        tcx_config["3cx"] = {"scheme": "http",
+                             "domain": "example.com", "port": "8080"}
         expected_url = "http://example.com:8080"
-        assert my_TCXConfig.get_server_url() == expected_url
+        assert tcx_config.server_url == expected_url
 
-    @patch('app.config.os')
-    def test_config_file_path(self, os, my_TCXConfig):
-        os.getcwd.return_value = 'C:\test_dir'
-        my_TCXConfig.config_file_path()
-        os.path.join.assert_called_once_with(
-            'C:\test_dir', 'conf', '3cx_conf.ini')
+    @patch('app.config.os.getcwd', return_value='/test')
+    def test_config_file_path(self, os_getcwd, tcx_config):
+        assert tcx_config.config_file_path == '/test/conf/3cx_conf.ini'
+        os_getcwd.assert_called_once_with()
 
-    @patch('app.config.os')
-    def test_defaults_config_file_path(self, os, my_TCXConfig):
-        os.getcwd.return_value = 'C:\test_dir'
-        my_TCXConfig.defaults_config_file_path()
-        os.path.join.assert_called_once_with(
-            'C:\test_dir', 'conf', '3cx_defaults.ini')
+    @patch('app.config.os.getcwd', return_value='/test')
+    def test_defaults_config_file_path(self, os_getcwd, tcx_config):
+        assert tcx_config.defaults_config_file_path == '/test/conf/3cx_defaults.ini'
+        os_getcwd.assert_called_once_with()
 
 
 @pytest.fixture
-def my_AppConfig():
+def app_config():
     yield AppConfig()
 
 
 class TestAppConfig:
-    @patch('app.config.os')
-    def test_config_file_path(self, os, my_AppConfig):
-        os.getcwd.return_value = 'C:\test_dir'
-        my_AppConfig.config_file_path()
-        os.path.join.assert_called_once_with(
-            'C:\test_dir', 'conf', 'app_conf.ini')
 
-    @patch('app.config.os')
-    def test_defaults_config_file_path(self, os, my_AppConfig):
-        os.getcwd.return_value = 'C:\test_dir'
-        my_AppConfig.defaults_config_file_path()
-        os.path.join.assert_called_once_with(
-            'C:\test_dir', 'conf', 'defaults.ini')
+    @patch('app.config.os.getcwd', return_value='/test')
+    def test_config_file_path(self, os_getcwd, app_config):
+        assert app_config.config_file_path == '/test/conf/app_conf.ini'
+        os_getcwd.assert_called_once_with()
+
+    @patch('app.config.os.getcwd', return_value='/test')
+    def test_defaults_config_file_path(self, os_getcwd, app_config):
+        assert app_config.defaults_config_file_path == '/test/conf/defaults.ini'
+        os_getcwd.assert_called_once_with()

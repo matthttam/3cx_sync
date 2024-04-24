@@ -4,21 +4,15 @@ from configparser import ConfigParser
 
 class TCXConfig(ConfigParser):
     @property
-    def defaults_config_file_path(self):
+    def defaults_config_file_path(self) -> str:
         return os.path.join(os.getcwd(), "conf", "3cx_defaults.ini")
 
     @property
-    def config_file_path(self):
+    def config_file_path(self) -> str:
         return os.path.join(os.getcwd(), "conf", "3cx_conf.ini")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        self.read_config_files()
-
-    def read_config_files(self):
-        self.read([self.defaults_config_file_path, self.config_file_path])
-
-    def get_server_url(self):
+    @property
+    def server_url(self) -> str:
         return (
             self["3cx"].get("scheme")
             + "://"
@@ -26,6 +20,17 @@ class TCXConfig(ConfigParser):
             + ":"
             + self["3cx"].get("port")
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+
+    def load(self) -> None:
+        self.read([self.defaults_config_file_path, self.config_file_path])
+
+    def save(self) -> None:
+        with open(self.config_file_path, "w") as config_file:
+            self.write(config_file)
+        config_file.close()
 
 
 class AppConfig(ConfigParser):

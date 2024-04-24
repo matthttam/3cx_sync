@@ -8,28 +8,24 @@ from app.mapping import CSVMapping
 
 
 class Window3cxConfig(tk.Toplevel):
-    def __init__(self, master, *args, **kwargs):
+
+    def __init__(self, master, tcx_config: TCXConfig, *args, **kwargs):
         tk.Toplevel.__init__(self, master, *args, **kwargs)
+        self.tcx_config = tcx_config
+        self.tcx_config.load()
+        self.initialize_variables()
+        self.build_gui()
 
-        # Get Config
-        self.tcx_config = TCXConfig()
-
+    def initialize_variables(self) -> None:
         # Initialize Variables
-        self.var_3cx_scheme = tk.StringVar(
-            self, self.tcx_config["3cx"].get("scheme", "")
-        )
-        self.var_3cx_domain = tk.StringVar(
-            self, self.tcx_config["3cx"].get("domain", "")
-        )
-        self.var_3cx_port = tk.StringVar(
-            self, self.tcx_config["3cx"].get("port", ""))
-        self.var_3cx_username = tk.StringVar(
-            self, self.tcx_config["3cx"].get("username", "")
-        )
-        self.var_3cx_password = tk.StringVar(
-            self, self.tcx_config["3cx"].get("password")
-        )
+        conf = self.tcx_config["3cx"]
+        self.vars = {}
+        for var in ["scheme", "domain", "port", "username", "password"]:
+            self.vars[var] = tk.StringVar(self, conf.get(var, ""))
+            # self.vars[var] = tk.StringVar(self, conf[var])
+            # self.vars[var].set(conf.get(var, ""))
 
+    def build_gui(self) -> None:
         self.grab_set()
         self.focus_force()
 
@@ -53,14 +49,14 @@ class Window3cxConfig(tk.Toplevel):
         frm_3cx_url.grid(row=0, column=1)
 
         opt_3cx_scheme = tk.OptionMenu(
-            frm_3cx_url, self.var_3cx_scheme, *["https", "http"]
+            frm_3cx_url, self.vars["scheme"], *["https", "http"]
         )
         lbl_3cx_scheme_ending = tk.Label(master=frm_3cx_url, text="://")
         ent_3cx_domain = tk.Entry(
-            master=frm_3cx_url, textvariable=self.var_3cx_domain)
+            master=frm_3cx_url, textvariable=self.vars["domain"])
         lbl_3cx_server_ending = tk.Label(master=frm_3cx_url, text=":")
         ent_3cx_port = tk.Entry(
-            master=frm_3cx_url, textvariable=self.var_3cx_port, width=5
+            master=frm_3cx_url, textvariable=self.vars["port"], width=5
         )
 
         elements = [
@@ -76,12 +72,12 @@ class Window3cxConfig(tk.Toplevel):
 
         lbl_3cx_username = tk.Label(master=frm_3cx_options, text="Username:")
         ent_3cx_username = tk.Entry(
-            master=frm_3cx_options, textvariable=self.var_3cx_username
+            master=frm_3cx_options, textvariable=self.vars["username"]
         )
 
         lbl_3cx_password = tk.Label(master=frm_3cx_options, text="Password:")
         ent_3cx_password = tk.Entry(
-            master=frm_3cx_options, textvariable=self.var_3cx_password, show="*"
+            master=frm_3cx_options, textvariable=self.vars["password"], show="*"
         )
         lbl_3cx_username.grid(row=2, column=0, padx=(5, 0))
         ent_3cx_username.grid(row=2, column=1, sticky="we")
@@ -93,7 +89,7 @@ class Window3cxConfig(tk.Toplevel):
         frm_navigation.pack(side="bottom", anchor="e")
 
         btn_test = tk.Button(
-            master=frm_navigation, text="Test", command=self.test_connection
+            master=frm_navigation, text="Test", command=self.handle_test_connection
         )
         btn_save = tk.Button(
             master=frm_navigation, text="Save", command=self.handle_save_click
@@ -106,23 +102,13 @@ class Window3cxConfig(tk.Toplevel):
         btn_save.grid(row=0, column=1, padx=5)
         btn_cancel.grid(row=0, column=2, padx=5)
 
-    @property
-    def server_url(self):
-        return (
-            self.var_3cx_scheme.get()
-            + "://"
-            + self.var_3cx_domain.get()
-            + ":"
-            + self.var_3cx_port.get()
-        )
-
-    def test_connection(self):
-        api = TCX_API_Connection(server_url=self.server_url)
+    def handle_test_connection(self):
+        api = TCX_API_Connection(server_url=self.tcx_config.server_url)
 
         try:
             api.authenticate(
-                username=self.var_3cx_username.get(),
-                password=self.var_3cx_password.get(),
+                username=self.vars["username"].get(),
+                password=self.vars["password"].get(),
             )
             messagebox.showinfo(title="Success", message="Test Successful")
         except Exception as e:
@@ -138,24 +124,21 @@ class Window3cxConfig(tk.Toplevel):
         self.destroy()
 
     def write_config_file(self):
-        self.tcx_config["3cx"]["scheme"] = self.var_3cx_scheme.get()
-        self.tcx_config["3cx"]["domain"] = self.var_3cx_domain.get()
-        self.tcx_config["3cx"]["port"] = self.var_3cx_port.get()
-        self.tcx_config["3cx"]["username"] = self.var_3cx_username.get()
-        self.tcx_config["3cx"]["password"] = self.var_3cx_password.get()
-        with open(self.tcx_config.config_file_path, "w") as config_file:
-            self.tcx_config.write(config_file)
-        config_file.close()
+        for var in ["scheme", "domain", "port", "username", "password"]:
+            self.tcx_config["3cx"][var] = self.vars["scheme"].get()
+        self.tcx_config.save()
 
 
 class WindowCSVMapping(tk.Toplevel):
+    ""
+
     def __init__(self, master, *args, **kwargs):
         tk.Toplevel.__init__(self, master, *args, **kwargs)
         self.grab_set()
         self.focus_force()
 
         self.mapping = CSVMapping()
-
+        self.mapping.load_mapping_config()
         self.mapping_fields = []
         self.ceckbox_key_state = tk.StringVar(self, "normal")
         self.var_csv_mapping_extension_path = tk.StringVar(self)

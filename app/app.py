@@ -1,6 +1,6 @@
 import tkinter as tk
 from app.windows import WindowCSVMapping, Window3cxConfig
-from app.config import AppConfig
+from app.config import AppConfig, TCXConfig
 from sync.sync_csv import SyncCSV
 from sync.sync import Sync
 
@@ -11,6 +11,7 @@ class App(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
 
         self.app_config = AppConfig()
+        self.tcx_config = TCXConfig()
 
         # Window Options
         self.wm_title("3cx Sync Config")
@@ -69,7 +70,7 @@ class App(tk.Tk):
         btn_exit.grid(row=0, column=1, padx=5)
 
     def show_Window3cxConfig(self):
-        Window3cxConfig(master=self)
+        Window3cxConfig(master=self, tcx_config=self.tcx_config)
 
     def show_WindowCSVMapping(self):
         WindowCSVMapping(master=self)
