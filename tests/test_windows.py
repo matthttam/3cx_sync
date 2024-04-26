@@ -1,10 +1,11 @@
 import pytest
 import tkinter as tk
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call, DEFAULT
 from app.windows import Window3cxConfig
 # from tcx_api.tcx_api_connection import TCX_API_Connection
 from app.config import TCXConfig
 from tests.test_config import tcx_config
+from app.exceptions import ConfigSaveError
 
 
 class TestWindow3cxConfig:
@@ -51,8 +52,6 @@ class TestWindow3cxConfig:
 
     @patch('app.config.TCXConfig')
     def test_initialize_variables_with_values(self, mock_tcx_config, root):
-        # with patch.object(window, 'tcx_config', {"3cx": {"scheme": "test_scheme", "domain": "test_domain", "port": "", "username": "", "password": ""}}) as tcx_config:
-        # tcx_config = TCXConfig()
         conf = {"3cx": {
             "scheme": "test_scheme",
             "domain": "test_domain",
@@ -68,58 +67,109 @@ class TestWindow3cxConfig:
             assert isinstance(window.vars[k], tk.StringVar)
             assert window.vars[k].get() == conf["3cx"][k]
 
-    @patch('tcx_api.tcx_api_connection.TCX_API_Connection')
-    def test_test_connection_success(self, mock_api):
-        mock_api_instance = mock_api.return_value
-        self.window.var_3cx_scheme.set('https')
-        self.window.var_3cx_domain.set('example.com')
-        self.window.var_3cx_port.set('8080')
-        self.window.var_3cx_username.set('user')
-        self.window.var_3cx_password.set('password')
+    @patch('app.windows.tk.Button')
+    def test_button_function_mapping(self, mock_button, mock_tcx_config, root):
+        window = Window3cxConfig(master=root, tcx_config=mock_tcx_config)
+        calls = [call(master=window.widgets["frm_navigation"], name="btn_test", text="Test",
+                      command=window.handle_test_connection),
+                 call(master=window.widgets["frm_navigation"], name="btn_save", text="Save",
+                      command=window.handle_save_click),
+                 call(master=window.widgets["frm_navigation"], name="btn_cancel", text="Cancel",
+                      command=window.handle_cancel_click)]
+        mock_button.assert_has_calls(calls)
 
-        # Configure the mock to succeed
-        mock_api_instance.authenticate.return_value = True
+    @patch('app.windows.messagebox.showinfo')
+    @patch('app.windows.TCX_API_Connection')
+    def test_handle_test_connection_success(self, mock_api, mock_messagebox_showinfo, root, mock_tcx_config):
+        window = Window3cxConfig(master=root, tcx_config=mock_tcx_config)
+        window.vars = {
+            "scheme": MagicMock(**{'get.return_value': 'test_scheme'}),
+            "domain": MagicMock(**{'get.return_value': 'test_domain'}),
+            "port": MagicMock(**{'get.return_value': 'test_port'}),
+            "username": MagicMock(**{'get.return_value': 'username'}),
+            "password": MagicMock(**{'get.return_value': 'password'})
+        }
+        window.widgets["btn_test"].invoke()
+        mock_api.authenticate.assert_called_once_with(
+            username='username', password='password')
 
-        # Call the method to test
-        self.window.test_connection()
+    def test_handle_test_connection_failure(self):
+        pass
 
-        # Assert that the success message is shown
-        self.assertTrue(self.window.messagebox.showinfo.called)
+    def test_handle_cancel_click(self, window):
+        with patch.object(window, 'destroy') as mock_destroy:
+            window.widgets["btn_cancel"].invoke()
+            mock_destroy.assert_called_once_with()
 
-    @patch('tcx_api.tcx_api_connection.TCX_API_Connection')
-    def test_test_connection_failure(self, mock_api):
-        mock_api_instance = mock_api.return_value
-        self.window.var_3cx_scheme.set('https')
-        self.window.var_3cx_domain.set('example.com')
-        self.window.var_3cx_port.set('8080')
-        self.window.var_3cx_username.set('user')
-        self.window.var_3cx_password.set('password')
+    @patch('app.windows.messagebox.showinfo')
+    def test_handle_save_click_success(self, mock_messagebox_showinfo, window):
+        with patch.multiple(window, write_config_file=DEFAULT, destroy=DEFAULT) as mocks:
+            window.widgets["btn_save"].invoke()
+            mocks["write_config_file"].assert_called_once_with()
+            mock_messagebox_showinfo.assert_called_once_with(
+                title='Saved!', message='Config saved!')
+            mocks["destroy"].assert_called_once_with()
 
-        # Configure the mock to raise an exception
-        mock_api_instance.authenticate.side_effect = Exception(
-            'Authentication failed')
+    @patch('app.windows.messagebox.showerror')
+    def test_handle_save_click_failure(self, mock_messagebox_showerror, window):
+        with patch.multiple(window, write_config_file=DEFAULT, destroy=DEFAULT) as mocks:
+            mocks["write_config_file"].side_effect = ConfigSaveError
+            window.widgets["btn_save"].invoke()
+            mock_messagebox_showerror.assert_called_once_with(
+                title='Error!', message=f"{ConfigSaveError()}")
 
-        # Call the method to test
-        self.window.test_connection()
+    @patch('app.config.TCXConfig')
+    def test_write_config_file_success(self, mock_tcx_config, root):
+        conf = {"3cx": {
+            "scheme": None,
+            "domain": None,
+            "port": None,
+            "username": None,
+            "password": None
+        }}
+        mock_tcx_config.__getitem__.side_effect = conf.__getitem__
+        window = Window3cxConfig(master=root, tcx_config=mock_tcx_config)
+        window.vars = {
+            "scheme": MagicMock(**{'get.return_value': 'test_scheme'}),
+            "domain": MagicMock(**{'get.return_value': 'test_domain'}),
+            "port": MagicMock(**{'get.return_value': 'test_port'}),
+            "username": MagicMock(**{'get.return_value': 'username'}),
+            "password": MagicMock(**{'get.return_value': 'password'})
+        }
+        # with patch.object(window.tcx_config, 'save') as mock_tcx_config_save:
+        window.write_config_file()
+        mock_tcx_config.save.assert_called_once_with()
 
-        # Assert that the failure message is shown
-        self.assertTrue(self.window.messagebox.showinfo.called)
+        assert mock_tcx_config["3cx"] == {
+            "scheme": "test_scheme",
+            "domain": "test_domain",
+            "port": "test_port",
+            "username": "username",
+            "password": "password"
+        }
 
-    @patch('your_module.TCXConfig')
-    def test_write_config_file(self, mock_tcx_config):
-        mock_config_instance = mock_tcx_config.return_value
-        self.window.var_3cx_scheme.set('https')
-        self.window.var_3cx_domain.set('example.com')
-        self.window.var_3cx_port.set('8080')
-        self.window.var_3cx_username.set('user')
-        self.window.var_3cx_password.set('password')
+    @patch('app.config.TCXConfig')
+    def test_write_config_file_failure(self, mock_tcx_config, root):
+        conf = {"3cx": {
+            "scheme": None,
+            "domain": None,
+            "port": None,
+            "username": None,
+            "password": None
+        }}
+        mock_tcx_config.__getitem__.side_effect = conf.__getitem__
+        mock_tcx_config.save.side_effect = Exception("An error has occurred!")
+        window = Window3cxConfig(master=root, tcx_config=mock_tcx_config)
+        window.vars = {
+            "scheme": MagicMock(**{'get.return_value': 'test_scheme'}),
+            "domain": MagicMock(**{'get.return_value': 'test_domain'}),
+            "port": MagicMock(**{'get.return_value': 'test_port'}),
+            "username": MagicMock(**{'get.return_value': 'username'}),
+            "password": MagicMock(**{'get.return_value': 'password'})
+        }
+        with pytest.raises(ConfigSaveError) as e:
+            window.write_config_file()
 
-        # Call the method to test
-        self.window.write_config_file()
-
-        # Assert that the TCXConfig instance is updated
-        self.assertEqual(mock_config_instance['3cx']['scheme'], 'https')
-        self.assertEqual(mock_config_instance['3cx']['domain'], 'example.com')
-        self.assertEqual(mock_config_instance['3cx']['port'], '8080')
-        self.assertEqual(mock_config_instance['3cx']['username'], 'user')
-        self.assertEqual(mock_config_instance['3cx']['password'], 'password')
+        # mock_tcx_config.__getitem__.assert_called_with("3cx")
+        # mock_tcx_config.__getitem__["3cx"].assert_called_once_with()
+       # mock_tcx_config.save.assert_called_once_with()

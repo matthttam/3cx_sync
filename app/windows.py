@@ -1,3 +1,4 @@
+import tcx_api
 import tkinter as tk
 from tcx_api.tcx_api_connection import TCX_API_Connection
 from tkinter.filedialog import askopenfilename
@@ -5,12 +6,14 @@ from tkinter import messagebox
 from app.widgets import Checkbox, ExtensionMappingFieldSet
 from app.config import TCXConfig
 from app.mapping import CSVMapping
+from app.exceptions import ConfigSaveError
 
 
 class Window3cxConfig(tk.Toplevel):
 
     def __init__(self, master, tcx_config: TCXConfig, *args, **kwargs):
         tk.Toplevel.__init__(self, master, *args, **kwargs)
+        self.widgets = {}
         self.tcx_config = tcx_config
         self.tcx_config.load()
         self.initialize_variables()
@@ -30,77 +33,87 @@ class Window3cxConfig(tk.Toplevel):
         self.focus_force()
 
         # Create a window frame
-        frm_window = tk.Frame(master=self)
-        frm_window.pack()
+        self.widgets["frm_window"] = tk.Frame(master=self)
+        self.widgets["frm_window"].pack()
 
         # Create 3cx options frame
-        frm_3cx_options = tk.Frame(master=frm_window)
-        frm_3cx_options.config(width=300, height=200,
-                               relief="ridge", borderwidth=2)
-        frm_3cx_options.pack()
+        self.widgets["frm_3cx_options"] = tk.Frame(
+            master=self.widgets["frm_window"])
+        self.widgets["frm_3cx_options"].config(width=300, height=200,
+                                               relief="ridge", borderwidth=2)
+        self.widgets["frm_3cx_options"].pack()
 
         # 3cx URL
-        lbl_3cx_url = tk.Label(master=frm_3cx_options, text="3CX URL:")
-        lbl_3cx_url.grid(row=0, column=0, padx=(5, 0), sticky="w")
+        self.widgets["lbl_3cx_url"] = tk.Label(
+            master=self.widgets["frm_3cx_options"], text="3CX URL:")
+        self.widgets["lbl_3cx_url"].grid(
+            row=0, column=0, padx=(5, 0), sticky="w")
 
         # Create a 3cx URL frame in that window
-        frm_3cx_url = tk.Frame(master=frm_3cx_options)
-        frm_3cx_url.grid_columnconfigure(2, weight=1)
-        frm_3cx_url.grid(row=0, column=1)
+        self.widgets["frm_3cx_url"] = tk.Frame(
+            master=self.widgets["frm_3cx_options"])
+        self.widgets["frm_3cx_url"].grid_columnconfigure(2, weight=1)
+        self.widgets["frm_3cx_url"].grid(row=0, column=1)
 
-        opt_3cx_scheme = tk.OptionMenu(
-            frm_3cx_url, self.vars["scheme"], *["https", "http"]
+        self.widgets["opt_3cx_scheme"] = tk.OptionMenu(
+            self.widgets["frm_3cx_url"], self.vars["scheme"], *
+            ["https", "http"]
         )
-        lbl_3cx_scheme_ending = tk.Label(master=frm_3cx_url, text="://")
-        ent_3cx_domain = tk.Entry(
-            master=frm_3cx_url, textvariable=self.vars["domain"])
-        lbl_3cx_server_ending = tk.Label(master=frm_3cx_url, text=":")
-        ent_3cx_port = tk.Entry(
-            master=frm_3cx_url, textvariable=self.vars["port"], width=5
+        self.widgets["lbl_3cx_scheme_ending"] = tk.Label(
+            master=self.widgets["frm_3cx_url"], text="://")
+        self.widgets["ent_3cx_domain"] = tk.Entry(
+            master=self.widgets["frm_3cx_url"], textvariable=self.vars["domain"])
+        self.widgets["lbl_3cx_server_ending"] = tk.Label(
+            master=self.widgets["frm_3cx_url"], text=":")
+        self.widgets["ent_3cx_port"] = tk.Entry(
+            master=self.widgets["frm_3cx_url"], textvariable=self.vars["port"], width=5
         )
 
         elements = [
-            opt_3cx_scheme,
-            lbl_3cx_scheme_ending,
-            ent_3cx_domain,
-            lbl_3cx_server_ending,
-            ent_3cx_port,
+            self.widgets["opt_3cx_scheme"],
+            self.widgets["lbl_3cx_scheme_ending"],
+            self.widgets["ent_3cx_domain"],
+            self.widgets["lbl_3cx_server_ending"],
+            self.widgets["ent_3cx_port"],
         ]
 
         for y, element in enumerate(elements):
             element.grid(row=1, column=y, sticky="we")
 
-        lbl_3cx_username = tk.Label(master=frm_3cx_options, text="Username:")
-        ent_3cx_username = tk.Entry(
-            master=frm_3cx_options, textvariable=self.vars["username"]
+        self.widgets["lbl_3cx_username"] = tk.Label(
+            master=self.widgets["frm_3cx_options"], text="Username:")
+        self.widgets["ent_3cx_username"] = tk.Entry(
+            master=self.widgets["frm_3cx_options"], textvariable=self.vars["username"]
         )
 
-        lbl_3cx_password = tk.Label(master=frm_3cx_options, text="Password:")
-        ent_3cx_password = tk.Entry(
-            master=frm_3cx_options, textvariable=self.vars["password"], show="*"
+        self.widgets["lbl_3cx_password"] = tk.Label(
+            master=self.widgets["frm_3cx_options"], text="Password:")
+        self.widgets["ent_3cx_password"] = tk.Entry(
+            master=self.widgets["frm_3cx_options"], textvariable=self.vars["password"], show="*"
         )
-        lbl_3cx_username.grid(row=2, column=0, padx=(5, 0))
-        ent_3cx_username.grid(row=2, column=1, sticky="we")
-        lbl_3cx_password.grid(row=3, column=0, padx=(5, 0))
-        ent_3cx_password.grid(row=3, column=1, sticky="we")
+        self.widgets["lbl_3cx_username"].grid(row=2, column=0, padx=(5, 0))
+        self.widgets["ent_3cx_username"].grid(row=2, column=1, sticky="we")
+        self.widgets["lbl_3cx_password"].grid(row=3, column=0, padx=(5, 0))
+        self.widgets["ent_3cx_password"].grid(row=3, column=1, sticky="we")
 
         # Test and OK Buttons
-        frm_navigation = tk.Frame(master=frm_window)
-        frm_navigation.pack(side="bottom", anchor="e")
+        self.widgets["frm_navigation"] = tk.Frame(
+            master=self.widgets["frm_window"])
+        self.widgets["frm_navigation"].pack(side="bottom", anchor="e")
 
-        btn_test = tk.Button(
-            master=frm_navigation, text="Test", command=self.handle_test_connection
+        self.widgets["btn_test"] = tk.Button(
+            master=self.widgets["frm_navigation"], name="btn_test", text="Test", command=self.handle_test_connection
         )
-        btn_save = tk.Button(
-            master=frm_navigation, text="Save", command=self.handle_save_click
+        self.widgets["btn_save"] = tk.Button(
+            master=self.widgets["frm_navigation"], name="btn_save", text="Save", command=self.handle_save_click
         )
-        btn_cancel = tk.Button(
-            master=frm_navigation, text="Cancel", command=self.handle_cancel_click
+        self.widgets["btn_cancel"] = tk.Button(
+            master=self.widgets["frm_navigation"], name="btn_cancel", text="Cancel", command=self.handle_cancel_click
         )
 
-        btn_test.grid(row=0, column=0, padx=5)
-        btn_save.grid(row=0, column=1, padx=5)
-        btn_cancel.grid(row=0, column=2, padx=5)
+        self.widgets["btn_test"].grid(row=0, column=0, padx=5)
+        self.widgets["btn_save"].grid(row=0, column=1, padx=5)
+        self.widgets["btn_cancel"].grid(row=0, column=2, padx=5)
 
     def handle_test_connection(self):
         api = TCX_API_Connection(server_url=self.tcx_config.server_url)
@@ -115,18 +128,25 @@ class Window3cxConfig(tk.Toplevel):
             messagebox.showinfo(
                 title="Failure", message=f"Test Failed. {str(e)}")
 
+    def handle_save_click(self):
+        try:
+            self.write_config_file()
+            messagebox.showinfo(title="Saved!", message="Config saved!")
+            self.destroy()
+        except ConfigSaveError as e:
+            messagebox.showerror(
+                title="Error!", message=f"{e}")
+
     def handle_cancel_click(self):
         self.destroy()
 
-    def handle_save_click(self):
-        self.write_config_file()
-        messagebox.showinfo(title="Saved!", message="Config saved!")
-        self.destroy()
-
     def write_config_file(self):
-        for var in ["scheme", "domain", "port", "username", "password"]:
-            self.tcx_config["3cx"][var] = self.vars["scheme"].get()
-        self.tcx_config.save()
+        try:
+            for var in ["scheme", "domain", "port", "username", "password"]:
+                self.tcx_config["3cx"][var] = self.vars[var].get()
+            self.tcx_config.save()
+        except Exception as e:
+            raise ConfigSaveError() from e
 
 
 class WindowCSVMapping(tk.Toplevel):
