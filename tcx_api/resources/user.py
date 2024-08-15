@@ -146,7 +146,7 @@ class UserResource(APIResource):
         """Update entity in Users"""
         try:
             response = self.api.patch(
-                endpoint=self.endpoint, params=user.Id, data=user)
+                endpoint=self.endpoint, params=user.Id, json=user)
             return response.json()["value"]
         except Exception as e:
             print(f"Failed to update user: {e}")

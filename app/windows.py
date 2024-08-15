@@ -277,16 +277,13 @@ class WindowCSVMapping(tk.Toplevel):
             "Path": self.var_csv_mapping_extension_path.get(),
         }
         mapping_new = {}
-        # mapping_update = {}
         mapping_update = []
         for mapping_row in self.mapping_fields:
             if mapping_row.key.checked:
-                key = mapping_row.header.get()
+                self.mapping["Extension"]["Key"] = mapping_row.header.get()
             mapping_new[mapping_row.field.get()] = mapping_row.header.get()
             if mapping_row.update.checked:
-                # mapping_update[mapping_row.field.get()] = mapping_row.header.get()
-                mapping_update.append(mapping_row.header.get())
-        self.mapping["Extension"]["Key"] = key
+                mapping_update.append(mapping_row.field.get())
         self.mapping["Extension"]["New"] = mapping_new
         self.mapping["Extension"]["Update"] = mapping_update
         self.mapping.save_mapping_config()
@@ -307,7 +304,7 @@ class WindowCSVMapping(tk.Toplevel):
             update = False
             if header == self.mapping.get("Extension", {}).get("Key", None):
                 key = True
-            if header in self.mapping.get("Extension", {}).get("Update", {}):
+            if field in self.mapping.get("Extension", {}).get("Update", {}):
                 update = True
 
             self.add_mapping_field_set(
@@ -317,17 +314,17 @@ class WindowCSVMapping(tk.Toplevel):
     def add_mapping_field_set(self, header="", field="", update=False, key=False):
         frm_csv_mapping_fields = self.nametowidget("window.csv_mapping_fields")
 
-        # CSV Header Field
-        ent_csv_mapping_header = tk.Entry(master=frm_csv_mapping_fields)
-        ent_csv_mapping_header.insert(0, header)
-        ent_csv_mapping_header.grid(
-            row=len(self.mapping_fields) + 2, column=1, sticky="w"
-        )
-
         # 3CX Field
         ent_csv_mapping_3cx_field = tk.Entry(master=frm_csv_mapping_fields)
         ent_csv_mapping_3cx_field.insert(0, field)
         ent_csv_mapping_3cx_field.grid(
+            row=len(self.mapping_fields) + 2, column=1, sticky="w"
+        )
+
+        # CSV Header Field
+        ent_csv_mapping_header = tk.Entry(master=frm_csv_mapping_fields)
+        ent_csv_mapping_header.insert(0, header)
+        ent_csv_mapping_header.grid(
             row=len(self.mapping_fields) + 2, column=2, sticky="w"
         )
 
@@ -359,8 +356,8 @@ class WindowCSVMapping(tk.Toplevel):
             chk_csv_mapping_key.invoke()
         self.mapping_fields.append(
             ExtensionMappingFieldSet(
-                header=ent_csv_mapping_header,
                 field=ent_csv_mapping_3cx_field,
+                header=ent_csv_mapping_header,
                 update=chk_csv_mapping_update,
                 key=chk_csv_mapping_key,
                 delete=btn_csv_mapping_remove

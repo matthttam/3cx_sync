@@ -41,6 +41,10 @@ class UserCreateError(APIError):
     """Error raised when there is an issue creating a user."""
 
 
+class UserUpdateError(APIError):
+    """Error raised when there is an issue updating a user."""
+
+
 class APIAuthenticationError(Exception):
     """Exception raised when authentication fails
 
