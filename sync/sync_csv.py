@@ -50,10 +50,15 @@ class SyncCSV(SyncSourceStrategy):
             csv_reader = csv.reader(csv_file)
             user_mapping = self.mapping.get("Extension").get("New")
             headers = next(csv_reader)
-            headers = [user_mapping[key] for key in headers]
+            # headers = [user_mapping[key] for key in headers if key in user_mapping]
+            mapped_headers = [(user_mapping[key], idx)
+                              for idx, key in enumerate(headers) if key in user_mapping]
 
             for row in csv_reader:
-                row_dict = dict(zip(headers, row))
+                filtered_row = [row[idx] for _, idx in mapped_headers]
+                # row_dict = dict(zip(headers, filtered_row))
+                row_dict = dict(
+                    zip([header for header, _ in mapped_headers], filtered_row))
                 user_data.append(row_dict)
         csv_user_list = TypeAdapter(List[CSVUser]).validate_python(user_data)
         self.output(f"Loaded {len(csv_user_list)} Users from CSV File")

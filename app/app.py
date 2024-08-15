@@ -1,8 +1,10 @@
+import requests
 import tkinter as tk
 from app.windows import WindowCSVMapping, Window3cxConfig
 from app.config import AppConfig, TCXConfig
 from sync.sync_csv import SyncCSV
 from sync.sync import Sync
+from tcx_api.exceptions import APIAuthenticationError
 
 
 class App(tk.Tk):
@@ -80,4 +82,9 @@ class App(tk.Tk):
 
     def handle_csv_sync_click(self):
         sync = Sync(sync_source=SyncCSV, text=self.txt_output)
-        sync.sync()
+        try:
+            sync.sync()
+        except APIAuthenticationError:
+            sync.output("Failed to sync. Unable to authenticate.")
+        except Exception as e:
+            sync.output(f"Failed to sync. {e}")

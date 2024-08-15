@@ -8,6 +8,7 @@ from tcx_api.resources.user import UserResource
 from tcx_api.components.schemas.pbx import User, Group
 from tcx_api.resources.user import ListUserParameters
 from tcx_api import exceptions as TCX_Exceptions
+from tcx_api.exceptions import APIAuthenticationError
 
 
 class SyncSourceStrategy(ABC):
@@ -45,7 +46,7 @@ class Sync:
         self.text = text
         self.newline = ""  # Set to "\n" on first output
 
-    def output(self, value) -> None:
+    def output(self, value: str) -> None:
         text_output = self.newline + self.get_timestamp() + value
         self.text.insert(tk.END, text_output)
         self.newline = "\n"
@@ -60,12 +61,17 @@ class Sync:
         self.output("Initializing Sync")
         self.output("Loading 3CX Config")
         self.config = TCXConfig()
+        self.config.load()
         self.output("3CX Config Loaded")
         self.output("Initializing API Connection")
         self.api_connection = TCX_API_Connection(
-            server_url=self.config.get_server_url()
+            server_url=self.config.server_url
         )
-        self.authenticate()
+        try:
+            self.authenticate()
+        except APIAuthenticationError:
+            raise
+        self.api_connection.refresh_access_token()
         self.UserResource = UserResource(api=self.api_connection)
         self.sync_source.initialize()
         self.source_user_list = self.sync_source.get_source_users()
@@ -109,13 +115,16 @@ class Sync:
         # Determine users that have been changed
         users_to_update = {tcx_user_dict[k].Id: source_user_dict[k] for k in set(
             users_to_compare.keys()) if source_user_dict[k] != tcx_user_dict[k]}
-        self.output(f"Count of users to create: {len(users_to_update)}")
+        self.output(f"Count of users to update: {len(users_to_update)}")
         return UserComparisonResult(users_to_create=users_to_create, users_to_update=users_to_update)
 
     def create_users(self, users: list[User]):
         for user in users:
-            print(f"We would try to create user with Number: {
-                  user.Number}")
+            try:
+                self.UserResource.create_user(user)
+                self.output(f"Created 3CX user {user.Number}")
+            except TCX_Exceptions.UserCreateError as e:
+                self.output(str(e))
 
     def update_users(self, users: dict[str, User]):
         for id in users.keys():
@@ -135,7 +144,7 @@ class Sync:
         pass
 
     def authenticate(self):
-        self.output(f"Authenticating to 3CX at {self.config.get_server_url()}")
+        self.output(f"Authenticating to 3CX at {self.config.server_url}")
         try:
             self.api_connection.authenticate(
                 username=self.config["3cx"].get("username"),
@@ -143,5 +152,5 @@ class Sync:
             )
             self.output("Authentication Successful")
         except TCX_Exceptions.APIAuthenticationError as e:
-            self.output("Failed to authenticate: {e}")
+            self.output(f"Failed to authenticate: {e}")
             raise e

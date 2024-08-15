@@ -1,10 +1,13 @@
+import json
 import requests
+
 from typing import List
 from enum import auto
 from tcx_api.resources.api_resource import APIResource
 from tcx_api.util import TcxStrEnum
 
 from pydantic import TypeAdapter
+from tcx_api.components.schemas.ODataErrors import MainError
 from tcx_api.components.schemas.pbx import User
 from tcx_api.components.parameters import GetParameters, ListParameters
 from tcx_api import exceptions as TCX_Exceptions
@@ -120,7 +123,17 @@ class UserResource(APIResource):
 
     def create_user(self, user: User):
         """Add new entity to Users"""
-        self.api.post(self.endpoint, user.model_dump())
+        default_user_dict = self.default_user
+        user_dict = user.model_dump(
+            exclude_none=True, exclude_unset=True)
+        # user_dict['Groups'] = [
+        # {'GroupId': 3078, 'Rights': {'RoleName': "users"}}]
+        # user_dict['VMEmailOptions'] = 'Attachment'
+        merged_user_dict = default_user_dict | user_dict
+        try:
+            self.api.post(self.endpoint, merged_user_dict)
+        except requests.HTTPError as e:
+            raise TCX_Exceptions.UserCreateError(e)
 
     def get_user(self, id: int, params: GetUserParameters) -> User:
         try:
@@ -157,3 +170,7 @@ class UserResource(APIResource):
         #  description: ETag
         #  schema:
         #    type: string)
+
+    @property
+    def default_user(self):
+        return json.loads('{"Require2FA": true, "SendEmailMissedCalls": true, "AuthID": "2cCY2wrcBU", "Phones": [], "Groups": [{"GroupId": 3078, "Rights": {"RoleName": "users"}}], "CallUsEnableChat": true, "CallUsRequirement": "Both", "ClickToCallId": "testtest", "EmailAddress": "", "Mobile": "", "FirstName": "TEST", "LastName": "TEST", "Number": "10003", "OutboundCallerID": "", "PrimaryGroupId": 3078, "WebMeetingFriendlyName": "testtest", "WebMeetingApproveParticipants": false, "Blfs": "<PhoneDevice><BLFS/></PhoneDevice>", "ForwardingProfiles": [], "MS365CalendarEnabled": true, "MS365ContactsEnabled": true, "MS365SignInEnabled": true, "MS365TeamsEnabled": true, "GoogleSignInEnabled": true, "Enabled": true, "Internal": false, "AllowOwnRecordings": false, "MyPhoneShowRecordings": false, "MyPhoneAllowDeleteRecordings": false, "MyPhoneHideForwardings": false, "RecordCalls": false, "HideInPhonebook": false, "PinProtected": false, "CallScreening": false, "AllowLanOnly": true, "SIPID": "", "EnableHotdesking": false, "PbxDeliversAudio": false, "SRTPMode": "SRTPDisabled", "Hours": {"Type": "OfficeHours"}, "OfficeHoursProps": [], "BreakTime": {"Type": "OfficeHours"}, "VMEnabled": true, "VMPIN": "923080", "VMEmailOptions": "Notification", "VMDisablePinAuth": false, "VMPlayCallerID": false, "VMPlayMsgDateTime": "None", "PromptSet": "8210986B-9412-497f-AD77-3A554F4A9BDB", "Greetings": [{"Type": "Default", "Filename": ""}]}')

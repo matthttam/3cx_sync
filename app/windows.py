@@ -307,7 +307,7 @@ class WindowCSVMapping(tk.Toplevel):
             update = False
             if header == self.mapping.get("Extension", {}).get("Key", None):
                 key = True
-            if header in self.mapping.get("Extension", {}).get("Update", {}).values():
+            if header in self.mapping.get("Extension", {}).get("Update", {}):
                 update = True
 
             self.add_mapping_field_set(
@@ -348,6 +348,13 @@ class WindowCSVMapping(tk.Toplevel):
         chk_csv_mapping_key.grid(
             row=len(self.mapping_fields) + 2, column=4, sticky="w")
 
+        # Remove Button
+        btn_csv_mapping_remove = tk.Button(
+            master=frm_csv_mapping_fields, text="-", command=lambda row_index=len(self.mapping_fields): self.delete_mapping_field_set(row_index)
+        )
+        btn_csv_mapping_remove.grid(
+            row=len(self.mapping_fields) + 2, column=5, sticky="w")
+
         if key:
             chk_csv_mapping_key.invoke()
         self.mapping_fields.append(
@@ -356,12 +363,16 @@ class WindowCSVMapping(tk.Toplevel):
                 field=ent_csv_mapping_3cx_field,
                 update=chk_csv_mapping_update,
                 key=chk_csv_mapping_key,
+                delete=btn_csv_mapping_remove
             )
         )
 
-    def delete_mapping_field_set(self):
-        last_row = self.mapping_fields.pop()
-        for widget in last_row:
+    def delete_mapping_field_set(self, row_index=None):
+        if row_index is None:
+            row_index = len(self.mapping_fields)
+
+        row = self.mapping_fields.pop(row_index)
+        for widget in row:
             widget.destroy()
 
     def handle_checkbox_key_change(self):

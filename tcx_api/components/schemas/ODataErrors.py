@@ -1,24 +1,24 @@
 from typing import Optional
-from pydantic import conlist
+from pydantic import conlist, BaseModel
 
 
-class InnerError:
+class InnerError(BaseModel):
     """The structure of this object is service-specific"""
 
 
-class ErrorDetails:
+class ErrorDetails(BaseModel):
     code: str
     message: str
     target: Optional[str] = None
 
 
-class MainError:
+class MainError(BaseModel):
     code: str
-    details: Optional[conlist(ErrorDetails)]
-    innererror: Optional[InnerError]
+    details: Optional[conlist(ErrorDetails)] = None
+    innererror: Optional[InnerError] = None
     message: str
     target: Optional[str] = None
 
 
-class ODataError:
+class ODataError(BaseModel):
     error: MainError

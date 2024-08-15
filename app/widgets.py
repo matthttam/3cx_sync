@@ -25,3 +25,4 @@ class ExtensionMappingFieldSet(NamedTuple):
     field: tk.Entry
     update: Checkbox
     key: Checkbox
+    delete: tk.Button

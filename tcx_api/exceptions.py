@@ -1,5 +1,32 @@
+import json
+from requests import HTTPError
+from tcx_api.components.schemas.ODataErrors import ErrorDetails, MainError
+
+
 class APIError(Exception):
     """Base class for API-related errors."""
+
+    def __init__(self, e: HTTPError):
+        self._http_error = e
+        self.response_error = json.loads(self._http_error.response.text)
+        self.MainError = MainError(**self.response_error['error'])
+        self.message = self.format_main_error(self.MainError)
+
+    def format_main_error(self, error: MainError):
+        message = f"{f'[{error.code}] 'if error.code else ''}{
+            error.message}"
+        for error_details in error.details:
+            message += '\n' + self.format_error_details(error_details)
+        return message
+
+    def format_error_details(self, error_details: ErrorDetails):
+        # code = error_details.code
+        # message = error_details.message
+        # message_info = message.split('.')
+        return f"[{error_details.code}] {error_details.message}{f' {error_details.target}' if error_details.target else ''}"
+
+    def __str__(self):
+        return self.message or ""
 
 
 class UserListError(APIError):
@@ -7,7 +34,11 @@ class UserListError(APIError):
 
 
 class UserGetError(APIError):
-    """Error raised when there is an issue getting a use."""
+    """Error raised when there is an issue getting a user."""
+
+
+class UserCreateError(APIError):
+    """Error raised when there is an issue creating a user."""
 
 
 class APIAuthenticationError(Exception):
@@ -18,6 +49,9 @@ class APIAuthenticationError(Exception):
         HTTP Response Code
     """
 
-    def __init__(self, http_response_status_code, http_response_error_message):
-        self.message = f"Authentication Failure. {http_response_error_message} ({http_response_status_code})"
-        super().__init__(self.message)
+    def __init__(self, http_error: HTTPError):
+        self.status_code = http_error.response.status_code
+        self.error_message = str(http_error)
+
+    def __str__(self):
+        return f"Authentication Failure. {self.error_message} ({self.status_code})"
