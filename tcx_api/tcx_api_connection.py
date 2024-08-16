@@ -1,7 +1,7 @@
 import requests
 import time
 
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 from tcx_api.exceptions import APIAuthenticationError
 from tcx_api.api import API
@@ -32,8 +32,9 @@ class TCX_API_Connection(API):
         self._token = AuthenticationToken(**token)
         self._update_token_expiry_time(self.token.expires_in)
 
-    def is_token_expired(self):
-        return time.time() > self.token_expiry_time
+    def is_token_expired(self, buffer: Optional[int] = 5) -> bool:
+        expiration_check_time = self.token_expiry_time - buffer
+        return time.time() > expiration_check_time
 
     def _update_token_expiry_time(self, expires_in: int) -> None:
         self.token_expiry_time = time.time() + expires_in
@@ -66,36 +67,16 @@ class TCX_API_Connection(API):
     def get(self, endpoint: str, params: ListParameters) -> requests.Response:
         return self._make_request('get', endpoint,
                                   params=params.model_dump(exclude_none=True))
-        # url = self.get_api_endpoint_url(endpoint)
-        # response = self.session.get(
-        #    url=url,
-        #    params=params.model_dump(exclude_none=True),
-        #    headers=self._get_headers(),
-        # )
-        # response.raise_for_status()
-        # return response
 
     def post(self, endpoint: str, data: dict) -> requests.Response:
         return self._make_request('post', endpoint,
                                   json=data)
-        # url = self.get_api_endpoint_url(endpoint)
-        # response = self.session.post(url=url, data=data)
-        # response.raise_for_status()
-        # return response
 
-    def patch(self, endpoint: str, params, data: dict) -> requests.Response:
-        return self._make_request('patch', endpoint, data=data)
-        # url = self.get_api_endpoint_url(endpoint)
-        # response = self.session.patch(url=url, params=params, data=data)
-        # response.raise_for_status()
-        # return response
+    def patch(self, endpoint: str, data: dict) -> requests.Response:
+        return self._make_request('patch', endpoint, json=data)
 
     def delete(self, endpoint: str, id: int) -> requests.Response:
         return self._make_request('delete', endpoint, params=id)
-        # url = self.get_api_endpoint_url(endpoint)
-        # response = self.session.delete(url=url, params=id)
-        # response.raise_for_status()
-        # return response#
 
     def authenticate(self, username, password):
         data = {"SecurityCode": "", "Username": username, "Password": password}

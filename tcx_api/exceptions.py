@@ -10,7 +10,7 @@ class APIError(Exception):
         self._http_error = e
         self.response_error = json.loads(self._http_error.response.text)
         self.MainError = MainError(**self.response_error['error'])
-        self.message = self.format_main_error(self.MainError)
+        self.api_error_Message = self.format_main_error(self.MainError)
 
     def format_main_error(self, error: MainError):
         message = f"{f'[{error.code}] 'if error.code else ''}{
@@ -26,23 +26,28 @@ class APIError(Exception):
         return f"[{error_details.code}] {error_details.message}{f' {error_details.target}' if error_details.target else ''}"
 
     def __str__(self):
-        return self.message or ""
+        return f"{getattr(self, 'message', '')} " + self.api_error_Message
+        # return self.message or ""
 
 
 class UserListError(APIError):
     """Error raised when there is an issue listing users."""
+    message = "Unable to retrieve users."
 
 
 class UserGetError(APIError):
     """Error raised when there is an issue getting a user."""
+    message = "Unable to retrieve user."
 
 
 class UserCreateError(APIError):
     """Error raised when there is an issue creating a user."""
+    message = "Unable to create user."
 
 
 class UserUpdateError(APIError):
     """Error raised when there is an issue updating a user."""
+    message = "Unable to update user."
 
 
 class APIAuthenticationError(Exception):

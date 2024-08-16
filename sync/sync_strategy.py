@@ -1,10 +1,10 @@
+from abc import ABC, abstractmethod
 import os
 import csv
 
-from sync.sync import SyncSourceStrategy
 from app.mapping import CSVMapping
-from typing import Optional, List, Dict
-from tcx_api.components.schemas.pbx import User
+from typing import Callable, Optional, List, Dict
+from tcx_api.components.schemas.pbx import Group, User
 from sync.schema import CSVUser
 from pydantic import TypeAdapter
 
@@ -18,6 +18,32 @@ def create_subclass_with_custom_comparison(prefix: str, base_class, properties_t
         return True
 
     return type(prefix + base_class.__name__, (base_class,), {"__eq__": custom_eq})
+
+
+class SyncSourceStrategy(ABC):
+    @property
+    @abstractmethod
+    def mapping(self):
+        ...
+
+    def __init__(self, output: Callable):
+        self.output = output
+
+    @abstractmethod
+    def initialize(self) -> None:
+        ...
+
+    @abstractmethod
+    def get_source_users(self) -> Optional[list[User]]:
+        ...
+
+    @abstractmethod
+    def get_source_groups(self) -> Optional[list[Group]]:
+        ...
+
+    @abstractmethod
+    def get_user_update_fields(self) -> list:
+        ...
 
 
 class SyncCSV(SyncSourceStrategy):
@@ -53,8 +79,11 @@ class SyncCSV(SyncSourceStrategy):
 
             for row in csv_reader:
                 row_dict = dict(zip(headers, row))
-                user_data.append(
-                    {key: row_dict[value] for key, value in user_mapping.items() if value in row_dict})
+                user_dict = {
+                    key: row_dict[value] for key, value in user_mapping.items() if value in row_dict}
+                if (user_dict['Enabled'] == '0'):
+                    user_dict['HotdeskingAssignment'] = ''
+                user_data.append(user_dict)
         csv_user_list = TypeAdapter(List[CSVUser]).validate_python(user_data)
         self.output(f"Loaded {len(csv_user_list)} Users from CSV File")
         return csv_user_list

@@ -1,45 +1,24 @@
 import tkinter as tk
 from datetime import datetime
-from abc import ABC, abstractmethod
-from typing import Callable, Optional, NamedTuple
+from typing import Optional, NamedTuple
 from app.config import TCXConfig
+from sync.sync_strategy import SyncSourceStrategy
 from tcx_api.tcx_api_connection import TCX_API_Connection
 from tcx_api.resources.user import UserResource
 from tcx_api.components.schemas.pbx import User, Group
 from tcx_api.resources.user import ListUserParameters
 from tcx_api import exceptions as TCX_Exceptions
 from tcx_api.exceptions import APIAuthenticationError
-
-
-class SyncSourceStrategy(ABC):
-    @property
-    @abstractmethod
-    def mapping(self):
-        ...
-
-    def __init__(self, output: Callable):
-        self.output = output
-
-    @abstractmethod
-    def initialize(self) -> None:
-        ...
-
-    @abstractmethod
-    def get_source_users(self) -> Optional[list[User]]:
-        ...
-
-    @abstractmethod
-    def get_source_groups(self) -> Optional[list[Group]]:
-        ...
-
-    @abstractmethod
-    def get_user_update_fields(self) -> list:
-        ...
+from sync.comparison import UserChangeDetail, UserComparer
 
 
 class UserComparisonResult(NamedTuple):
     users_to_create: list[User]
     users_to_update: list[User]
+
+
+class UserUpdateInfo(NamedTuple):
+    user_to_update: User
 
 
 class Sync:
@@ -81,20 +60,25 @@ class Sync:
         self.source_user_list = self.sync_source.get_source_users()
         # self.source_group_list = self.sync_source.get_source_groups()
         self.tcx_user_list = self.get_users()
-        users_to_create = self.get_users_to_create(tcx_user_list=self.tcx_user_list,
-                                                   source_user_list=self.source_user_list)
-        users_to_update = self.get_users_to_update(tcx_user_list=self.tcx_user_list,
-                                                   source_user_list=self.source_user_list, update_fields=self.sync_source.get_user_update_fields())
+        # users_to_create = self.get_users_to_create(tcx_user_list=self.tcx_user_list,
+        #                                           source_user_list=self.source_user_list)
+        # users_to_update = self.get_users_to_update(tcx_user_list=self.tcx_user_list,
+        #                                           source_user_list=self.source_user_list, update_fields=self.sync_source.get_user_update_fields())
 
         # comparison_results = self.compare_users(tcx_user_list=self.tcx_user_list,
         #                                        source_user_list=self.source_user_list)
-
+        user_comparer = UserComparer(
+            tcx_user_list=self.tcx_user_list, sync_source=self.sync_source)
+        users_to_update = user_comparer.get_users_to_update()
         if len(users_to_update) > 0:
-            self.update_users(users=users_to_update)
+            self.output(f"Count of users to update: {len(users_to_update)}")
+            self.update_users(user_change_details=users_to_update)
         else:
             self.output("No users to update.")
 
+        users_to_create = user_comparer.get_users_to_create()
         if len(users_to_create) > 0:
+            self.output(f"Count of users to create: {len(users_to_create)}")
             self.create_users(users=users_to_create)
         else:
             self.output("No users to create.")
@@ -182,14 +166,17 @@ class Sync:
         except TCX_Exceptions.UserCreateError as e:
             self.output(str(e))
 
-    def update_users(self, users: list[User]):
-        for user in users:
-            self.update_user(user)
+    def update_users(self, user_change_details: list[UserChangeDetail]):
+        for user_change_detail in user_change_details:
+            self.update_user(user_change_detail)
 
-    def update_user(self, user: User):
+    def update_user(self, user_change_detail: UserChangeDetail):
         try:
-            self.UserResource.update_user(user)
-            self.output(f"Updated 3CX user {user.Number}")
+            self.output(f"Updating 3CX user {
+                        user_change_detail.Number}")
+            self.output(f"Changing {str(user_change_detail)}")
+            self.UserResource.update_user(user_change_detail.user_to_update)
+
         except TCX_Exceptions.UserUpdateError as e:
             self.output(str(e))
 
@@ -197,9 +184,9 @@ class Sync:
         try:
             self.output("Fetching Users From 3CX")
             users = self.UserResource.list_user(params=ListUserParameters())
-        except TCX_Exceptions.APIError as e:
-            self.output("Failed to Fetch Users: {e}")
-            return False
+        except TCX_Exceptions.UserListError as e:
+            self.output(f"Failed to Fetch Users: {str(e)}")
+            raise
         self.output(f"Fetched {len(users)} Users From 3CX")
         return users
 
@@ -215,5 +202,5 @@ class Sync:
             )
             self.output("Authentication Successful")
         except TCX_Exceptions.APIAuthenticationError as e:
-            self.output(f"Failed to authenticate: {e}")
+            self.output(f"Failed to authenticate: {str(e)}")
             raise e

@@ -119,16 +119,13 @@ class UserResource(APIResource):
             response_value = response.json().get("value")
             return TypeAdapter(List[User]).validate_python(response_value)
         except requests.HTTPError as e:
-            raise TCX_Exceptions.UserListError(f"Failed to fetch users: {e}")
+            raise TCX_Exceptions.UserListError(e)
 
     def create_user(self, user: User):
         """Add new entity to Users"""
         default_user_dict = self.default_user
         user_dict = user.model_dump(
             exclude_none=True, exclude_unset=True)
-        # user_dict['Groups'] = [
-        # {'GroupId': 3078, 'Rights': {'RoleName': "users"}}]
-        # user_dict['VMEmailOptions'] = 'Attachment'
         merged_user_dict = default_user_dict | user_dict
         try:
             self.api.post(self.endpoint, merged_user_dict)
@@ -140,17 +137,17 @@ class UserResource(APIResource):
             response = self.api.get(endpoint=f"Users({id})", params=params)
             return TypeAdapter(User).validate_python(response.json())
         except requests.HTTPError as e:
-            raise TCX_Exceptions.UserGetError(f"Failed to fetch user: {e}")
+            raise TCX_Exceptions.UserGetError(e)
 
     def update_user(self, user: User):
-        """Update entity in Users"""
+        """Update a user entity"""
+        user_dict = user.model_dump(exclude_unset=True,
+                                    exclude_none=True, serialize_as_any=True)
         try:
-            response = self.api.patch(
-                endpoint=self.endpoint, params=user.Id, json=user)
-            return response.json()["value"]
-        except Exception as e:
-            print(f"Failed to update user: {e}")
-            return None
+            self.api.patch(
+                endpoint=f"{self.endpoint}({user.Id})", data=user_dict)
+        except requests.HTTPError as e:
+            raise TCX_Exceptions.UserUpdateError(e)
 
     def delete_user(self, user: User | int):
         if isinstance(user, User):
