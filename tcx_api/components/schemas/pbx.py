@@ -92,12 +92,14 @@ class TrunkVariable(Schema):
 class BackupSchedule(Schema):
     Day: Optional[DayOfWeek] = None
     RepeatHours: Optional[int] = None
-    ScheduleType: Optional[ScheduleType] = None
+    schedule_type: Optional[ScheduleType] = Field(
+        None, alias="ScheduleType")
     Time: Optional[str] = None
 
 
 class LocationSettings(Schema):
-    FileSystemType: Optional[FileSystemType] = None
+    file_system_type: Optional[FileSystemType] = Field(
+        None, alias="FileSystemType")
     FtpPassword: Optional[str] = None
     FtpPath: Optional[str] = None
     FtpUser: Optional[str] = None
@@ -126,7 +128,8 @@ class GroupProps(Schema):
     ResellerId: Optional[str] = None
     ResellerName: Optional[str] = None
     SbcMaxCount: Optional[int] = None
-    StartupLicense: Optional[StartupLicense] = None
+    startup_license: Optional[StartupLicense] = Field(
+        None, alias="StartupLicense")
     StartupOwnerEmail: Optional[str] = None
     SubcriptionExpireDate: Optional[datetime]
     Subscription: Optional[str] = None
@@ -423,7 +426,8 @@ class License(Schema):
 class CrmContact(Schema):
     CompanyName: Optional[str] = None
     ContactRawData: Optional[str] = None
-    ContactType: Optional[ContactType] = None
+    contact_type: Optional[ContactType] = Field(
+        None, alias="ContactType")
     ContactUrl: Optional[str] = None
     Department: Optional[str] = None
     Email: Optional[str] = None
@@ -445,7 +449,8 @@ class Destination(Schema):
     External: Optional[str] = None
     Name: Optional[str] = None
     Number: Optional[str] = None
-    PeerType: Optional[PeerType] = None
+    peer_type: Optional[PeerType] = Field(
+        None, alias="PeerType")
     To: Optional[DestinationType] = None
 
 
@@ -466,8 +471,10 @@ class BlackListNumber(Schema):
 
 
 class BlocklistAddr(Schema):
-    AddedBy: Optional[AddedBy] = None
-    BlockType: Optional[BlockType] = None
+    added_by: Optional[AddedBy] = Field(
+        None, alias="AddedBy")
+    block_type: Optional[BlockType] = Field(
+        None, alias="BlockType")
     Description: Optional[str] = None
     ExpiresAt: Optional[datetime]
     Id: int
@@ -480,7 +487,8 @@ class ReceptionistForward(Schema):
     ForwardType: IVRForwardType
     Id: int
     Input: Optional[str] = None
-    PeerType: Optional[PeerType] = None
+    peer_type: Optional[PeerType] = Field(
+        None, alias="PeerType")
 
 
 class UserGroup(Schema):
@@ -490,7 +498,8 @@ class UserGroup(Schema):
     MemberName: Optional[str] = None
     Name: Optional[str] = None
     Number: Optional[str] = None
-    Rights: Optional[Rights] = None
+    rights: Optional[Rights] = Field(
+        None, alias="Rights")
     Type: Optional[DnType] = None
 
 
@@ -503,7 +512,8 @@ class Receptionist(Schema):
     Id: int
     InvalidKeyForwardDN: Optional[str] = None
     IsRegistered: Optional[bool] = None
-    IVRType: Optional[IVRType] = None
+    ivr_type: Optional[IVRType] = Field(
+        None, alias="IVRType")
     Name: Optional[str] = None
     Number: Optional[str] = None
     OfficeRoute: Optional[Route] = None
@@ -684,7 +694,7 @@ class ForwardingProfile(Schema):
     CustomMessage: Optional[str] = None
     CustomName: Optional[str] = None
     DisableRingGroupCalls: Optional[bool] = None
-    Id: int
+    # Id: int
     Name: Optional[str] = None
     NoAnswerTimeout: Optional[int] = None
     OfficeHoursAutoQueueLogOut: Optional[bool] = None
@@ -2416,7 +2426,8 @@ class CrmIntegration(Schema):
     EnabledForExternalCalls: Optional[bool] = None
     Id: str
     Name: str
-    PhonebookPriorityOptions: Optional[PhonebookPriorityOptions] = None
+    phonebook_priority_options: Optional[PhonebookPriorityOptions] = Field(
+        None, alias="PhonebookPriorityOptions")
     PhonebookSynchronization: Optional[bool] = None
     PossibleValues: conlist(CrmSelectableValue) = Field(default_factory=list)
     VariableChoices: Optional[conlist(CrmChoice)] = None

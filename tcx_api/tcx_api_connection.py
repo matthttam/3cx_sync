@@ -5,7 +5,7 @@ from typing import NamedTuple, Optional
 
 from tcx_api.exceptions import APIAuthenticationError
 from tcx_api.api import API
-from tcx_api.components.parameters import ListParameters
+from tcx_api.components.parameters import QueryParameters
 
 
 class AuthenticationToken(NamedTuple):
@@ -53,6 +53,7 @@ class TCX_API_Connection(API):
         url = self.get_api_endpoint_url(endpoint)
         if self.is_token_expired():
             self.refresh_access_token()
+
         response = self.session.request(
             method, url, headers=self._get_headers(), **kwargs)
         response.raise_for_status()
@@ -64,9 +65,9 @@ class TCX_API_Connection(API):
         self.session = requests.Session()
         self.token_expiry_time = 0
 
-    def get(self, endpoint: str, params: ListParameters) -> requests.Response:
+    def get(self, endpoint: str, params: QueryParameters) -> requests.Response:
         return self._make_request('get', endpoint,
-                                  params=params.model_dump(exclude_none=True))
+                                  params=params.model_dump(exclude_none=True, by_alias=True))
 
     def post(self, endpoint: str, data: dict) -> requests.Response:
         return self._make_request('post', endpoint,

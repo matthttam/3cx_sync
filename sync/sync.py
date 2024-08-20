@@ -12,13 +12,13 @@ from tcx_api.exceptions import APIAuthenticationError
 from sync.comparison import UserChangeDetail, UserComparer
 
 
-class UserComparisonResult(NamedTuple):
-    users_to_create: list[User]
-    users_to_update: list[User]
-
-
-class UserUpdateInfo(NamedTuple):
-    user_to_update: User
+# class UserComparisonResult(NamedTuple):
+#    users_to_create: list[User]
+#    users_to_update: list[User]
+#
+#
+# class UserUpdateInfo(NamedTuple):
+#    user_to_update: User
 
 
 class Sync:
@@ -33,7 +33,6 @@ class Sync:
         text_output = self.newline + self.get_timestamp() + value
         self.text.insert(tk.END, text_output)
         self.newline = "\n"
-        # self.text.master.update()
         self.text.winfo_toplevel().update()
 
     def get_timestamp(self) -> str:
@@ -99,61 +98,61 @@ class Sync:
         self.output(f"Count of users to create: {len(user_keys_to_create)}")
         return users_to_create
 
-    def get_users_to_update(self, tcx_user_list: list[User], source_user_list: list[User], update_fields: list) -> list[User]:
-        tcx_user_dict = self.index_users(users=tcx_user_list)
-        tcx_user_keys = set(tcx_user_dict.keys())
-        source_user_dict = self.index_users(users=source_user_list)
-        source_user_keys = set(source_user_dict.keys())
+    # def get_users_to_update(self, tcx_user_list: list[User], source_user_list: list[User], update_fields: list) -> list[User]:
+    #    tcx_user_dict = self.index_users(users=tcx_user_list)
+    #    tcx_user_keys = set(tcx_user_dict.keys())
+    #    source_user_dict = self.index_users(users=source_user_list)
+    #    source_user_keys = set(source_user_dict.keys())
+#
+    #    users_to_update = []
+    #    user_keys_to_compare = list(
+    #        source_user_keys.intersection(tcx_user_keys))
+    #    self.output(f"Comparing {len(user_keys_to_compare)} users")
+#
+    #    for key in user_keys_to_compare:
+    #        tcx_user = tcx_user_dict[key]
+    #        source_user = source_user_dict[key]
+    #        updated_fields = {}
+#
+    #        for field in update_fields:
+    #            tcx_value = getattr(tcx_user, field, None)
+    #            source_value = getattr(source_user, field, None)
+#
+    #            if tcx_value != source_value:
+    #                updated_fields[field] = source_value
+#
+    #        if updated_fields:
+    #            updated_user = User(**(tcx_user.model_dump() | updated_fields))
+    #            users_to_update.append(updated_user)
+    #    return users_to_update
 
-        users_to_update = []
-        user_keys_to_compare = list(
-            source_user_keys.intersection(tcx_user_keys))
-        self.output(f"Comparing {len(user_keys_to_compare)} users")
-
-        for key in user_keys_to_compare:
-            tcx_user = tcx_user_dict[key]
-            source_user = source_user_dict[key]
-            updated_fields = {}
-
-            for field in update_fields:
-                tcx_value = getattr(tcx_user, field, None)
-                source_value = getattr(source_user, field, None)
-
-                if tcx_value != source_value:
-                    updated_fields[field] = source_value
-
-            if updated_fields:
-                updated_user = User(**(tcx_user.model_dump() | updated_fields))
-                users_to_update.append(updated_user)
-        return users_to_update
-
-    def compare_users(self, tcx_user_list: list[User], source_user_list: list[User]) -> UserComparisonResult:
-        tcx_user_dict = self.index_users(users=tcx_user_list)
-        tcx_user_keys = set(tcx_user_dict.keys())
-        source_user_dict = self.index_users(users=source_user_list)
-        source_user_keys = set(source_user_dict.keys())
-
-        # Determine users to create
-        user_keys_to_create = list(source_user_keys - tcx_user_keys)
-        users_to_create = [source_user_dict[k] for k in list(
-            set(source_user_dict).intersection(user_keys_to_create))]
-        self.output(f"Count of users to create: {len(user_keys_to_create)}")
-
-        # Determine users to compare with existing users
-        user_keys_to_compare = list(
-            source_user_keys.intersection(tcx_user_keys))
-        users_to_compare = {k: source_user_dict[k] for k in list(
-            set(source_user_dict).intersection(user_keys_to_compare))}
-        self.output(f"Comparing {len(user_keys_to_compare)} users")
-
-        # Determine users that have been changed
-        users_to_update = list()
-        source_users_to_update = {tcx_user_dict[k].Number: source_user_dict[k] for k in set(
-            users_to_compare.keys()) if source_user_dict[k] != tcx_user_dict[k]}
-        for key, source_user_to_update in source_users_to_update.items():
-            users_to_update.append(tcx_user_dict[key] | source_user_to_update)
-        self.output(f"Count of users to update: {len(users_to_update)}")
-        return UserComparisonResult(users_to_create=users_to_create, users_to_update=users_to_update)
+    # def compare_users(self, tcx_user_list: list[User], source_user_list: list[User]) -> UserComparisonResult:
+    #    tcx_user_dict = self.index_users(users=tcx_user_list)
+    #    tcx_user_keys = set(tcx_user_dict.keys())
+    #    source_user_dict = self.index_users(users=source_user_list)
+    #    source_user_keys = set(source_user_dict.keys())
+#
+    #    # Determine users to create
+    #    user_keys_to_create = list(source_user_keys - tcx_user_keys)
+    #    users_to_create = [source_user_dict[k] for k in list(
+    #        set(source_user_dict).intersection(user_keys_to_create))]
+    #    self.output(f"Count of users to create: {len(user_keys_to_create)}")
+#
+    #    # Determine users to compare with existing users
+    #    user_keys_to_compare = list(
+    #        source_user_keys.intersection(tcx_user_keys))
+    #    users_to_compare = {k: source_user_dict[k] for k in list(
+    #        set(source_user_dict).intersection(user_keys_to_compare))}
+    #    self.output(f"Comparing {len(user_keys_to_compare)} users")
+#
+    #    # Determine users that have been changed
+    #    users_to_update = list()
+    #    source_users_to_update = {tcx_user_dict[k].Number: source_user_dict[k] for k in set(
+    #        users_to_compare.keys()) if source_user_dict[k] != tcx_user_dict[k]}
+    #    for key, source_user_to_update in source_users_to_update.items():
+    #        users_to_update.append(tcx_user_dict[key] | source_user_to_update)
+    #    self.output(f"Count of users to update: {len(users_to_update)}")
+    #    return UserComparisonResult(users_to_create=users_to_create, users_to_update=users_to_update)
 
     def create_users(self, users: list[User]):
         for user in users:
@@ -183,7 +182,8 @@ class Sync:
     def get_users(self) -> list[User]:
         try:
             self.output("Fetching Users From 3CX")
-            users = self.UserResource.list_user(params=ListUserParameters())
+            users = self.UserResource.list_user(
+                params=ListUserParameters(expand="Groups($expand=Rights,GroupRights),ForwardingProfiles,ForwardingExceptions,Phones,Greetings"))
         except TCX_Exceptions.UserListError as e:
             self.output(f"Failed to Fetch Users: {str(e)}")
             raise

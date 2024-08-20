@@ -1,4 +1,5 @@
 import json
+from pydantic import TypeAdapter
 import requests
 
 from typing import List
@@ -6,10 +7,10 @@ from enum import auto
 from tcx_api.resources.api_resource import APIResource
 from tcx_api.util import TcxStrEnum
 
-from pydantic import TypeAdapter
-from tcx_api.components.schemas.ODataErrors import MainError
+
 from tcx_api.components.schemas.pbx import User
-from tcx_api.components.parameters import GetParameters, ListParameters
+from tcx_api.components.parameters import (ExpandParameters, ListParameters, OrderbyParameters,
+                                           SelectParameters)
 from tcx_api import exceptions as TCX_Exceptions
 
 
@@ -84,29 +85,35 @@ class UserProperties(TcxStrEnum):
     WebMeetingFriendlyName = auto()
 
 
-class ListUserParameters(ListParameters):
-    """
-    Parameters for listing users.
+# class ListUserParameters(ListParameters):
+#    """
+#    Parameters for listing users.
+#
+#    Attributes:
+#        top (int): The number of items to retrieve from the top.
+#        skip (int): The number of items to skip.
+#        search (str): The search query.
+#        filter (str): The filter to apply.
+#        count (bool): Indicates if a count should be returned or not.
+#        orderby (str): The field to order by.
+#        select (list): Select properties to be returned.
+#        expand (str): Expand related entities.
+#
+#    """
+#
+#    orderby: str = None
+#    select: List[UserProperties] = None
+#    expand: str = None
 
-    Attributes:
-        top (int): The number of items to retrieve from the top.
-        skip (int): The number of items to skip.
-        search (str): The search query.
-        filter (str): The filter to apply.
-        count (bool): Indicates if a count should be returned or not.
-        orderby (str): The field to order by.
-        select (list): Select properties to be returned.
-        expand (str): Expand related entities.
+class ListUserParameters(ListParameters, OrderbyParameters, SelectParameters[UserProperties], ExpandParameters):
+    ...
 
-    """
-
-    orderby: str = None
-    select: List[UserProperties] = None
-    expand: str = None
+# class GetUserParameters(GetParameters):
+#    select: List[UserProperties] = None
 
 
-class GetUserParameters(GetParameters):
-    select: List[UserProperties] = None
+class GetUserParameters(SelectParameters[UserProperties], ExpandParameters):
+    ...
 
 
 class UserResource(APIResource):
