@@ -148,9 +148,9 @@ class UserResource(APIResource):
 
     def update_user(self, user: User):
         """Update a user entity"""
-        user_dict = user.model_dump(exclude_unset=True,
-                                    exclude_none=True, serialize_as_any=True)
         try:
+            user_dict = user.model_dump(exclude_unset=True,
+                                        exclude_none=True, serialize_as_any=True)
             self.api.patch(
                 endpoint=f"{self.endpoint}({user.Id})", data=user_dict)
         except requests.HTTPError as e:

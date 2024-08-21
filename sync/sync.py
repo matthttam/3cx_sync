@@ -31,7 +31,10 @@ class Sync:
 
     def output(self, value: str) -> None:
         text_output = self.newline + self.get_timestamp() + value
+        # self.text.configure(state="normal")
         self.text.insert(tk.END, text_output)
+        # self.text.configure(state="disabled")
+        self.text.see("end")
         self.newline = "\n"
         self.text.winfo_toplevel().update()
 

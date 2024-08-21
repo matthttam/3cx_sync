@@ -5,6 +5,7 @@ from app.config import AppConfig, TCXConfig
 from sync.sync_strategy import SyncCSV
 from sync.sync import Sync
 from tcx_api.exceptions import APIAuthenticationError
+from tkinter.scrolledtext import ScrolledText
 
 
 class App(tk.Tk):
@@ -16,11 +17,13 @@ class App(tk.Tk):
         self.tcx_config = TCXConfig()
 
         # Window Options
-        self.wm_title("3cx Sync Config")
+        self.wm_title("3cx Sync")
+        self.geometry('1200x800')
 
         # Create a window frame
-        frm_window = tk.Frame(master=self)
-        frm_window.pack()
+        frm_window = tk.Frame(
+            master=self, background="pink", width=500, height=1000)
+        frm_window.pack(fill="both", anchor="ne", expand=True)
 
         # Frame: Left Column
         frm_left_column = tk.Frame(master=frm_window)
@@ -43,24 +46,27 @@ class App(tk.Tk):
         btn_show_window_3cx_config.pack(fill="x")
 
         # Right Frame
-        frm_right_column = tk.Frame(master=frm_window)
-        frm_right_column.pack(side="left")
+        frm_right_column = tk.Frame(master=frm_window, background="blue")
+        frm_right_column.pack(side="left", fill="both",
+                              expand=True, padx="5", pady="5")
 
         # Text:  Output
-        self.txt_output = tk.Text(
+        self.txt_output = ScrolledText(
             master=frm_right_column, relief="sunken", name="output"
         )
-        self.txt_output.pack(fill="both")
+        self.txt_output.pack(fill="both", expand=True)
+        # self.txt_output.bind("<1>", lambda event: self.txt_output.focus_set())
+        # self.txt_output.bind("<Key>", lambda e: "break")
 
         # Form: Sync
-        frm_sync = tk.Frame(master=frm_right_column)
-        frm_sync.pack()
+        # frm_sync = tk.Frame(master=frm_right_column, background="green")
+        # frm_sync.pack()
 
         # Button: Sync CSV
         btn_sync_csv = tk.Button(
-            master=frm_sync, text="Sync CSV", command=self.handle_csv_sync_click
+            master=frm_right_column, text="Sync CSV", command=self.handle_csv_sync_click
         )
-        btn_sync_csv.pack()
+        btn_sync_csv.pack(side="bottom", anchor="s")
 
         # Form: Navigation Buttons
         frm_navigation = tk.Frame(master=self)

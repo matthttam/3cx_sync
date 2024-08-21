@@ -8,7 +8,15 @@ class APIError(Exception):
 
     def __init__(self, e: HTTPError):
         self._http_error = e
-        self.response_error = json.loads(self._http_error.response.text)
+        if self._http_error.response.text:
+            self._parse_response_text(self._http_error.response.text)
+        else:
+            self.MainError = MainError(
+                code=str(self._http_error.response.status_code), message=self._http_error.response.reason)
+            self.api_error_Message = str(self.MainError)
+
+    def _parse_response_text(self, response_text: str):
+        self.response_error = json.loads(response_text)
         self.MainError = MainError(**self.response_error['error'])
         self.api_error_Message = self.format_main_error(self.MainError)
 
