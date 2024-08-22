@@ -44,5 +44,4 @@ class SyncLogger:
     @staticmethod
     def get_logger():
         """Returns the configured logger instance."""
-        # return self.logger
         return logging.getLogger(SyncLogger.logger_name)
