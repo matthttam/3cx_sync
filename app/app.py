@@ -1,17 +1,20 @@
 import requests
 import tkinter as tk
-from app.windows import WindowCSVMapping, Window3cxConfig
+from app.windows import WindowCSVMapping, Window3cxConfig, WindowPreferences
 from app.config import AppConfig, TCXConfig
 from sync.sync_strategy import SyncCSV
 from sync.sync import Sync
 from tcx_api.exceptions import APIAuthenticationError
 from tkinter.scrolledtext import ScrolledText
+from sync.logging import SyncLogger
 
 
 class App(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+
+        self.is_paused = False
 
         self.app_config = AppConfig()
         self.tcx_config = TCXConfig()
@@ -21,61 +24,79 @@ class App(tk.Tk):
         self.geometry('1200x800')
 
         # Create a window frame
-        frm_window = tk.Frame(
-            master=self, background="pink", width=500, height=1000)
-        frm_window.pack(fill="both", anchor="ne", expand=True)
+        self.frm_window = tk.Frame(
+            master=self, width=500, height=1000)
+        self.frm_window.pack(fill="both", anchor="ne", expand=True)
 
         # Frame: Left Column
-        frm_left_column = tk.Frame(master=frm_window)
-        frm_left_column.pack(side="left")
+        self.frm_left_column = tk.Frame(master=self.frm_window)
+        self.frm_left_column.pack(side="left", ipadx=5)
 
         # Button: Configure 3CX
-        btn_show_window_3cx_config = tk.Button(
-            master=frm_left_column,
+        self.btn_show_window_csv_config = tk.Button(
+            master=self.frm_left_column,
             text="Configure 3CX",
             command=self.show_Window3cxConfig,
         )
-        btn_show_window_3cx_config.pack(fill="x")
+        self.btn_show_window_csv_config.pack(fill="x")
 
         # Button: Configure CSV
-        btn_show_window_3cx_config = tk.Button(
-            master=frm_left_column,
+        self.btn_show_window_csv_config = tk.Button(
+            master=self.frm_left_column,
             text="Configure CSV",
             command=self.show_WindowCSVMapping,
         )
-        btn_show_window_3cx_config.pack(fill="x")
+        self.btn_show_window_csv_config.pack(fill="x")
+
+        # Button: Configure Preferences
+        self.btn_show_window_app_preferences = tk.Button(
+            master=self.frm_left_column,
+            text="Preferences",
+            command=self.show_WindowPreferences,
+        )
+        self.btn_show_window_app_preferences.pack(fill="x")
 
         # Right Frame
-        frm_right_column = tk.Frame(master=frm_window, background="blue")
-        frm_right_column.pack(side="left", fill="both",
-                              expand=True, padx="5", pady="5")
+        self.frm_right_column = tk.Frame(master=self.frm_window)
+        self.frm_right_column.pack(side="left", fill="both",
+                                   expand=True, padx="5", pady="5")
 
         # Text:  Output
         self.txt_output = ScrolledText(
-            master=frm_right_column, relief="sunken", name="output"
+            master=self.frm_right_column, relief="sunken", name="output"
         )
         self.txt_output.pack(fill="both", expand=True)
-        # self.txt_output.bind("<1>", lambda event: self.txt_output.focus_set())
-        # self.txt_output.bind("<Key>", lambda e: "break")
 
-        # Form: Sync
-        # frm_sync = tk.Frame(master=frm_right_column, background="green")
-        # frm_sync.pack()
+        # Form: Sync Buttons
+        self.frm_sync_buttons = tk.Frame(
+            master=self.frm_right_column, background="green")
+        self.frm_sync_buttons.pack(side="bottom")
 
         # Button: Sync CSV
-        btn_sync_csv = tk.Button(
-            master=frm_right_column, text="Sync CSV", command=self.handle_csv_sync_click
+        self.btn_sync_csv = tk.Button(
+            master=self.frm_sync_buttons, text="Sync CSV", command=self.handle_csv_sync_click
         )
-        btn_sync_csv.pack(side="bottom", anchor="s")
+        self.btn_sync_csv.pack(side="left", anchor="s")
+        # Button: Pause/Resume
+        self.btn_pause_resume = tk.Button(
+            master=self.frm_sync_buttons, text="Pause", command=self.handle_pause_resume
+        )
+        self.btn_pause_resume.pack(side="left", anchor="s")
 
         # Form: Navigation Buttons
-        frm_navigation = tk.Frame(master=self)
-        frm_navigation.pack(side="bottom", anchor="e", pady=5)
+        self.frm_navigation = tk.Frame(master=self)
+        self.frm_navigation.pack(side="bottom", anchor="e", pady=5)
 
-        btn_exit = tk.Button(
-            master=frm_navigation, text="Exit", command=self.handle_exit_click
+        self.btn_exit = tk.Button(
+            master=self.frm_navigation, text="Exit", command=self.handle_exit_click
         )
-        btn_exit.grid(row=0, column=1, padx=5)
+        self.btn_exit.grid(row=0, column=1, padx=5)
+
+        # Add Logging
+        sync_logger = SyncLogger()
+        sync_logger.addFileHandler()
+        sync_logger.addTextWindowHandler(self.txt_output)
+        self.sync_logger = sync_logger.get_logger()
 
     def show_Window3cxConfig(self):
         Window3cxConfig(master=self, tcx_config=self.tcx_config)
@@ -83,14 +104,36 @@ class App(tk.Tk):
     def show_WindowCSVMapping(self):
         WindowCSVMapping(master=self)
 
+    def show_WindowPreferences(self):
+        WindowPreferences(master=self)
+
     def handle_exit_click(self):
         self.destroy()
 
     def handle_csv_sync_click(self):
-        sync = Sync(sync_source=SyncCSV, text=self.txt_output)
+        sync = Sync(app=self, sync_source=SyncCSV)
         try:
             sync.sync()
         except APIAuthenticationError:
-            sync.output("Failed to sync. Unable to authenticate.")
+            self.output("Failed to sync. Unable to authenticate.")
         except Exception as e:
-            sync.output(f"Failed to sync. {e}")
+            self.output(f"Failed to sync. {e}")
+
+    def handle_pause_resume(self):
+        self.is_paused = not self.is_paused
+        self.btn_pause_resume.configure(
+            text="Resume" if self.is_paused else "Pause")
+        if (self.is_paused):
+            self.pause_app()
+
+    def pause_app(self):
+        self.output(f"Paused by user")
+        while True:
+            self.update()
+            self.after(100)
+            if not self.is_paused:
+                return
+
+    def output(self, value: str, level='info') -> None:
+        self.sync_logger.info(value)
+        self.update()

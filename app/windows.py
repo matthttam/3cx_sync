@@ -1,4 +1,3 @@
-import tcx_api
 import tkinter as tk
 from tcx_api.tcx_api_connection import TCX_API_Connection
 from tkinter.filedialog import askopenfilename
@@ -9,10 +8,46 @@ from app.mapping import CSVMapping
 from app.exceptions import ConfigSaveError
 
 
-class Window3cxConfig(tk.Toplevel):
+class Window(tk.Toplevel):
+    def __init__(self, master, *args, **kwargs):
+        tk.Toplevel.__init__(self, master, *args, **kwargs)
+        self.grab_set()
+        self.focus_force()
+
+        self.header_y_padding = (5, 15)
+        self.paragraph_x_padding = (15, 0)
+        self.frame_iy_padding = 5
+
+
+class WindowPreferences(Window):
+    def __init__(self, master, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        self.grab_set()
+        self.focus_force()
+
+        # Frame: window
+        self.frm_window = tk.Frame(master=self, name="preferences")
+        self.frm_window.pack(fill="both", expand=True)
+
+        # Frame: Mapping
+        self.frm_user_preferences = tk.Frame(master=self.frm_window)
+        self.frm_user_preferences.config(relief="ridge", borderwidth=2)
+        self.frm_user_preferences.pack(side="top", fill="both",
+                                       ipady=self.frame_iy_padding, expand=True)
+
+        # Label: User Preferences
+        self.lbl_extension_header = tk.Label(
+            master=self.frm_user_preferences, text="User Preferences", font=("Arial", 15)
+        )
+        self.lbl_extension_header.grid(
+            row=0, column=1, pady=self.header_y_padding, sticky="w", columnspan=3
+        )
+
+
+class Window3cxConfig(Window):
 
     def __init__(self, master, tcx_config: TCXConfig, *args, **kwargs):
-        tk.Toplevel.__init__(self, master, *args, **kwargs)
+        super().__init__(master, *args, **kwargs)
         self.widgets = {}
         self.tcx_config = tcx_config
         self.tcx_config.load()
@@ -29,9 +64,6 @@ class Window3cxConfig(tk.Toplevel):
             # self.vars[var].set(conf.get(var, ""))
 
     def build_gui(self) -> None:
-        self.grab_set()
-        self.focus_force()
-
         # Create a window frame
         self.widgets["frm_window"] = tk.Frame(master=self)
         self.widgets["frm_window"].pack()
@@ -149,14 +181,10 @@ class Window3cxConfig(tk.Toplevel):
             raise ConfigSaveError() from e
 
 
-class WindowCSVMapping(tk.Toplevel):
-    ""
+class WindowCSVMapping(Window):
 
     def __init__(self, master, *args, **kwargs):
-        tk.Toplevel.__init__(self, master, *args, **kwargs)
-        self.grab_set()
-        self.focus_force()
-
+        super().__init__(master, *args, **kwargs)
         self.mapping = CSVMapping()
         self.mapping.load_mapping_config()
         self.mapping_fields = []
@@ -167,32 +195,28 @@ class WindowCSVMapping(tk.Toplevel):
         extension = self.mapping.get("Extension", {})
         self.var_csv_mapping_extension_path.set(extension.get("Path", ""))
 
-        header_y_padding = (5, 15)
-        paragraph_x_padding = (15, 0)
-        frame_iy_padding = 5
-
         # Frame: window
-        frm_window = tk.Frame(master=self, name="window")
+        frm_window = tk.Frame(master=self, name="csv_mapping")
         frm_window.pack(fill="both", expand=True)
 
         # Frame: Mapping
         frm_csv_mapping = tk.Frame(master=frm_window)
         frm_csv_mapping.config(relief="ridge", borderwidth=2)
         frm_csv_mapping.pack(side="top", fill="both",
-                             ipady=frame_iy_padding, expand=True)
+                             ipady=self.frame_iy_padding, expand=True)
 
         # Extension Header
         lbl_extension_header = tk.Label(
             master=frm_csv_mapping, text="Extension Mapping", font=("Arial", 15)
         )
         lbl_extension_header.grid(
-            row=0, column=1, pady=header_y_padding, sticky="w", columnspan=3
+            row=0, column=1, pady=self.header_y_padding, sticky="w", columnspan=3
         )
 
         # Field: Extension Path
         lbl_extension_path = tk.Label(master=frm_csv_mapping, text="Path:")
         lbl_extension_path.grid(
-            row=2, column=1, padx=paragraph_x_padding, sticky="w")
+            row=2, column=1, padx=self.paragraph_x_padding, sticky="w")
 
         ent_extension_path = tk.Entry(
             master=frm_csv_mapping,
@@ -211,7 +235,7 @@ class WindowCSVMapping(tk.Toplevel):
             relief="sunken", borderwidth=2
         )
         frm_csv_mapping_fields.pack(
-            side="top", fill="both", ipady=frame_iy_padding, expand=True)
+            side="top", fill="both", ipady=self.frame_iy_padding, expand=True)
 
         # CSV Mapping Headers
         # Header: 3cx Field
