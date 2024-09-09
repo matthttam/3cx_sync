@@ -10,7 +10,8 @@ from app.exceptions import ConfigSaveError
 
 class Window(tk.Toplevel):
     def __init__(self, master, *args, **kwargs):
-        tk.Toplevel.__init__(self, master, *args, **kwargs)
+        # tk.Toplevel.__init__(self, master, *args, **kwargs)
+        super().__init__(master, *args, **kwargs)
         self.grab_set()
         self.focus_force()
 
@@ -31,17 +32,56 @@ class WindowPreferences(Window):
 
         # Frame: Mapping
         self.frm_user_preferences = tk.Frame(master=self.frm_window)
-        self.frm_user_preferences.config(relief="ridge", borderwidth=2)
+        self.frm_user_preferences.config(
+            relief="ridge", borderwidth=2, background="yellow")
         self.frm_user_preferences.pack(side="top", fill="both",
                                        ipady=self.frame_iy_padding, expand=True)
 
         # Label: User Preferences
-        self.lbl_extension_header = tk.Label(
+        self.lbl_user_preferences_header = tk.Label(
             master=self.frm_user_preferences, text="User Preferences", font=("Arial", 15)
         )
-        self.lbl_extension_header.grid(
+        self.lbl_user_preferences_header.grid(
+            row=0, column=0, pady=self.header_y_padding, sticky="w", columnspan=2
+        )
+
+        # Frame: User Preferences Left
+        self.frm_user_preferences_left = tk.Frame(
+            master=self.frm_user_preferences)
+        self.frm_user_preferences_left.config(
+            relief="ridge", borderwidth=2, background="green")
+        self.frm_user_preferences_left.grid(row=2, column=0, sticky="nsew")
+
+        # Frame: User Preferences Right
+        self.frm_user_preferences_right = tk.Frame(
+            master=self.frm_user_preferences)
+        self.frm_user_preferences_right.config(
+            relief="ridge", borderwidth=2, background="red")
+        self.frm_user_preferences_right.grid(row=2, column=1, sticky="nsew")
+
+        # Configuring grid weights for frm_user_preferences to expand equally
+        self.frm_user_preferences.grid_columnconfigure(0, weight=1)
+        self.frm_user_preferences.grid_columnconfigure(1, weight=1)
+        self.frm_user_preferences.grid_rowconfigure(1, weight=1)
+        self.frm_user_preferences.grid_rowconfigure(2, weight=1)
+
+        # Label: User On Enable
+        self.lbl_user_on_disable = tk.Label(
+            master=self.frm_user_preferences_left, text="On Enable", font=("Arial", 15)
+        )
+        self.lbl_user_on_disable.grid(
             row=0, column=1, pady=self.header_y_padding, sticky="w", columnspan=3
         )
+
+        # Label: User On Disable
+        self.lbl_user_on_disable = tk.Label(
+            master=self.frm_user_preferences_right, text="On Disable", font=("Arial", 15)
+        )
+        self.lbl_user_on_disable.grid(
+            row=0, column=1, pady=self.header_y_padding, sticky="w", columnspan=3
+        )
+
+        # Sign out of hotdesks
 
 
 class Window3cxConfig(Window):
@@ -252,13 +292,18 @@ class WindowCSVMapping(Window):
 
         # Header: Update
         lbl_csv_mapping_update = tk.Label(
-            master=frm_csv_mapping_fields, text="Update", width=5)
+            master=frm_csv_mapping_fields, text="Static", width=5)
         lbl_csv_mapping_update.grid(row=1, column=3, sticky="w")
+
+        # Header: Update
+        lbl_csv_mapping_update = tk.Label(
+            master=frm_csv_mapping_fields, text="Update", width=5)
+        lbl_csv_mapping_update.grid(row=1, column=4, sticky="w")
 
         # Header: Key
         lbl_csv_mapping_key = tk.Label(
             master=frm_csv_mapping_fields, text="Key", width=5)
-        lbl_csv_mapping_key.grid(row=1, column=4, sticky="w")
+        lbl_csv_mapping_key.grid(row=1, column=5, sticky="w")
 
         # self.add_mapping_field_set()
         self.initialize_mapping_field_sets()
@@ -302,14 +347,18 @@ class WindowCSVMapping(Window):
         }
         mapping_new = {}
         mapping_update = []
+        mapping_static = []
         for mapping_row in self.mapping_fields:
             if mapping_row.key.checked:
                 self.mapping["Extension"]["Key"] = mapping_row.header.get()
             mapping_new[mapping_row.field.get()] = mapping_row.header.get()
             if mapping_row.update.checked:
                 mapping_update.append(mapping_row.field.get())
+            if mapping_row.static.checked:
+                mapping_static.append(mapping_row.field.get())
         self.mapping["Extension"]["New"] = mapping_new
         self.mapping["Extension"]["Update"] = mapping_update
+        self.mapping["Extension"]["Static"] = mapping_static
         self.mapping.save_mapping_config()
         messagebox.showinfo(title="Saved!", message="Config saved!")
         self.destroy()
@@ -323,20 +372,34 @@ class WindowCSVMapping(Window):
         self.var_csv_mapping_extension_path.set(filename)
 
     def initialize_mapping_field_sets(self):
-        for field, header in self.mapping.get("Extension", {}).get("New", {}).items():
-            key = False
-            update = False
-            if header == self.mapping.get("Extension", {}).get("Key", None):
-                key = True
-            if field in self.mapping.get("Extension", {}).get("Update", {}):
-                update = True
+        extension_mapping = self.mapping.get("Extension", {})
+        new_mapping = extension_mapping.get("New", {})
+        key_header = extension_mapping.get("Key", None)
+
+        for field, header in new_mapping.items():
+            key = header == key_header
+            update = field in extension_mapping.get("Update", {})
+            static = field in extension_mapping.get("Static", {})
+
+        # extension_mapping = self.mapping.get("Extension", {})
+        # for field, header in extension_mapping.get("New", {}).items():
+        #    key = False
+        #    update = False
+        #    static = False
+        #    if header == extension_mapping.get("Key", None):
+        #        key = True
+        #    if field in extension_mapping.get("Update", {}):
+        #        update = True
+        #    if field in extension_mapping.get("Static", {}):
+        #        static = True
 
             self.add_mapping_field_set(
-                header=header, field=field, key=key, update=update
+                header=header, field=field, static=static, key=key, update=update
             )
 
-    def add_mapping_field_set(self, header="", field="", update=False, key=False):
-        frm_csv_mapping_fields = self.nametowidget("window.csv_mapping_fields")
+    def add_mapping_field_set(self, header="", field="", static=False, update=False, key=False):
+        frm_csv_mapping_fields = self.nametowidget(
+            "csv_mapping.csv_mapping_fields")
 
         # 3CX Field
         ent_csv_mapping_3cx_field = tk.Entry(master=frm_csv_mapping_fields)
@@ -352,11 +415,18 @@ class WindowCSVMapping(Window):
             row=len(self.mapping_fields) + 2, column=2, sticky="w"
         )
 
+        # Static Value Checkbox
+        chk_csv_mapping_static_value = Checkbox(
+            master=frm_csv_mapping_fields, value=static)
+        chk_csv_mapping_static_value.grid(
+            row=len(self.mapping_fields) + 2, column=3, sticky="w"
+        )
+
         # Update Checkbox
         chk_csv_mapping_update = Checkbox(
             master=frm_csv_mapping_fields, value=update)
         chk_csv_mapping_update.grid(
-            row=len(self.mapping_fields) + 2, column=3, sticky="w"
+            row=len(self.mapping_fields) + 2, column=4, sticky="w"
         )
 
         # Key Checkbox
@@ -367,14 +437,14 @@ class WindowCSVMapping(Window):
             # value=key,
         )
         chk_csv_mapping_key.grid(
-            row=len(self.mapping_fields) + 2, column=4, sticky="w")
+            row=len(self.mapping_fields) + 2, column=5, sticky="w")
 
         # Remove Button
         btn_csv_mapping_remove = tk.Button(
             master=frm_csv_mapping_fields, text="-", command=lambda row_index=len(self.mapping_fields): self.delete_mapping_field_set(row_index)
         )
         btn_csv_mapping_remove.grid(
-            row=len(self.mapping_fields) + 2, column=5, sticky="w")
+            row=len(self.mapping_fields) + 2, column=6, sticky="w")
 
         if key:
             chk_csv_mapping_key.invoke()
@@ -382,6 +452,7 @@ class WindowCSVMapping(Window):
             ExtensionMappingFieldSet(
                 field=ent_csv_mapping_3cx_field,
                 header=ent_csv_mapping_header,
+                static=chk_csv_mapping_static_value,
                 update=chk_csv_mapping_update,
                 key=chk_csv_mapping_key,
                 delete=btn_csv_mapping_remove

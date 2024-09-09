@@ -38,6 +38,54 @@ class APIError(Exception):
         # return self.message or ""
 
 
+class ListError(APIError):
+    """Error raised when there is an issue listing something."""
+    @property
+    def message(self):
+        return f"Unable to retrive {self.object}."
+
+
+class GetError(APIError):
+    """Error raised when there is an issue getting something."""
+    @property
+    def message(self):
+        return f"Unable to retrive {self.object}."
+
+
+class CreateError(APIError):
+    """Error raised when there is an issue creating something."""
+    @property
+    def message(self):
+        return f"Unable to create {self.object}."
+
+
+class UpdateError(APIError):
+    """Error raised when there is an issue updating something."""
+    @property
+    def message(self):
+        return f"Unable to update {self.object}."
+
+
+class GroupListError(ListError):
+    """Error raised when there is an issue listing groups."""
+    object = 'groups'
+
+
+class GroupGetError(GetError):
+    """Error raised when there is an issue getting a user."""
+    object = 'group'
+
+
+class GroupCreateError(CreateError):
+    """Error raised when there is an issue creating a user."""
+    object = 'group'
+
+
+class GroupUpdateError(UpdateError):
+    """Error raised when there is an issue updating a user."""
+    object = 'group'
+
+
 class UserListError(APIError):
     """Error raised when there is an issue listing users."""
     message = "Unable to retrieve users."

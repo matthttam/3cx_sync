@@ -1,8 +1,7 @@
 
 
-import pydantic
 from dataclasses import dataclass
-from typing import NamedTuple, TypedDict, Dict, Any
+from typing import Dict, Any, Optional
 from sync.sync_strategy import SyncSourceStrategy
 from tcx_api.components.schemas.pbx import User
 
@@ -15,8 +14,9 @@ class FieldChange():
 
 @dataclass
 class UserChangeDetail():
-    user_to_update: User
+
     field_changes: Dict[str, FieldChange]
+    user_to_update: Optional[User] = None
 
     @property
     def Id(self):
@@ -49,19 +49,18 @@ class UserComparer:
     def _index_users(self, users: list[User], key: str = "Number") -> dict[str, User]:
         return {getattr(user, key): user for user in users if user is not None and getattr(user, key) is not None}
 
-    def get_users_to_update(self) -> list[UserChangeDetail]:
-        users_to_update = []
+    def get_user_change_details(self) -> list[UserChangeDetail]:
+        user_change_details = []
         user_keys_to_compare = list(
             self.source_user_keys.intersection(self.tcx_user_keys))
-        # self.output(f"Comparing {len(user_keys_to_compare)} users")
 
         for key in user_keys_to_compare:
-            updated_user = self.compare_user(
+            user_change_detail = self.compare_user(
                 self.tcx_user_dict[key], self.source_user_dict[key])
-            if updated_user:
-                users_to_update.append(updated_user)
-        users_to_update.sort(key=lambda x: x.Number)
-        return users_to_update
+            if user_change_detail.field_changes:
+                user_change_details.append(user_change_detail)
+
+        return user_change_details
 
     def compare_user(self, tcx_user: User, source_user: User) -> UserChangeDetail:
         updated_fields = {}
@@ -75,9 +74,10 @@ class UserComparer:
                 field_changes[field] = FieldChange(
                     old=tcx_value, new=source_value)
 
-        if updated_fields:
-            return UserChangeDetail(user_to_update=User(**(tcx_user.model_dump() | updated_fields)), field_changes=field_changes)
-        return None
+        if not update_fields:
+            return None
+
+        return UserChangeDetail(user_to_update=User(**(tcx_user.model_dump() | updated_fields)), field_changes=field_changes)
 
     def get_users_to_create(self) -> list[User]:
         # Determine users to create

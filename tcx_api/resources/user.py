@@ -1,4 +1,5 @@
-import json
+import string
+import random
 from pydantic import TypeAdapter
 import requests
 
@@ -85,31 +86,8 @@ class UserProperties(TcxStrEnum):
     WebMeetingFriendlyName = auto()
 
 
-# class ListUserParameters(ListParameters):
-#    """
-#    Parameters for listing users.
-#
-#    Attributes:
-#        top (int): The number of items to retrieve from the top.
-#        skip (int): The number of items to skip.
-#        search (str): The search query.
-#        filter (str): The filter to apply.
-#        count (bool): Indicates if a count should be returned or not.
-#        orderby (str): The field to order by.
-#        select (list): Select properties to be returned.
-#        expand (str): Expand related entities.
-#
-#    """
-#
-#    orderby: str = None
-#    select: List[UserProperties] = None
-#    expand: str = None
-
 class ListUserParameters(ListParameters, OrderbyParameters, SelectParameters[UserProperties], ExpandParameters):
     ...
-
-# class GetUserParameters(GetParameters):
-#    select: List[UserProperties] = None
 
 
 class GetUserParameters(SelectParameters[UserProperties], ExpandParameters):
@@ -128,14 +106,15 @@ class UserResource(APIResource):
         except requests.HTTPError as e:
             raise TCX_Exceptions.UserListError(e)
 
-    def create_user(self, user: User):
+    def create_user(self, user: dict):
         """Add new entity to Users"""
-        default_user_dict = self.default_user
-        user_dict = user.model_dump(
-            exclude_none=True, exclude_unset=True)
-        merged_user_dict = default_user_dict | user_dict
+        # new_user_dict = self.get_new_user
+        # user_dict = user.model_dump(
+        #    exclude_none=True, exclude_unset=True)
+        # merged_user_dict = new_user_dict | user_dict
+
         try:
-            self.api.post(self.endpoint, merged_user_dict)
+            self.api.post(self.endpoint, user)
         except requests.HTTPError as e:
             raise TCX_Exceptions.UserCreateError(e)
 
@@ -150,31 +129,72 @@ class UserResource(APIResource):
         """Update a user entity"""
         try:
             user_dict = user.model_dump(exclude_unset=True,
-                                        exclude_none=True, serialize_as_any=True)
+                                        exclude_none=True, serialize_as_any=True, by_alias=True)
             self.api.patch(
                 endpoint=f"{self.endpoint}({user.Id})", data=user_dict)
         except requests.HTTPError as e:
             raise TCX_Exceptions.UserUpdateError(e)
 
-    def delete_user(self, user: User | int):
+    def delete_user(self, user: User):
         if isinstance(user, User):
-            return self._delete_user_directly(user=user)
-        return self._delete_user_by_id(id=user.Id)
+            self.api.delete(endpoint=self.endpoint, params=user.Id)
 
-    def _delete_user_directly(self, user: User):
-        self._delete_user_by_id(id=user.Id)
-
-    def _delete_user_by_id(self, id: int):
-        """Delete entity from Users"""
-        self.api.delete(endpoint=self.endpoint, params=id)
-        # Looks like it takes a header value called If-Match that is a string of an etag.
-        # Not sure if it is required.
-        # - name: If-Match
-        #  in: header
-        #  description: ETag
-        #  schema:
-        #    type: string)
-
-    @property
-    def default_user(self):
-        return json.loads('{"Require2FA": true, "SendEmailMissedCalls": true, "AuthID": "2cCY2wrcBU", "Phones": [], "Groups": [{"GroupId": 3078, "Rights": {"RoleName": "users"}}], "CallUsEnableChat": true, "CallUsRequirement": "Both", "ClickToCallId": "testtest", "EmailAddress": "", "Mobile": "", "FirstName": "TEST", "LastName": "TEST", "Number": "10003", "OutboundCallerID": "", "PrimaryGroupId": 3078, "WebMeetingFriendlyName": "testtest", "WebMeetingApproveParticipants": false, "Blfs": "<PhoneDevice><BLFS/></PhoneDevice>", "ForwardingProfiles": [], "MS365CalendarEnabled": true, "MS365ContactsEnabled": true, "MS365SignInEnabled": true, "MS365TeamsEnabled": true, "GoogleSignInEnabled": true, "Enabled": true, "Internal": false, "AllowOwnRecordings": false, "MyPhoneShowRecordings": false, "MyPhoneAllowDeleteRecordings": false, "MyPhoneHideForwardings": false, "RecordCalls": false, "HideInPhonebook": false, "PinProtected": false, "CallScreening": false, "AllowLanOnly": true, "SIPID": "", "EnableHotdesking": false, "PbxDeliversAudio": false, "SRTPMode": "SRTPDisabled", "Hours": {"Type": "OfficeHours"}, "OfficeHoursProps": [], "BreakTime": {"Type": "OfficeHours"}, "VMEnabled": true, "VMPIN": "923080", "VMEmailOptions": "Notification", "VMDisablePinAuth": false, "VMPlayCallerID": false, "VMPlayMsgDateTime": "None", "PromptSet": "8210986B-9412-497f-AD77-3A554F4A9BDB", "Greetings": [{"Type": "Default", "Filename": ""}]}')
+    def get_new_user(self):
+        auth_id = ''.join(random.choices(
+            string.ascii_letters + string.digits, k=10))
+        # return json.loads('{"Require2FA": true, "SendEmailMissedCalls": true, "AuthID": "", "Phones": [], "Groups": [{"GroupId": 3078, "Rights": {"RoleName": "users"}}], "CallUsEnableChat": true, "CallUsRequirement": "Both", "ClickToCallId": "testtest", "EmailAddress": "", "Mobile": "", "FirstName": "TEST", "LastName": "TEST", "Number": "10003", "OutboundCallerID": "", "PrimaryGroupId": 3078, "WebMeetingFriendlyName": "testtest", "WebMeetingApproveParticipants": false, "Blfs": "<PhoneDevice><BLFS/></PhoneDevice>", "ForwardingProfiles": [], "MS365CalendarEnabled": true, "MS365ContactsEnabled": true, "MS365SignInEnabled": true, "MS365TeamsEnabled": true, "GoogleSignInEnabled": true, "Enabled": true, "Internal": false, "AllowOwnRecordings": false, "MyPhoneShowRecordings": false, "MyPhoneAllowDeleteRecordings": false, "MyPhoneHideForwardings": false, "RecordCalls": false, "HideInPhonebook": false, "PinProtected": false, "CallScreening": false, "AllowLanOnly": true, "SIPID": "", "EnableHotdesking": false, "PbxDeliversAudio": false, "SRTPMode": "SRTPDisabled", "Hours": {"Type": "OfficeHours"}, "OfficeHoursProps": [], "BreakTime": {"Type": "OfficeHours"}, "VMEnabled": true, "VMPIN": "923080", "VMEmailOptions": "Notification", "VMDisablePinAuth": false, "VMPlayCallerID": false, "VMPlayMsgDateTime": "None", "PromptSet": "8210986B-9412-497f-AD77-3A554F4A9BDB", "Greetings": [{"Type": "Default", "Filename": ""}]}')
+        return {
+            'Require2FA': True,
+            'SendEmailMissedCalls': True,
+            'AuthID': auth_id,
+            'Phones': [],
+            'Groups': [],
+            'CallUsEnableChat': True,
+            'CallUsRequirement': 'Both',
+            'ClickToCallId': '',
+            'EmailAddress': '',
+            'Mobile': '',
+            'FirstName': '',
+            'LastName': '',
+            'Number': '',
+            'OutboundCallerID': '',
+            'PrimaryGroupId': 3078,
+            'WebMeetingFriendlyName': '',
+            'WebMeetingApproveParticipants': False,
+            'Blfs': '<PhoneDevice><BLFS/></PhoneDevice>',
+            'ForwardingProfiles': [],
+            'MS365CalendarEnabled': True,
+            'MS365ContactsEnabled': True,
+            'MS365SignInEnabled': True,
+            'MS365TeamsEnabled': True,
+            'GoogleSignInEnabled': True,
+            'Enabled': True,
+            'Internal': False,
+            'AllowOwnRecordings': False,
+            'MyPhoneShowRecordings': False,
+            'MyPhoneAllowDeleteRecordings': False,
+            'MyPhoneHideForwardings': False,
+            'RecordCalls': False,
+            'HideInPhonebook': False,
+            'PinProtected': False,
+            'CallScreening': False,
+            'AllowLanOnly': True,
+            'SIPID': '',
+            'EnableHotdesking': False,
+            'PbxDeliversAudio': False,
+            'SRTPMode': 'SRTPDisabled',
+            'Hours': {'Type': 'OfficeHours'},
+            'OfficeHoursProps': [],
+            'BreakTime': {'Type': 'OfficeHours'},
+            'VMEnabled': True,
+            'VMPIN': '',
+            'VMEmailOptions': 'Notification',
+            'VMDisablePinAuth': False,
+            'VMPlayCallerID': False,
+            'VMPlayMsgDateTime': 'None',
+            'PromptSet': '8210986B-9412-497f-AD77-3A554F4A9BDB',
+            'Greetings': [
+                {'Type': 'Default',
+                 'Filename': ''}
+            ]
+        }

@@ -1,14 +1,13 @@
 import tkinter as tk
-from datetime import datetime
 from app.config import TCXConfig
 from sync.sync_strategy import SyncSourceStrategy
 from tcx_api.tcx_api_connection import TCX_API_Connection
-from tcx_api.resources.user import UserResource
+from tcx_api.resources.user import UserResource, ListUserParameters
 from tcx_api.components.schemas.pbx import User, Group
-from tcx_api.resources.user import ListUserParameters
 from tcx_api import exceptions as TCX_Exceptions
 from tcx_api.exceptions import APIAuthenticationError
 from sync.comparison import UserChangeDetail, UserComparer
+from tcx_api.resources.group import GroupResource, ListGroupParameters
 
 
 class Sync:
@@ -33,18 +32,22 @@ class Sync:
         except APIAuthenticationError:
             raise
         self.api_connection.refresh_access_token()
-        self.UserResource = UserResource(api=self.api_connection)
+        self.user_resource = UserResource(api=self.api_connection)
+        self.group_resource = GroupResource(api=self.api_connection)
+
         self.sync_source.initialize()
         self.source_user_list = self.sync_source.get_source_users()
         # self.source_group_list = self.sync_source.get_source_groups()
         self.tcx_user_list = self.get_users()
         user_comparer = UserComparer(
             tcx_user_list=self.tcx_user_list, sync_source=self.sync_source)
-        users_to_update = user_comparer.get_users_to_update()
-        if len(users_to_update) > 0:
+        user_change_details = user_comparer.get_user_change_details()
+        # user_change_details = self.hydrate_user_change_details(user_change_details)
+        user_change_details.sort(key=lambda x: x.user_to_update.Number)
+        if len(user_change_details) > 0:
             self.app.output(f"Count of users to update: {
-                            len(users_to_update)}")
-            self.update_users(user_change_details=users_to_update)
+                            len(user_change_details)}")
+            self.update_users(user_change_details=user_change_details)
         else:
             self.app.output("No users to update.")
 
@@ -68,10 +71,21 @@ class Sync:
     def create_user(self, user: User):
         try:
             self.app.output(f"Creating 3CX user {user.Number}")
-            self.UserResource.create_user(user)
-            self.app.output(f"Created 3CX user {user.Number}")
+            new_user_dict = self.get_new_user()
+            merged_user_dict = new_user_dict | user.model_dump()
+            self.user_resource.create_user(merged_user_dict)
+            self.app.output(f"Created 3CX user {merged_user_dict['Number']}")
         except TCX_Exceptions.UserCreateError as e:
             self.app.output(str(e))
+
+    def get_new_user(self):
+        new_user = self.user_resource.get_new_user()
+        default_group = self.group_resource.get_default_group()
+        new_user['Groups'].append(
+            {'GroupId': default_group.Id,
+                'Rights': {'RoleName': 'users'}
+             })
+        return new_user
 
     def update_users(self, user_change_details: list[UserChangeDetail]):
         for user_change_detail in user_change_details:
@@ -82,7 +96,7 @@ class Sync:
             self.app.output(f"Updating 3CX user {
                 user_change_detail.Number}")
             self.app.output(f"Changing {str(user_change_detail)}")
-            self.UserResource.update_user(user_change_detail.user_to_update)
+            self.user_resource.update_user(user_change_detail.user_to_update)
 
         except TCX_Exceptions.UserUpdateError as e:
             self.app.output(str(e))
@@ -90,7 +104,7 @@ class Sync:
     def get_users(self) -> list[User]:
         try:
             self.app.output("Fetching Users From 3CX")
-            users = self.UserResource.list_user(
+            users = self.user_resource.list_user(
                 params=ListUserParameters(expand="Groups($expand=Rights,GroupRights),ForwardingProfiles,ForwardingExceptions,Phones,Greetings"))
         except TCX_Exceptions.UserListError as e:
             self.app.output(f"Failed to Fetch Users: {str(e)}")
@@ -98,8 +112,25 @@ class Sync:
         self.app.output(f"Fetched {len(users)} Users From 3CX")
         return users
 
-    def get_groups(self) -> list[Group]:
-        pass
+    # def hydrate_user_change_details(self, user_change_details: list[UserChangeDetail]) -> list[UserChangeDetail]:
+    #    try:
+    #        self.app.output(f"Fetching Additional Details for {len(
+    #                        user_change_details)} Users to Update")
+    #        for user_change_detail in user_change_details:
+#
+    #            detailed_user = self.UserResource.get_user(id=user_change_detail.user_to_update_dict['Id'],
+    #                                                       params=ListUserParameters(expand="Groups($expand=Rights,GroupRights),ForwardingProfiles,ForwardingExceptions,Phones,Greetings"))
+#
+    #            user_change_detail.user_to_update = User(
+    #                **(detailed_user.model_dump() | user_change_detail.user_to_update_dict))
+#
+    #    except TCX_Exceptions.UserListError as e:
+    #        self.app.output(
+    #            f"Failed to Fetch Additional Details for Users to Update: {str(e)}")
+    #        raise
+    #    self.app.output(
+    #        f"Fetched {len(user_change_details)} Detailed Users From 3CX")
+    #    return user_change_details
 
     def authenticate(self):
         self.app.output(f"Authenticating to 3CX at {self.config.server_url}")
@@ -111,4 +142,4 @@ class Sync:
             self.app.output("Authentication Successful")
         except TCX_Exceptions.APIAuthenticationError as e:
             self.app.output(f"Failed to authenticate: {str(e)}")
-            raise e
+            raise

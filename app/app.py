@@ -49,12 +49,12 @@ class App(tk.Tk):
         self.btn_show_window_csv_config.pack(fill="x")
 
         # Button: Configure Preferences
-        self.btn_show_window_app_preferences = tk.Button(
-            master=self.frm_left_column,
-            text="Preferences",
-            command=self.show_WindowPreferences,
-        )
-        self.btn_show_window_app_preferences.pack(fill="x")
+        # self.btn_show_window_app_preferences = tk.Button(
+        #    master=self.frm_left_column,
+        #    text="Preferences",
+        #    command=self.show_WindowPreferences,
+        # )
+        # self.btn_show_window_app_preferences.pack(fill="x")
 
         # Right Frame
         self.frm_right_column = tk.Frame(master=self.frm_window)

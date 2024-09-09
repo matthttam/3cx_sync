@@ -2,7 +2,7 @@ from decimal import Decimal
 from uuid import UUID
 from datetime import datetime
 from typing import Optional
-from pydantic import conlist, Field
+from pydantic import conlist, Field, field_validator
 from tcx_api.components.schema import Schema
 from tcx_api.components.schemas.enums import *
 
@@ -650,8 +650,8 @@ class Queue(Schema):
 
 class Period(Schema):
     day_of_week: Optional[DayOfWeek] = Field(None, alias="DayOfWeek")
-    start: Optional[str] = Field(None, alias="Start")
-    stop: Optional[str] = Field(None, alias="Stop")
+    Start: Optional[str] = None
+    Stop: Optional[str] = None
 
 
 class Schedule(Schema):
@@ -859,20 +859,18 @@ class Group(Schema):
     Id: int
     IsDefault: Optional[bool] = None
     Language: Optional[str] = None
-    LastLoginTime: Optional[datetime]
+    LastLoginTime: Optional[datetime] = None
     Members: conlist(UserGroup) = Field(default_factory=list)
     Name: Optional[str] = None
     Number: Optional[str] = None
     OfficeHolidays: conlist(Holiday) = Field(default_factory=list)
     OfficeRoute: Optional[Route] = None
     OutOfOfficeRoute: Optional[Route] = None
-    OverrideExpiresAt: Optional[datetime]
+    OverrideExpiresAt: Optional[datetime] = None
     OverrideHolidays: Optional[bool] = None
     PromptSet: Optional[str] = None
     Props: Optional[GroupProps] = None
-    # Rights: conlist(Rights)
     rights: conlist(Rights) = Field(default_factory=list, alias="Rights")
-    # Rights: List[Rights] = Field(default_factory=list)
     TimeZoneId: Optional[str] = None
 
 

@@ -23,6 +23,7 @@ class Checkbox(tk.Checkbutton):
 class ExtensionMappingFieldSet(NamedTuple):
     header: tk.Entry
     field: tk.Entry
+    static: Checkbox
     update: Checkbox
     key: Checkbox
     delete: tk.Button
