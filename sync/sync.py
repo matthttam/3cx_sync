@@ -1,5 +1,5 @@
 import tkinter as tk
-from app.config import TCXConfig
+from app.config import AppConfig
 from sync.sync_strategy import SyncSourceStrategy
 from tcx_api.tcx_api_connection import TCX_API_Connection
 from tcx_api.resources.user import UserResource, ListUserParameters
@@ -20,7 +20,7 @@ class Sync:
     def sync(self):
         self.app.output("Initializing Sync")
         self.app.output("Loading 3CX Config")
-        self.config = TCXConfig()
+        self.config = AppConfig()
         self.config.load()
         self.app.output("3CX Config Loaded")
         self.app.output("Initializing API Connection")
