@@ -37,10 +37,12 @@ class TestExtensionMappingFieldSet:
 
     @pytest.fixture
     def field_set(self):
-        yield ExtensionMappingFieldSet(header=MagicMock(spec=Entry),
-                                       field=MagicMock(spec=Entry),
-                                       update=MagicMock(spec=Checkbox),
-                                       key=MagicMock(spec=Checkbox))
+        yield ExtensionMappingFieldSet(
+            header=MagicMock(spec=Entry),
+            field=MagicMock(spec=Entry),
+            update=MagicMock(spec=Checkbox),
+            key=MagicMock(spec=Checkbox),
+        )
 
     def test_initialization(self, field_set):
         # Check if the attributes are properly set
@@ -51,4 +53,4 @@ class TestExtensionMappingFieldSet:
 
     def test_is_tuple(self):
         assert issubclass(ExtensionMappingFieldSet, tuple)
-        assert hasattr(ExtensionMappingFieldSet, '_fields')
+        assert hasattr(ExtensionMappingFieldSet, "_fields")

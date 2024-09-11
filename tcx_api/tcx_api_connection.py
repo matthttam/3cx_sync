@@ -55,7 +55,8 @@ class TCX_API_Connection(API):
             self.refresh_access_token()
 
         response = self.session.request(
-            method, url, headers=self._get_headers(), **kwargs)
+            method, url, headers=self._get_headers(), **kwargs
+        )
         response.raise_for_status()
         return response
 
@@ -66,18 +67,18 @@ class TCX_API_Connection(API):
         self.token_expiry_time = 0
 
     def get(self, endpoint: str, params: QueryParameters) -> requests.Response:
-        return self._make_request('get', endpoint,
-                                  params=params.model_dump(exclude_none=True, by_alias=True))
+        return self._make_request(
+            "get", endpoint, params=params.model_dump(exclude_none=True, by_alias=True)
+        )
 
     def post(self, endpoint: str, data: dict) -> requests.Response:
-        return self._make_request('post', endpoint,
-                                  json=data)
+        return self._make_request("post", endpoint, json=data)
 
     def patch(self, endpoint: str, data: dict) -> requests.Response:
-        return self._make_request('patch', endpoint, json=data)
+        return self._make_request("patch", endpoint, json=data)
 
     def delete(self, endpoint: str, id: int) -> requests.Response:
-        return self._make_request('delete', endpoint, params=id)
+        return self._make_request("delete", endpoint, params=id)
 
     def authenticate(self, username, password):
         data = {"SecurityCode": "", "Username": username, "Password": password}
@@ -94,8 +95,11 @@ class TCX_API_Connection(API):
 
     def refresh_access_token(self):
         # Get Access Token
-        data = {"client_id": "Webclient", "grant_type": "refresh_token",
-                "refresh_token": self.token.refresh_token}
+        data = {
+            "client_id": "Webclient",
+            "grant_type": "refresh_token",
+            "refresh_token": self.token.refresh_token,
+        }
         try:
             response = self.session.post(
                 url=self.server_url + "/connect/token",

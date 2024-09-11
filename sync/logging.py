@@ -9,8 +9,8 @@ class TextWindowHandler(logging.Handler):
     def emit(self, record):
         try:
             msg = self.format(record)
-            self.text_widget.insert('end', msg + '\n')
-            self.text_widget.yview('end')
+            self.text_widget.insert("end", msg + "\n")
+            self.text_widget.yview("end")
         except Exception:
             self.handleError(record)
 
@@ -18,15 +18,15 @@ class TextWindowHandler(logging.Handler):
 class SyncLogger:
     """Class to initialize and configure logging to a file and a Tkinter text widget."""
 
-    logger_name = '3cxSync'
+    logger_name = "3cxSync"
 
     def __init__(self):
         self.logger = logging.getLogger(self.logger_name)
         self.logger.setLevel(logging.DEBUG)
-        self.default_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        self.default_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-    def addFileHandler(self, path='app.log'):
-        file_handler = logging.FileHandler('app.log')
+    def addFileHandler(self, path="app.log"):
+        file_handler = logging.FileHandler("app.log")
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(self.default_format)
         file_handler.setFormatter(file_formatter)

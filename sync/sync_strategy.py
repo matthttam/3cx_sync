@@ -9,7 +9,9 @@ from sync.schema import CSVUser
 from pydantic import TypeAdapter
 
 
-def create_subclass_with_custom_comparison(prefix: str, base_class, properties_to_compare: list[str]):
+def create_subclass_with_custom_comparison(
+    prefix: str, base_class, properties_to_compare: list[str]
+):
     def custom_eq(self, other):
         # Compare only the specified properties
         for prop in properties_to_compare:
@@ -23,27 +25,22 @@ def create_subclass_with_custom_comparison(prefix: str, base_class, properties_t
 class SyncSourceStrategy(ABC):
     @property
     @abstractmethod
-    def mapping(self):
-        ...
+    def mapping(self): ...
 
     def __init__(self, output: Callable):
         self.output = output
 
     @abstractmethod
-    def initialize(self) -> None:
-        ...
+    def initialize(self) -> None: ...
 
     @abstractmethod
-    def get_source_users(self) -> Optional[list[User]]:
-        ...
+    def get_source_users(self) -> Optional[list[User]]: ...
 
     @abstractmethod
-    def get_source_groups(self) -> Optional[list[Group]]:
-        ...
+    def get_source_groups(self) -> Optional[list[Group]]: ...
 
     @abstractmethod
-    def get_user_update_fields(self) -> list:
-        ...
+    def get_user_update_fields(self) -> list: ...
 
 
 class SyncCSV(SyncSourceStrategy):
@@ -60,8 +57,9 @@ class SyncCSV(SyncSourceStrategy):
         self.output("Loading CSV Mapping")
         self.mapping = CSVMapping()
         self.mapping.load_mapping_config()
-        CSVUser._comparison_properties = self.mapping.get(
-            "Extension", {}).get("Update", [])
+        CSVUser._comparison_properties = self.mapping.get("Extension", {}).get(
+            "Update", []
+        )
         self.output("CSV Mapping Loaded")
 
     def get_source_users(self) -> Optional[List[User]]:
@@ -80,16 +78,19 @@ class SyncCSV(SyncSourceStrategy):
             for row in csv_reader:
                 row_dict = dict(zip(headers, row))
                 user_dict = {
-                    key: row_dict[value] for key, value in user_mapping.items() if value in row_dict}
-                if (user_dict['Enabled'] == '0'):
-                    user_dict['HotdeskingAssignment'] = ''
+                    key: row_dict[value]
+                    for key, value in user_mapping.items()
+                    if value in row_dict
+                }
+                if user_dict["Enabled"] == "0":
+                    user_dict["HotdeskingAssignment"] = ""
                 user_data.append(user_dict)
         csv_user_list = TypeAdapter(List[CSVUser]).validate_python(user_data)
         self.output(f"Loaded {len(csv_user_list)} Users from CSV File")
         return csv_user_list
 
     def get_user_update_fields(self) -> list:
-        return self.mapping['Extension']['Update']
+        return self.mapping["Extension"]["Update"]
 
     def get_source_groups(self):
         return None

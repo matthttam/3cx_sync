@@ -11,7 +11,7 @@ class Schema(BaseModel):
             "exclude_unset": True,
             "exclude_none": True,
             "serialize_as_any": True,
-            "by_alias": True
+            "by_alias": True,
         }
 
         # Update with any user-provided options
