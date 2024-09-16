@@ -101,16 +101,44 @@ class WindowAppConfig(Window):
         self.build_gui()
 
     def initialize_variables(self) -> None:
-        # Initialize Variables
-        conf = self.app_config["3cx"]
-        self.vars = {}
+        self.vars = {"3cx": {}, "app": {}}
+
+        # Helper to create and trace a StringVar
+        def create_string_var(section, var):
+            tk_var = tk.StringVar(self, self.app_config.get(section, var, fallback=""))
+            tk_var.trace_add(
+                "write", lambda *args: self.update_config(section, var, tk_var)
+            )
+            self.vars[section][var] = tk_var
+
+        # Helper to create and trace a BooleanVar
+        def create_boolean_var(section, var):
+            tk_var = tk.BooleanVar(
+                self, self.app_config.getboolean(section, var, fallback=False)
+            )
+            tk_var.trace_add(
+                "write", lambda *args: self.update_config(section, var, tk_var)
+            )
+            self.vars[section][var] = tk_var
+
+        # Create StringVars for '3cx' section
         for var in ["scheme", "domain", "port", "username", "password"]:
-            self.vars[var] = tk.StringVar(self, conf.get(var, ""))
+            create_string_var("3cx", var)
+
+        # Create BooleanVars for 'app' section
+        for var in ["logout_hotdesk_on_disable"]:
+            create_boolean_var("app", var)
+
+    def update_config(self, section, var_name, tk_var):
+        # Check if the section exists, if not, add it
+        if not self.app_config.has_section(section):
+            self.app_config.add_section(section)
+        self.app_config.set(section, var_name, str(tk_var.get()))
 
     def build_gui(self) -> None:
         # Create a window frame
         self.widgets["frm_window"] = tk.Frame(master=self)
-        self.widgets["frm_window"].pack()
+        self.widgets["frm_window"].pack(fill="both", expand=True)
 
         # 3cx Header
         self.widgets["lbl_3cx_settings_header"] = tk.Label(
@@ -123,7 +151,7 @@ class WindowAppConfig(Window):
         self.widgets["frm_3cx_options"].config(
             width=300, height=200, relief="ridge", borderwidth=2
         )
-        self.widgets["frm_3cx_options"].pack()
+        self.widgets["frm_3cx_options"].pack(fill="both", expand=True)
 
         # 3cx URL
         self.widgets["lbl_3cx_url"] = tk.Label(
@@ -137,19 +165,21 @@ class WindowAppConfig(Window):
         self.widgets["frm_3cx_url"].grid(row=0, column=1)
 
         self.widgets["opt_3cx_scheme"] = tk.OptionMenu(
-            self.widgets["frm_3cx_url"], self.vars["scheme"], *["https", "http"]
+            self.widgets["frm_3cx_url"], self.vars["3cx"]["scheme"], *["https", "http"]
         )
         self.widgets["lbl_3cx_scheme_ending"] = tk.Label(
             master=self.widgets["frm_3cx_url"], text="://"
         )
         self.widgets["ent_3cx_domain"] = tk.Entry(
-            master=self.widgets["frm_3cx_url"], textvariable=self.vars["domain"]
+            master=self.widgets["frm_3cx_url"], textvariable=self.vars["3cx"]["domain"]
         )
         self.widgets["lbl_3cx_server_ending"] = tk.Label(
             master=self.widgets["frm_3cx_url"], text=":"
         )
         self.widgets["ent_3cx_port"] = tk.Entry(
-            master=self.widgets["frm_3cx_url"], textvariable=self.vars["port"], width=5
+            master=self.widgets["frm_3cx_url"],
+            textvariable=self.vars["3cx"]["port"],
+            width=5,
         )
 
         elements = [
@@ -167,7 +197,8 @@ class WindowAppConfig(Window):
             master=self.widgets["frm_3cx_options"], text="Username:"
         )
         self.widgets["ent_3cx_username"] = tk.Entry(
-            master=self.widgets["frm_3cx_options"], textvariable=self.vars["username"]
+            master=self.widgets["frm_3cx_options"],
+            textvariable=self.vars["3cx"]["username"],
         )
 
         self.widgets["lbl_3cx_password"] = tk.Label(
@@ -175,7 +206,7 @@ class WindowAppConfig(Window):
         )
         self.widgets["ent_3cx_password"] = tk.Entry(
             master=self.widgets["frm_3cx_options"],
-            textvariable=self.vars["password"],
+            textvariable=self.vars["3cx"]["password"],
             show="*",
         )
         self.widgets["lbl_3cx_username"].grid(row=2, column=0, padx=(5, 0))
@@ -193,6 +224,33 @@ class WindowAppConfig(Window):
         self.widgets["btn_test"].grid(
             row=4, column=1, columnspan=2, padx=5, sticky="we"
         )
+
+        # App Settings Header
+        self.widgets["lbl_app_settings_header"] = tk.Label(
+            master=self.widgets["frm_window"], text="App Settings", font=("Arial", 15)
+        )
+        self.widgets["lbl_app_settings_header"].pack()
+
+        # frm: App Options
+        self.widgets["frm_app_options"] = tk.Frame(master=self.widgets["frm_window"])
+        self.widgets["frm_app_options"].config(
+            width=300, height=200, relief="ridge", borderwidth=2
+        )
+        self.widgets["frm_app_options"].pack(fill="both", expand=True)
+
+        # lbl: Log out hotdesk on disable
+        self.widgets["lbl_app_logout_hotdesk_on_disable"] = tk.Label(
+            master=self.widgets["frm_app_options"], text="Logout hotdesk on disable:"
+        )
+        self.widgets["lbl_app_logout_hotdesk_on_disable"].grid(row=0, column=0)
+
+        # chk: Sign out of Hotdesk on Disable
+        self.widgets["chk_app_logout_hotdesk_on_disable"] = tk.Checkbutton(
+            master=self.widgets["frm_app_options"],
+            # value=self.vars["app"]["logout_hotdesk_on_disable"].get(),
+            variable=self.vars["app"]["logout_hotdesk_on_disable"],
+        )
+        self.widgets["chk_app_logout_hotdesk_on_disable"].grid(row=0, column=1)
 
         # Save and Cancel Buttons
         self.widgets["frm_navigation"] = tk.Frame(master=self.widgets["frm_window"])
@@ -218,8 +276,8 @@ class WindowAppConfig(Window):
 
         try:
             api.authenticate(
-                username=self.vars["username"].get(),
-                password=self.vars["password"].get(),
+                username=self.vars["3cx"]["username"].get(),
+                password=self.vars["3cx"]["password"].get(),
             )
             messagebox.showinfo(title="Success", message="Test Successful")
         except Exception as e:
@@ -238,8 +296,6 @@ class WindowAppConfig(Window):
 
     def write_config_file(self):
         try:
-            for var in ["scheme", "domain", "port", "username", "password"]:
-                self.app_config["3cx"][var] = self.vars[var].get()
             self.app_config.save()
         except Exception as e:
             raise ConfigSaveError() from e
@@ -407,19 +463,6 @@ class WindowCSVMapping(Window):
             key = header == key_header
             update = field in extension_mapping.get("Update", {})
             static = field in extension_mapping.get("Static", {})
-
-            # extension_mapping = self.mapping.get("Extension", {})
-            # for field, header in extension_mapping.get("New", {}).items():
-            #    key = False
-            #    update = False
-            #    static = False
-            #    if header == extension_mapping.get("Key", None):
-            #        key = True
-            #    if field in extension_mapping.get("Update", {}):
-            #        update = True
-            #    if field in extension_mapping.get("Static", {}):
-            #        static = True
-
             self.add_mapping_field_set(
                 header=header, field=field, static=static, key=key, update=update
             )
