@@ -1,4 +1,3 @@
-import requests
 import tkinter as tk
 from app.windows import WindowCSVMapping, WindowAppConfig, WindowPreferences
 from app.config import AppConfig
@@ -15,9 +14,17 @@ class App(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
 
         self.is_paused = False
-
         self.app_config = AppConfig()
 
+        # Add Logging
+        sync_logger = SyncLogger()
+        sync_logger.addFileHandler()
+
+        self.build_gui()
+        sync_logger.addTextWindowHandler(self.txt_output)
+        self.sync_logger = sync_logger.get_logger()
+
+    def build_gui(self):
         # Window Options
         self.wm_title("3cx Sync")
         self.geometry("1200x800")
@@ -46,15 +53,7 @@ class App(tk.Tk):
         )
         self.btn_show_window_csv_config.pack(fill="x")
 
-        # Button: Configure Preferences
-        # self.btn_show_window_app_preferences = tk.Button(
-        #    master=self.frm_left_column,
-        #    text="Preferences",
-        #    command=self.show_WindowPreferences,
-        # )
-        # self.btn_show_window_app_preferences.pack(fill="x")
-
-        # Right Frame
+        # Frame: Right Frame
         self.frm_right_column = tk.Frame(master=self.frm_window)
         self.frm_right_column.pack(
             side="left", fill="both", expand=True, padx="5", pady="5"
@@ -93,12 +92,6 @@ class App(tk.Tk):
             master=self.frm_navigation, text="Exit", command=self.handle_exit_click
         )
         self.btn_exit.grid(row=0, column=1, padx=5)
-
-        # Add Logging
-        sync_logger = SyncLogger()
-        sync_logger.addFileHandler()
-        sync_logger.addTextWindowHandler(self.txt_output)
-        self.sync_logger = sync_logger.get_logger()
 
     def show_WindowAppConfig(self):
         WindowAppConfig(master=self, app_config=self.app_config)

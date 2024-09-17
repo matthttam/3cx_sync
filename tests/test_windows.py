@@ -166,7 +166,7 @@ class TestWindow3cxConfig:
             "password": MagicMock(**{"get.return_value": "password"}),
         }
         # with patch.object(window.tcx_config, 'save') as mock_tcx_config_save:
-        window.write_config_file()
+        window.save_config()
         mock_app_config.save.assert_called_once_with()
 
         assert mock_app_config["3cx"] == {
@@ -199,7 +199,7 @@ class TestWindow3cxConfig:
             "password": MagicMock(**{"get.return_value": "password"}),
         }
         with pytest.raises(ConfigSaveError) as e:
-            window.write_config_file()
+            window.save_config()
 
         # mock_tcx_config.__getitem__.assert_called_with("3cx")
         # mock_tcx_config.__getitem__["3cx"].assert_called_once_with()

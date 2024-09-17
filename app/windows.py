@@ -96,44 +96,33 @@ class WindowAppConfig(Window):
         super().__init__(master, *args, **kwargs)
         self.widgets = {}
         self.app_config = app_config
-        self.app_config.load()
+        # self.app_config.load()
         self.initialize_variables()
         self.build_gui()
 
     def initialize_variables(self) -> None:
         self.vars = {"3cx": {}, "app": {}}
 
-        # Helper to create and trace a StringVar
-        def create_string_var(section, var):
-            tk_var = tk.StringVar(self, self.app_config.get(section, var, fallback=""))
+        # Helper to add trace to the tk variables
+        def trace_tk_variables(tk_var: tk.Variable, section, var):
             tk_var.trace_add(
-                "write", lambda *args: self.update_config(section, var, tk_var)
+                "write",
+                lambda *args: self.app_config.update(section, var, str(tk_var.get())),
             )
-            self.vars[section][var] = tk_var
-
-        # Helper to create and trace a BooleanVar
-        def create_boolean_var(section, var):
-            tk_var = tk.BooleanVar(
-                self, self.app_config.getboolean(section, var, fallback=False)
-            )
-            tk_var.trace_add(
-                "write", lambda *args: self.update_config(section, var, tk_var)
-            )
-            self.vars[section][var] = tk_var
 
         # Create StringVars for '3cx' section
+        section = "3cx"
         for var in ["scheme", "domain", "port", "username", "password"]:
-            create_string_var("3cx", var)
+            tk_var = tk.StringVar(self, self.app_config.get(section, var))
+            self.vars[section][var] = tk_var
+            trace_tk_variables(tk_var, section, var)
 
         # Create BooleanVars for 'app' section
+        section = "app"
         for var in ["logout_hotdesk_on_disable"]:
-            create_boolean_var("app", var)
-
-    def update_config(self, section, var_name, tk_var):
-        # Check if the section exists, if not, add it
-        if not self.app_config.has_section(section):
-            self.app_config.add_section(section)
-        self.app_config.set(section, var_name, str(tk_var.get()))
+            tk_var = tk.BooleanVar(self, self.app_config.getboolean(section, var))
+            self.vars[section][var] = tk_var
+            trace_tk_variables(tk_var, section, var)
 
     def build_gui(self) -> None:
         # Create a window frame
@@ -252,9 +241,15 @@ class WindowAppConfig(Window):
         )
         self.widgets["chk_app_logout_hotdesk_on_disable"].grid(row=0, column=1)
 
-        # Save and Cancel Buttons
+        # Apply, Save, and Cancel Buttons
         self.widgets["frm_navigation"] = tk.Frame(master=self.widgets["frm_window"])
         self.widgets["frm_navigation"].pack(side="bottom", anchor="e")
+        self.widgets["btn_apply"] = tk.Button(
+            master=self.widgets["frm_navigation"],
+            name="btn_apply",
+            text="Apply",
+            command=self.handle_apply_click,
+        )
         self.widgets["btn_save"] = tk.Button(
             master=self.widgets["frm_navigation"],
             name="btn_save",
@@ -267,38 +262,48 @@ class WindowAppConfig(Window):
             text="Cancel",
             command=self.handle_cancel_click,
         )
-
-        self.widgets["btn_save"].grid(row=0, column=1, padx=5)
-        self.widgets["btn_cancel"].grid(row=0, column=2, padx=5)
+        self.widgets["btn_apply"].grid(row=0, column=1, padx=5)
+        self.widgets["btn_save"].grid(row=0, column=2, padx=5)
+        self.widgets["btn_cancel"].grid(row=0, column=3, padx=5)
 
     def handle_test_connection(self):
         api = TCX_API_Connection(server_url=self.app_config.server_url)
 
         try:
             api.authenticate(
-                username=self.vars["3cx"]["username"].get(),
-                password=self.vars["3cx"]["password"].get(),
+                username=self.app_config["3cx"]["username"],
+                password=self.app_config["3cx"]["password"],
             )
             messagebox.showinfo(title="Success", message="Test Successful")
         except Exception as e:
             messagebox.showinfo(title="Failure", message=f"Test Failed. {str(e)}")
 
-    def handle_save_click(self):
-        try:
-            self.write_config_file()
-            messagebox.showinfo(title="Saved!", message="Config saved!")
-            self.destroy()
-        except ConfigSaveError as e:
-            messagebox.showerror(title="Error!", message=f"{e}")
+    def handle_apply_click(self):
+        self.save_config()
 
-    def handle_cancel_click(self):
+    def handle_save_click(self):
+        self.save_config()
         self.destroy()
 
-    def write_config_file(self):
+    def handle_cancel_click(self):
+        if self.app_config.is_dirty:
+            if not self.confirm_discard_changes():
+                return
+        self.app_config.load()
+        self.destroy()
+
+    def confirm_discard_changes(self) -> bool:
+        return messagebox.askyesno(
+            "Unsaved Changes",
+            "You have unsaved changes. Do you really want to discard them?",
+        )
+
+    def save_config(self):
         try:
             self.app_config.save()
+            messagebox.showinfo(title="Saved!", message="Config saved!")
         except Exception as e:
-            raise ConfigSaveError() from e
+            messagebox.showerror(title="Error!", message=f"{e}")
 
 
 class WindowCSVMapping(Window):
