@@ -1,8 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Response(BaseModel):
-    # '@odata.context': str
+    context: str = Field(None, alias="@odata.context")
     # '@odata.count': int
-    context: str
-    count: int

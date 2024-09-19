@@ -2,9 +2,9 @@ import requests
 from unittest.mock import MagicMock
 import pytest
 from pydantic import ValidationError
-from tcx_api.resources.user import ListUserParameters, UserProperties
+from tcx_api.resources.users import ListUserParameters, UserProperties
 from tcx_api.components.parameters import ListParameters
-from tcx_api.resources.user import UserResource
+from tcx_api.resources.users import UsersResource
 from tcx_api.tcx_api_connection import TCX_API_Connection
 from tcx_api.components.schemas.pbx import User
 from tcx_api import exceptions as TCX_Exceptions
@@ -68,28 +68,26 @@ class TestListUserParameters:
 class TestUserResource:
     @pytest.fixture
     def user_resource(self):
-        return UserResource(api=MagicMock(spec=TCX_API_Connection))
+        return UsersResource(api=MagicMock(spec=TCX_API_Connection))
 
     @pytest.fixture
     def simple_user(self):
-        user = User(Id=1, FirstName="TestFirstName",
-                    LastName="TestLastName")
+        user = User(Id=1, FirstName="TestFirstName", LastName="TestLastName")
         yield user
 
     @pytest.fixture
     def simple_user2(self):
-        user = User(Id=2, FirstName="TestFirstName2",
-                    LastName="TestLastName2", )
+        user = User(
+            Id=2,
+            FirstName="TestFirstName2",
+            LastName="TestLastName2",
+        )
         yield user
 
     def test_list_user_single_success(self, user_resource, simple_user):
         # Mocking the API response
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "value": [
-                simple_user.model_dump()
-            ]
-        }
+        mock_response.json.return_value = {"value": [simple_user.model_dump()]}
         user_resource.api.get.return_value = mock_response
 
         # Calling the method under test

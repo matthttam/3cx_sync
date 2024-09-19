@@ -3,6 +3,12 @@ from configparser import ConfigParser
 
 
 class AppConfig(ConfigParser):
+    def __init__(self, *args, supress_load=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.original_config = None
+        if not supress_load:
+            self.load()
+
     @property
     def defaults_config_file_path(self) -> str:
         return os.path.join(os.getcwd(), "conf", "app_defaults.ini")
@@ -24,12 +30,6 @@ class AppConfig(ConfigParser):
     @property
     def is_dirty(self) -> bool:
         return self.original_config != self
-
-    def __init__(self, *args, supress_load=False, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.original_config = None
-        if not supress_load:
-            self.load()
 
     def load(self) -> None:
         self.read([self.defaults_config_file_path, self.config_file_path])

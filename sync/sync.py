@@ -2,13 +2,12 @@ import tkinter as tk
 from app.config import AppConfig
 from sync.sync_strategy import SyncSourceStrategy
 from tcx_api.tcx_api_connection import TCX_API_Connection
-from tcx_api.resources.user import UserResource, ListUserParameters
-from tcx_api.components.schemas.pbx import User, Group
-from tcx_api import exceptions as TCX_Exceptions
+from tcx_api.resources.users import UsersResource, ListUserParameters
+from tcx_api.components.schemas.pbx import User
 from tcx_api.exceptions import APIAuthenticationError
 from sync.comparison import UserChangeDetail, UserComparer
-from tcx_api.resources.group import GroupResource, ListGroupParameters
-
+from tcx_api.resources.group import GroupResource
+from tcx_api.resources.user_exceptions import UserCreateError, UserUpdateError, UserListError, UserHotdeskLogoutError
 
 class Sync:
     user_data = list()
@@ -21,7 +20,6 @@ class Sync:
         self.app.output("Initializing Sync")
         self.app.output("Loading 3CX Config")
         self.config = AppConfig()
-        self.config.load()
         self.app.output("3CX Config Loaded")
         self.app.output("Initializing API Connection")
         self.api_connection = TCX_API_Connection(
@@ -31,8 +29,8 @@ class Sync:
             self.authenticate()
         except APIAuthenticationError:
             raise
-        self.api_connection.refresh_access_token()
-        self.user_resource = UserResource(api=self.api_connection)
+        #self.api_connection.refresh_access_token()
+        self.user_resource = UsersResource(api=self.api_connection)
         self.group_resource = GroupResource(api=self.api_connection)
 
         self.sync_source.initialize()
@@ -42,7 +40,6 @@ class Sync:
         user_comparer = UserComparer(
             tcx_user_list=self.tcx_user_list, sync_source=self.sync_source)
         user_change_details = user_comparer.get_user_change_details()
-        # user_change_details = self.hydrate_user_change_details(user_change_details)
         user_change_details.sort(key=lambda x: x.user_to_update.Number)
         if len(user_change_details) > 0:
             self.app.output(f"Count of users to update: {
@@ -75,7 +72,7 @@ class Sync:
             merged_user_dict = new_user_dict | user.model_dump()
             self.user_resource.create_user(merged_user_dict)
             self.app.output(f"Created 3CX user {merged_user_dict['Number']}")
-        except TCX_Exceptions.UserCreateError as e:
+        except UserCreateError as e:
             self.app.output(str(e))
 
     def get_new_user(self):
@@ -89,7 +86,16 @@ class Sync:
 
     def update_users(self, user_change_details: list[UserChangeDetail]):
         for user_change_detail in user_change_details:
+            if user_change_detail.field_changes.get('Enabled').new == False:
+                self.logout_hotdesk(user_change_detail)
             self.update_user(user_change_detail)
+
+    def logout_hotdesk(self, user_change_detail: UserChangeDetail):
+        try:
+            self.app.output(f"Logging user {user_change_detail.Number} out of any hotdesk")
+            self.user_resource.logout_hotdesk(user_change_detail.Id)
+        except UserHotdeskLogoutError as e:
+            self.app.output(str(e))
 
     def update_user(self, user_change_detail: UserChangeDetail):
         try:
@@ -98,7 +104,7 @@ class Sync:
             self.app.output(f"Changing {str(user_change_detail)}")
             self.user_resource.update_user(user_change_detail.user_to_update)
 
-        except TCX_Exceptions.UserUpdateError as e:
+        except UserUpdateError as e:
             self.app.output(str(e))
 
     def get_users(self) -> list[User]:
@@ -106,7 +112,7 @@ class Sync:
             self.app.output("Fetching Users From 3CX")
             users = self.user_resource.list_user(
                 params=ListUserParameters(expand="Groups($expand=Rights,GroupRights),ForwardingProfiles,ForwardingExceptions,Phones,Greetings"))
-        except TCX_Exceptions.UserListError as e:
+        except UserListError as e:
             self.app.output(f"Failed to Fetch Users: {str(e)}")
             raise
         self.app.output(f"Fetched {len(users)} Users From 3CX")
@@ -140,6 +146,6 @@ class Sync:
                 password=self.config["3cx"].get("password"),
             )
             self.app.output("Authentication Successful")
-        except TCX_Exceptions.APIAuthenticationError as e:
+        except APIAuthenticationError as e:
             self.app.output(f"Failed to authenticate: {str(e)}")
             raise

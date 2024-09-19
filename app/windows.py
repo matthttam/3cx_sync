@@ -8,9 +8,15 @@ from app.mapping import CSVMapping
 from app.exceptions import ConfigSaveError
 
 
+def update_nested_dict(d: dict, keys: list, value) -> None:
+    """Update a nested dictionary with the given keys and value."""
+    for key in keys[:-1]:
+        d = d.setdefault(key, {})
+    d[keys[-1]] = value
+
+
 class Window(tk.Toplevel):
     def __init__(self, master, *args, **kwargs):
-        # tk.Toplevel.__init__(self, master, *args, **kwargs)
         super().__init__(master, *args, **kwargs)
         self.grab_set()
         self.focus_force()
@@ -86,8 +92,6 @@ class WindowPreferences(Window):
         self.lbl_user_on_disable.grid(
             row=0, column=1, pady=self.header_y_padding, sticky="w", columnspan=3
         )
-
-        # Sign out of hotdesks
 
 
 class WindowAppConfig(Window):
@@ -311,15 +315,29 @@ class WindowCSVMapping(Window):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.mapping = CSVMapping()
-        self.mapping.load_mapping_config()
+        self.initialize_variables()
+        self.build_gui()
+
+    def initialize_variables(self):
         self.mapping_fields = []
         self.ceckbox_key_state = tk.StringVar(self, "normal")
-        self.var_csv_mapping_extension_path = tk.StringVar(self)
+        extension = self.mapping.get("Extension", {})
+        self.var_csv_mapping_extension_path = tk.StringVar(
+            self, value=extension.get("Path", "")
+        )
+        # self.var_csv_mapping_extension_path.trace_add(
+        #    "write",
+        #    lambda *args: update_nested_dict(
+        #        self.mapping,
+        #        ["Extension", "Path"],
+        #        self.var_csv_mapping_extension_path.get(),
+        #    ),
+        # )
         self.key_checked = False
 
-        extension = self.mapping.get("Extension", {})
-        self.var_csv_mapping_extension_path.set(extension.get("Path", ""))
+        # self.var_csv_mapping_extension_path.set(extension.get("Path", ""))
 
+    def build_gui(self):
         # Frame: window
         frm_window = tk.Frame(master=self, name="csv_mapping")
         frm_window.pack(fill="both", expand=True)
@@ -448,7 +466,7 @@ class WindowCSVMapping(Window):
         self.mapping["Extension"]["New"] = mapping_new
         self.mapping["Extension"]["Update"] = mapping_update
         self.mapping["Extension"]["Static"] = mapping_static
-        self.mapping.save_mapping_config()
+        self.mapping.save()
         messagebox.showinfo(title="Saved!", message="Config saved!")
         self.destroy()
 
@@ -563,18 +581,3 @@ class WindowCSVMapping(Window):
         self.ceckbox_key_state.set("normal")
         for row in self.mapping_fields:
             row.key.configure(state="normal")
-
-    def handle_key_unchecked(self):
-        # self.key_checked = False
-        pass
-        # Extensions
-        # Path
-        # Key
-        # New Field Mapping
-        # Update Field Mapping
-
-        # Group Memberships
-        # Path
-        # Groups
-        # Group
-        # Conditions

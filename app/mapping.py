@@ -10,8 +10,10 @@ class CSVMapping(UserDict):
     def mapping_file_path(self):
         return os.path.join(os.getcwd(), "conf", "csv_mapping.json")
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, suppress_load=False, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        if not suppress_load:
+            self.load()
 
     def __setitem__(self, key: Any, item: Any) -> None:
         return super().__setitem__(key, item)
@@ -19,20 +21,21 @@ class CSVMapping(UserDict):
     def __getitem__(self, key: Any) -> Any:
         return super().__getitem__(key)
 
-    def load_mapping_config(self):
-        self.validate_file_exists()
-        self.validate_file_not_empty()
-        self.load_mapping_dict()
-
-    def validate_file_exists(self):
-        if not os.path.isfile(self.mapping_file_path):
+    def load(self):
+        if not self.load_mapping_config():
             self.initialize_mapping_file()
 
-    def validate_file_not_empty(self):
+    def load_mapping_config(self) -> bool:
+        if not os.path.exists(self.mapping_file_path):
+            return False
+
         if os.stat(self.mapping_file_path).st_size == 0:
-            self.initialize_mapping_file()
+            return False
 
-    def load_mapping_dict(self):
+        self.load_mapping_file()
+        return True
+
+    def load_mapping_file(self):
         with open(self.mapping_file_path, "r") as mapping_file:
             mapping_config = json.load(mapping_file)
             mapping_file.close()
@@ -43,10 +46,10 @@ class CSVMapping(UserDict):
             mapping_file.write("{}")
             mapping_file.close()
 
-    def save_mapping_config(self):
+    def save(self):
+        self.save_mapping_file()
+
+    def save_mapping_file(self):
         with open(self.mapping_file_path, "w") as mapping_file:
             json.dump(self.__dict__["data"], mapping_file)
-        mapping_file.close()
-
-    def inverted_mapping(self, mapping: dict):
-        return {v: k for k, v in mapping.items()}
+            mapping_file.close()
