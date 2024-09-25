@@ -16,7 +16,7 @@ class Is2FAEnabledResponse(Response):
 
 
 class HasDuplicatedEmailResponse(Response):
-    pass
+    value: bool = False
 
 
 class GetRestrictionsResponse(Response):

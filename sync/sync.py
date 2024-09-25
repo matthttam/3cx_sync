@@ -7,7 +7,7 @@ from tcx_api.components.schemas.pbx import User
 from tcx_api.exceptions import APIAuthenticationError
 from sync.comparison import UserChangeDetail, UserComparer
 from tcx_api.resources.group import GroupResource
-from tcx_api.resources.user_exceptions import UserCreateError, UserUpdateError, UserListError, UserHotdeskLogoutError
+from tcx_api.resources.users_exceptions import UserCreateError, UserUpdateError, UserListError, UserHotdeskLogoutError
 
 class Sync:
     user_data = list()
