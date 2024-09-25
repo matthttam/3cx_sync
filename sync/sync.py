@@ -78,19 +78,26 @@ class Sync:
     def get_new_user(self):
         new_user = self.user_resource.get_new_user()
         default_group = self.group_resource.get_default_group()
+        new_user['PrimaryGroupId'] = default_group.Id
         new_user['Groups'].append(
             {'GroupId': default_group.Id,
                 'Rights': {'RoleName': 'users'}
              })
         return new_user
 
-    def update_users(self, user_change_details: list[UserChangeDetail]):
+    def update_users(self, user_change_details: list[UserChangeDetail]) -> None:
         for user_change_detail in user_change_details:
-            if user_change_detail.field_changes.get('Enabled').new == False:
-                self.log_user_out_of_assigned_hotdesks_by_number(user_change_detail.Number)
             self.update_user(user_change_detail)
+            if self.config['app'].get('logout_hotdesk_on_disable', False):
+                self.handle_logout_hotdesk_on_disable(user_change_detail)
+            
 
-    def log_user_out_of_assigned_hotdesks_by_number(self, user_number: str):
+    def handle_logout_hotdesk_on_disable(self, user_change_detail: UserChangeDetail) -> None:
+        enabled_change = user_change_detail.field_changes.get('Enabled')
+        if enabled_change and enabled_change.new is False:
+                self.log_user_out_of_assigned_hotdesks_by_number(user_change_detail.Number)
+
+    def log_user_out_of_assigned_hotdesks_by_number(self, user_number: str) -> None:
         try:
             hotdesk_users = self.user_resource.get_hotdesks_by_assigned_user_number(user_number=user_number)
             if hotdesk_users:
@@ -123,27 +130,7 @@ class Sync:
         self.app.output(f"Fetched {len(users)} Users From 3CX")
         return users
 
-    # def hydrate_user_change_details(self, user_change_details: list[UserChangeDetail]) -> list[UserChangeDetail]:
-    #    try:
-    #        self.app.output(f"Fetching Additional Details for {len(
-    #                        user_change_details)} Users to Update")
-    #        for user_change_detail in user_change_details:
-#
-    #            detailed_user = self.UserResource.get_user(id=user_change_detail.user_to_update_dict['Id'],
-    #                                                       params=ListUserParameters(expand="Groups($expand=Rights,GroupRights),ForwardingProfiles,ForwardingExceptions,Phones,Greetings"))
-#
-    #            user_change_detail.user_to_update = User(
-    #                **(detailed_user.model_dump() | user_change_detail.user_to_update_dict))
-#
-    #    except TCX_Exceptions.UserListError as e:
-    #        self.app.output(
-    #            f"Failed to Fetch Additional Details for Users to Update: {str(e)}")
-    #        raise
-    #    self.app.output(
-    #        f"Fetched {len(user_change_details)} Detailed Users From 3CX")
-    #    return user_change_details
-
-    def authenticate(self):
+    def authenticate(self) -> None:
         self.app.output(f"Authenticating to 3CX at {self.config.server_url}")
         try:
             self.api_connection.authenticate(

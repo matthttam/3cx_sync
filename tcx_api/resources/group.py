@@ -112,6 +112,8 @@ class GroupResource(APIResource):
     def get_group_defaults(self):
         return {}
 
-    def get_default_group(self):
+    def get_default_group(self) -> Group | None:
         groups = self.list_group(params=ListGroupParameters(filter="IsDefault eq true"))
-        return groups.pop()
+        if groups:
+            return groups[0]
+        return None
