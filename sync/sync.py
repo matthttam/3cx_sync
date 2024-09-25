@@ -87,13 +87,18 @@ class Sync:
     def update_users(self, user_change_details: list[UserChangeDetail]):
         for user_change_detail in user_change_details:
             if user_change_detail.field_changes.get('Enabled').new == False:
-                self.logout_hotdesk(user_change_detail)
+                self.log_user_out_of_assigned_hotdesks_by_number(user_change_detail.Number)
             self.update_user(user_change_detail)
 
-    def logout_hotdesk(self, user_change_detail: UserChangeDetail):
+    def log_user_out_of_assigned_hotdesks_by_number(self, user_number: str):
         try:
-            self.app.output(f"Logging user {user_change_detail.Number} out of any hotdesk")
-            self.user_resource.logout_hotdesk(user_change_detail.Id)
+            hotdesk_users = self.user_resource.get_hotdesks_by_assigned_user_number(user_number=user_number)
+            if hotdesk_users:
+                for hotdesk_user in hotdesk_users:
+                    self.app.output(f"Logging user {user_number} out of hotdesk {hotdesk_user.Number}")
+                    self.user_resource.clear_hotdesk_assignment(hotdesk_user)
+            else:
+                self.app.output(f"User {user_number} is being disabled. No action required for hotdesking as the user is not currently signed in to any hotdesk.")
         except UserHotdeskLogoutError as e:
             self.app.output(str(e))
 
