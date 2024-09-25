@@ -10,8 +10,12 @@ from tcx_api.util import TcxStrEnum
 
 
 from tcx_api.components.schemas.pbx import User
-from tcx_api.components.parameters import (ExpandParameters, ListParameters, OrderbyParameters,
-                                           SelectParameters)
+from tcx_api.components.parameters import (
+    ExpandParameters,
+    ListParameters,
+    OrderbyParameters,
+    SelectParameters,
+)
 from tcx_api import exceptions as TCX_Exceptions
 
 
@@ -86,12 +90,15 @@ class UserProperties(TcxStrEnum):
     WebMeetingFriendlyName = auto()
 
 
-class ListUserParameters(ListParameters, OrderbyParameters, SelectParameters[UserProperties], ExpandParameters):
-    ...
+class ListUserParameters(
+    ListParameters,
+    OrderbyParameters,
+    SelectParameters[UserProperties],
+    ExpandParameters,
+): ...
 
 
-class GetUserParameters(SelectParameters[UserProperties], ExpandParameters):
-    ...
+class GetUserParameters(SelectParameters[UserProperties], ExpandParameters): ...
 
 
 class UserResource(APIResource):
@@ -128,10 +135,13 @@ class UserResource(APIResource):
     def update_user(self, user: User):
         """Update a user entity"""
         try:
-            user_dict = user.model_dump(exclude_unset=True,
-                                        exclude_none=True, serialize_as_any=True, by_alias=True)
-            self.api.patch(
-                endpoint=f"{self.endpoint}({user.Id})", data=user_dict)
+            user_dict = user.model_dump(
+                exclude_unset=True,
+                exclude_none=True,
+                serialize_as_any=True,
+                by_alias=True,
+            )
+            self.api.patch(endpoint=f"{self.endpoint}({user.Id})", data=user_dict)
         except requests.HTTPError as e:
             raise TCX_Exceptions.UserUpdateError(e)
 
@@ -140,61 +150,57 @@ class UserResource(APIResource):
             self.api.delete(endpoint=self.endpoint, params=user.Id)
 
     def get_new_user(self):
-        auth_id = ''.join(random.choices(
-            string.ascii_letters + string.digits, k=10))
+        auth_id = "".join(random.choices(string.ascii_letters + string.digits, k=10))
         # return json.loads('{"Require2FA": true, "SendEmailMissedCalls": true, "AuthID": "", "Phones": [], "Groups": [{"GroupId": 3078, "Rights": {"RoleName": "users"}}], "CallUsEnableChat": true, "CallUsRequirement": "Both", "ClickToCallId": "testtest", "EmailAddress": "", "Mobile": "", "FirstName": "TEST", "LastName": "TEST", "Number": "10003", "OutboundCallerID": "", "PrimaryGroupId": 3078, "WebMeetingFriendlyName": "testtest", "WebMeetingApproveParticipants": false, "Blfs": "<PhoneDevice><BLFS/></PhoneDevice>", "ForwardingProfiles": [], "MS365CalendarEnabled": true, "MS365ContactsEnabled": true, "MS365SignInEnabled": true, "MS365TeamsEnabled": true, "GoogleSignInEnabled": true, "Enabled": true, "Internal": false, "AllowOwnRecordings": false, "MyPhoneShowRecordings": false, "MyPhoneAllowDeleteRecordings": false, "MyPhoneHideForwardings": false, "RecordCalls": false, "HideInPhonebook": false, "PinProtected": false, "CallScreening": false, "AllowLanOnly": true, "SIPID": "", "EnableHotdesking": false, "PbxDeliversAudio": false, "SRTPMode": "SRTPDisabled", "Hours": {"Type": "OfficeHours"}, "OfficeHoursProps": [], "BreakTime": {"Type": "OfficeHours"}, "VMEnabled": true, "VMPIN": "923080", "VMEmailOptions": "Notification", "VMDisablePinAuth": false, "VMPlayCallerID": false, "VMPlayMsgDateTime": "None", "PromptSet": "8210986B-9412-497f-AD77-3A554F4A9BDB", "Greetings": [{"Type": "Default", "Filename": ""}]}')
         return {
-            'Require2FA': True,
-            'SendEmailMissedCalls': True,
-            'AuthID': auth_id,
-            'Phones': [],
-            'Groups': [],
-            'CallUsEnableChat': True,
-            'CallUsRequirement': 'Both',
-            'ClickToCallId': '',
-            'EmailAddress': '',
-            'Mobile': '',
-            'FirstName': '',
-            'LastName': '',
-            'Number': '',
-            'OutboundCallerID': '',
-            'PrimaryGroupId': 3078,
-            'WebMeetingFriendlyName': '',
-            'WebMeetingApproveParticipants': False,
-            'Blfs': '<PhoneDevice><BLFS/></PhoneDevice>',
-            'ForwardingProfiles': [],
-            'MS365CalendarEnabled': True,
-            'MS365ContactsEnabled': True,
-            'MS365SignInEnabled': True,
-            'MS365TeamsEnabled': True,
-            'GoogleSignInEnabled': True,
-            'Enabled': True,
-            'Internal': False,
-            'AllowOwnRecordings': False,
-            'MyPhoneShowRecordings': False,
-            'MyPhoneAllowDeleteRecordings': False,
-            'MyPhoneHideForwardings': False,
-            'RecordCalls': False,
-            'HideInPhonebook': False,
-            'PinProtected': False,
-            'CallScreening': False,
-            'AllowLanOnly': True,
-            'SIPID': '',
-            'EnableHotdesking': False,
-            'PbxDeliversAudio': False,
-            'SRTPMode': 'SRTPDisabled',
-            'Hours': {'Type': 'OfficeHours'},
-            'OfficeHoursProps': [],
-            'BreakTime': {'Type': 'OfficeHours'},
-            'VMEnabled': True,
-            'VMPIN': '',
-            'VMEmailOptions': 'Notification',
-            'VMDisablePinAuth': False,
-            'VMPlayCallerID': False,
-            'VMPlayMsgDateTime': 'None',
-            'PromptSet': '8210986B-9412-497f-AD77-3A554F4A9BDB',
-            'Greetings': [
-                {'Type': 'Default',
-                 'Filename': ''}
-            ]
+            "Require2FA": True,
+            "SendEmailMissedCalls": True,
+            "AuthID": auth_id,
+            "Phones": [],
+            "Groups": [],
+            "CallUsEnableChat": True,
+            "CallUsRequirement": "Both",
+            "ClickToCallId": "",
+            "EmailAddress": "",
+            "Mobile": "",
+            "FirstName": "",
+            "LastName": "",
+            "Number": "",
+            "OutboundCallerID": "",
+            "PrimaryGroupId": 28,
+            "WebMeetingFriendlyName": "",
+            "WebMeetingApproveParticipants": False,
+            "Blfs": "<PhoneDevice><BLFS/></PhoneDevice>",
+            "ForwardingProfiles": [],
+            "MS365CalendarEnabled": True,
+            "MS365ContactsEnabled": True,
+            "MS365SignInEnabled": True,
+            "MS365TeamsEnabled": True,
+            "GoogleSignInEnabled": True,
+            "Enabled": True,
+            "Internal": False,
+            "AllowOwnRecordings": False,
+            "MyPhoneShowRecordings": False,
+            "MyPhoneAllowDeleteRecordings": False,
+            "MyPhoneHideForwardings": False,
+            "RecordCalls": False,
+            "HideInPhonebook": False,
+            "PinProtected": False,
+            "CallScreening": False,
+            "AllowLanOnly": True,
+            "SIPID": "",
+            "EnableHotdesking": False,
+            "PbxDeliversAudio": False,
+            "SRTPMode": "SRTPDisabled",
+            "Hours": {"Type": "OfficeHours"},
+            "OfficeHoursProps": [],
+            "BreakTime": {"Type": "OfficeHours"},
+            "VMEnabled": True,
+            "VMPIN": "",
+            "VMEmailOptions": "Notification",
+            "VMDisablePinAuth": False,
+            "VMPlayCallerID": False,
+            "VMPlayMsgDateTime": "None",
+            "PromptSet": "8210986B-9412-497f-AD77-3A554F4A9BDB",
+            "Greetings": [{"Type": "Default", "Filename": ""}],
         }
