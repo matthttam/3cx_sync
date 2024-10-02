@@ -1,7 +1,6 @@
-import requests
 import tkinter as tk
-from app.windows import WindowCSVMapping, Window3cxConfig, WindowPreferences
-from app.config import AppConfig, TCXConfig
+from app.windows import WindowCSVMapping, WindowAppConfig, WindowPreferences
+from app.config import AppConfig
 from sync.sync_strategy import SyncCSV
 from sync.sync import Sync
 from tcx_api.exceptions import APIAuthenticationError
@@ -15,28 +14,34 @@ class App(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
 
         self.is_paused = False
-
         self.app_config = AppConfig()
-        self.tcx_config = TCXConfig()
 
+        # Add Logging
+        sync_logger = SyncLogger()
+        sync_logger.addFileHandler()
+
+        self.build_gui()
+        sync_logger.addTextWindowHandler(self.txt_output)
+        self.sync_logger = sync_logger.get_logger()
+
+    def build_gui(self):
         # Window Options
         self.wm_title("3cx Sync")
-        self.geometry('1200x800')
+        self.geometry("1200x800")
 
         # Create a window frame
-        self.frm_window = tk.Frame(
-            master=self, width=500, height=1000)
+        self.frm_window = tk.Frame(master=self, width=500, height=1000)
         self.frm_window.pack(fill="both", anchor="ne", expand=True)
 
         # Frame: Left Column
         self.frm_left_column = tk.Frame(master=self.frm_window)
         self.frm_left_column.pack(side="left", ipadx=5)
 
-        # Button: Configure 3CX
+        # Button: Configure App
         self.btn_show_window_csv_config = tk.Button(
             master=self.frm_left_column,
-            text="Configure 3CX",
-            command=self.show_Window3cxConfig,
+            text="Configure App",
+            command=self.show_WindowAppConfig,
         )
         self.btn_show_window_csv_config.pack(fill="x")
 
@@ -48,18 +53,11 @@ class App(tk.Tk):
         )
         self.btn_show_window_csv_config.pack(fill="x")
 
-        # Button: Configure Preferences
-        # self.btn_show_window_app_preferences = tk.Button(
-        #    master=self.frm_left_column,
-        #    text="Preferences",
-        #    command=self.show_WindowPreferences,
-        # )
-        # self.btn_show_window_app_preferences.pack(fill="x")
-
-        # Right Frame
+        # Frame: Right Frame
         self.frm_right_column = tk.Frame(master=self.frm_window)
-        self.frm_right_column.pack(side="left", fill="both",
-                                   expand=True, padx="5", pady="5")
+        self.frm_right_column.pack(
+            side="left", fill="both", expand=True, padx="5", pady="5"
+        )
 
         # Text:  Output
         self.txt_output = ScrolledText(
@@ -69,12 +67,15 @@ class App(tk.Tk):
 
         # Form: Sync Buttons
         self.frm_sync_buttons = tk.Frame(
-            master=self.frm_right_column, background="green")
+            master=self.frm_right_column, background="green"
+        )
         self.frm_sync_buttons.pack(side="bottom")
 
         # Button: Sync CSV
         self.btn_sync_csv = tk.Button(
-            master=self.frm_sync_buttons, text="Sync CSV", command=self.handle_csv_sync_click
+            master=self.frm_sync_buttons,
+            text="Sync CSV",
+            command=self.handle_csv_sync_click,
         )
         self.btn_sync_csv.pack(side="left", anchor="s")
         # Button: Pause/Resume
@@ -92,14 +93,8 @@ class App(tk.Tk):
         )
         self.btn_exit.grid(row=0, column=1, padx=5)
 
-        # Add Logging
-        sync_logger = SyncLogger()
-        sync_logger.addFileHandler()
-        sync_logger.addTextWindowHandler(self.txt_output)
-        self.sync_logger = sync_logger.get_logger()
-
-    def show_Window3cxConfig(self):
-        Window3cxConfig(master=self, tcx_config=self.tcx_config)
+    def show_WindowAppConfig(self):
+        WindowAppConfig(master=self, app_config=self.app_config)
 
     def show_WindowCSVMapping(self):
         WindowCSVMapping(master=self)
@@ -121,9 +116,8 @@ class App(tk.Tk):
 
     def handle_pause_resume(self):
         self.is_paused = not self.is_paused
-        self.btn_pause_resume.configure(
-            text="Resume" if self.is_paused else "Pause")
-        if (self.is_paused):
+        self.btn_pause_resume.configure(text="Resume" if self.is_paused else "Pause")
+        if self.is_paused:
             self.pause_app()
 
     def pause_app(self):
@@ -134,6 +128,6 @@ class App(tk.Tk):
             if not self.is_paused:
                 return
 
-    def output(self, value: str, level='info') -> None:
+    def output(self, value: str, level="info") -> None:
         self.sync_logger.info(value)
         self.update()

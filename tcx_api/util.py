@@ -3,10 +3,7 @@ from enum import StrEnum, EnumMeta
 
 class TcxStrEnumMeta(EnumMeta):
     # Map special string values to their Python equivalents
-    SPECIAL_STRING_MAP = {
-        "None": "NONE",
-        "-INF": "NEGATIVE_INF"
-    }
+    SPECIAL_STRING_MAP = {"None": "NONE", "-INF": "NEGATIVE_INF"}
     SPECIAL_STRING_MAP_INV = {v: k for k, v in SPECIAL_STRING_MAP.items()}
 
     def __getitem__(self, name):

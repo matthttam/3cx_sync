@@ -5,8 +5,12 @@ from enum import auto
 from tcx_api.resources.api_resource import APIResource
 from tcx_api.util import TcxStrEnum
 from tcx_api.components.schemas.pbx import Group
-from tcx_api.components.parameters import (ExpandParameters, ListParameters, OrderbyParameters,
-                                           SelectParameters)
+from tcx_api.components.parameters import (
+    ExpandParameters,
+    ListParameters,
+    OrderbyParameters,
+    SelectParameters,
+)
 from tcx_api import exceptions as TCX_Exceptions
 
 
@@ -48,12 +52,15 @@ class GroupProperties(TcxStrEnum):
     TimeZoneId = auto()
 
 
-class ListGroupParameters(ListParameters, OrderbyParameters, SelectParameters[GroupProperties], ExpandParameters):
-    ...
+class ListGroupParameters(
+    ListParameters,
+    OrderbyParameters,
+    SelectParameters[GroupProperties],
+    ExpandParameters,
+): ...
 
 
-class GetGroupParameters(SelectParameters[GroupProperties], ExpandParameters):
-    ...
+class GetGroupParameters(SelectParameters[GroupProperties], ExpandParameters): ...
 
 
 class GroupResource(APIResource):
@@ -71,8 +78,7 @@ class GroupResource(APIResource):
     def create_group(self, group: Group):
         """Add new entity to Groups"""
         default_group_dict = self.get_group_defaults
-        group_dict = group.model_dump(
-            exclude_none=True, exclude_unset=True)
+        group_dict = group.model_dump(exclude_none=True, exclude_unset=True)
         merged_group_dict = default_group_dict | group_dict
         try:
             self.api.post(self.endpoint, merged_group_dict)
@@ -89,10 +95,13 @@ class GroupResource(APIResource):
     def update_group(self, group: Group):
         """Update a group entity"""
         try:
-            group_dict = group.model_dump(exclude_unset=True,
-                                          exclude_none=True, serialize_as_any=True, by_alias=True)
-            self.api.patch(
-                endpoint=f"{self.endpoint}({group.Id})", data=group_dict)
+            group_dict = group.model_dump(
+                exclude_unset=True,
+                exclude_none=True,
+                serialize_as_any=True,
+                by_alias=True,
+            )
+            self.api.patch(endpoint=f"{self.endpoint}({group.Id})", data=group_dict)
         except requests.HTTPError as e:
             raise TCX_Exceptions.GroupUpdateError(e)
 
@@ -103,7 +112,8 @@ class GroupResource(APIResource):
     def get_group_defaults(self):
         return {}
 
-    def get_default_group(self):
-        groups = self.list_group(
-            params=ListGroupParameters(filter="IsDefault eq true"))
-        return groups.pop()
+    def get_default_group(self) -> Group | None:
+        groups = self.list_group(params=ListGroupParameters(filter="IsDefault eq true"))
+        if groups:
+            return groups[0]
+        return None

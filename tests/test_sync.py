@@ -15,9 +15,11 @@ class TestSyncSchema:
             prop_c: str
 
         modified_comparison_a = ModifiedComparisonClass(
-            prop_a="a", prop_b="b", prop_c="c")
+            prop_a="a", prop_b="b", prop_c="c"
+        )
         modified_comparison_b = ModifiedComparisonClass(
-            prop_a="a", prop_b="b", prop_c="c")
+            prop_a="a", prop_b="b", prop_c="c"
+        )
         assert modified_comparison_a == modified_comparison_b
         modified_comparison_b.prop_a = "TEST"
         assert modified_comparison_a != modified_comparison_b
@@ -29,11 +31,14 @@ class TestSyncSchema:
             prop_a: str
             prop_b: str
             prop_c: str
+
         ModifiedComparisonClass._comparison_properties = ["prop_b", "prop_c"]
         modified_comparison_a = ModifiedComparisonClass(
-            prop_a="a", prop_b="b", prop_c="c")
+            prop_a="a", prop_b="b", prop_c="c"
+        )
         modified_comparison_b = ModifiedComparisonClass(
-            prop_a="TEST", prop_b="b", prop_c="c")
+            prop_a="TEST", prop_b="b", prop_c="c"
+        )
         assert modified_comparison_a == modified_comparison_b
         modified_comparison_b.prop_b = "TEST"
         assert modified_comparison_a != modified_comparison_b

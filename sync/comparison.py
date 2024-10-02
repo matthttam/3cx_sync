@@ -53,19 +53,20 @@ class UserComparer:
         user_change_details = []
         user_keys_to_compare = list(
             self.source_user_keys.intersection(self.tcx_user_keys))
+        update_fields = self.sync_source.get_user_update_fields()
 
         for key in user_keys_to_compare:
             user_change_detail = self.compare_user(
-                self.tcx_user_dict[key], self.source_user_dict[key])
+                self.tcx_user_dict[key], self.source_user_dict[key], update_fields)
             if user_change_detail.field_changes:
                 user_change_details.append(user_change_detail)
 
         return user_change_details
 
-    def compare_user(self, tcx_user: User, source_user: User) -> UserChangeDetail:
+    def compare_user(self, tcx_user: User, source_user: User, update_fields: list) -> UserChangeDetail:
         updated_fields = {}
         field_changes = {}
-        update_fields = self.sync_source.get_user_update_fields()
+
         for field in update_fields:
             tcx_value = getattr(tcx_user, field, None)
             source_value = getattr(source_user, field, None)
