@@ -5,7 +5,7 @@ on:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
-  build_and_release:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -41,7 +41,32 @@ jobs:
       - name: Build application for ${{matrix.TARGET}}
         run: ${{matrix.CMD_BUILD}}
 
-      - name: Upload release assets
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact-${{ matrix.TARGET }}
+          path: ${{ matrix.OUT_FILE_NAME }}
+
+  upload_release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact-windows
+          path: dist/
+      - name: Download macOS build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact-macos
+          path: dist/
+
+      - name: Create and upload release assets
         uses: ncipollo/release-action@v1
         with:
-          artifacts: dist/*,
+          artifacts: dist/*
+          token: ${{ secrets.GITHUB_TOKEN }}
