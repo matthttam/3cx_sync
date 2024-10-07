@@ -10,6 +10,7 @@ jobs:
     name: Create Release
     runs-on: [ubuntu-latest]
     steps:
+    - uses: actions/checkout@v3
     - name: Create Release
       id: create_release
       uses: elgohr/Github-Release-Action@v5
