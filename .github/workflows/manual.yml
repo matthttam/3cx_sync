@@ -12,13 +12,13 @@ jobs:
         include:
           - os: windows-latest
             TARGET: windows
-            CMD_BUILD: python -m PyInstaller --onefile --windowed --name 3cx_sync main.py
+            CMD_BUILD: python -m PyInstaller --onefile --windowed --name 3cx_sync --add-data "conf/app_defaults.ini;conf" --add-data "conf/csv_mapping_defaults.json;conf" main.py
             OUT_FILE_NAME: dist/3cx_sync.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
           - os: macos-latest
             TARGET: macos
             CMD_BUILD: >
-                python -m PyInstaller --onefile --windowed --name 3cx_sync main.py &&
+                python -m PyInstaller --onefile --windowed --name 3cx_sync --add-data "conf/app_defaults.ini:conf" --add-data "conf/csv_mapping_defaults.json:conf" main.py &&
                 cd dist/ &&
                 zip -r9 3cx_sync 3cx_sync.app/                
             OUT_FILE_NAME: dist/3cx_sync.zip
