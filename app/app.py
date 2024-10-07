@@ -136,15 +136,3 @@ class App(tk.Tk):
             self.logger.info(f"Resumed by user")
             self.sync.resume_sync()
             self.btn_pause_resume.configure(text="Pause")
-
-    # def pause_app(self):
-    #    self.logger.info(f"Paused by user")
-    #    while True:
-    #        self.update()
-    #        self.after(100)
-    #        if not self.is_paused:
-    #            return
-
-    # def output(self, value: str, level="info") -> None:
-    #    self.logger.info(value)
-    #    self.update()
