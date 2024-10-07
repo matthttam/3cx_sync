@@ -21,7 +21,7 @@ jobs:
                 python -m PyInstaller --onefile --windowed --name 3cx_sync main.py &&
                 cd dist/ &&
                 zip -r9 3cx_sync 3cx_sync.app/                
-            OUT_FILE_NAME: 3cx_sync.zip
+            OUT_FILE_NAME: dist/3cx_sync.zip
             ASSET_MIME: application/zip
     steps:
       - name: Checkout code
