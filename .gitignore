@@ -160,6 +160,10 @@ cython_debug/
 #.idea/
 
 3cx_conf.ini
+app_conf.ini
 csv_mapping.json
+csv_mapping copy.json
 .vscode
 launch.json
+**/*.csv
+*.log
