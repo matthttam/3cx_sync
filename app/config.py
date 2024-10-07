@@ -1,5 +1,6 @@
-import os, copy
+import os, copy, sys
 from configparser import ConfigParser
+from pathlib import Path
 
 
 class AppConfig(ConfigParser):
@@ -9,13 +10,21 @@ class AppConfig(ConfigParser):
         if not supress_load:
             self.load()
 
+    def get_config_path(self) -> str:
+        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+            conf_path = Path(sys._MEIPASS)
+        else:
+            conf_path = os.path.join(os.getcwd(), "conf")
+        return conf_path
+
     @property
     def defaults_config_file_path(self) -> str:
-        return os.path.join(os.getcwd(), "conf", "app_defaults.ini")
+
+        return os.path.join(self.get_config_path(), "app_defaults.ini")
 
     @property
     def config_file_path(self) -> str:
-        return os.path.join(os.getcwd(), "conf", "app_conf.ini")
+        return os.path.join(self.get_config_path(), "app_conf.ini")
 
     @property
     def server_url(self) -> str:
