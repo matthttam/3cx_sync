@@ -44,7 +44,7 @@ jobs:
             ASSET_MIME: application/zip
           - os: windows-latest
             TARGET: windows
-            CMD_BUILD: --onefile --windowed -name 3cx_sync --icon NONE main.py
+            CMD_BUILD: pyinstaller --onefile --windowed -name 3cx_sync --icon NONE main.py
             OUT_FILE_NAME: 3cx_sync.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
     steps:
