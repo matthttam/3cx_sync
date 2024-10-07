@@ -1,5 +1,6 @@
 import tkinter as tk
 import logging
+import threading
 from app.windows import WindowCSVMapping, WindowAppConfig, WindowPreferences
 from app.config import AppConfig
 from sync.sync_strategy import SyncCSV
@@ -12,11 +13,10 @@ from sync.logging import SyncLogger
 class App(tk.Tk):
 
     def __init__(self, *args, sync_logger: SyncLogger, app_config: AppConfig, **kwargs):
-        # app_args = kwargs.pop("app_args")
-        # logger = kwargs.pop("logger")
         tk.Tk.__init__(self, *args, **kwargs)
 
         self.is_paused = False
+        self.sync_running = False
         self.app_config = app_config  # AppConfig()
 
         self.build_gui()
@@ -101,25 +101,49 @@ class App(tk.Tk):
     def show_WindowPreferences(self):
         WindowPreferences(master=self)
 
-    def handle_exit_click(self):
+    def handle_exit_click(self) -> None:
         self.destroy()
 
-    def handle_csv_sync_click(self):
-        run_sync(logger=self.logger, sync_source=SyncCSV)
+    def handle_csv_sync_click(self) -> None:
+        self.sync_running = True
+        self.sync_thread = threading.Thread(target=self.run_sync_in_thread)
+        self.sync_thread.start()
+        self.periodic_update()
+
+    def run_sync_in_thread(self) -> None:
+        try:
+            self.sync = Sync(logger=self.logger, sync_source=SyncCSV)
+            run_sync(self.sync)
+        finally:
+            self.sync_running = False
+
+    def periodic_update(self) -> None:
+        if not self.sync_running:
+            return
+        self.update()
+        self.after(100, self.periodic_update)
 
     def handle_pause_resume(self):
+        if not self.sync_running:
+            return
         self.is_paused = not self.is_paused
-        self.btn_pause_resume.configure(text="Resume" if self.is_paused else "Pause")
+        # self.btn_pause_resume.configure(text="Resume" if self.is_paused else "Pause")
         if self.is_paused:
-            self.pause_app()
+            self.logger.info(f"Paused by user")
+            self.sync.pause_sync()
+            self.btn_pause_resume.configure(text="Resume")
+        else:
+            self.logger.info(f"Resumed by user")
+            self.sync.resume_sync()
+            self.btn_pause_resume.configure(text="Pause")
 
-    def pause_app(self):
-        self.logger.info(f"Paused by user")
-        while True:
-            self.update()
-            self.after(100)
-            if not self.is_paused:
-                return
+    # def pause_app(self):
+    #    self.logger.info(f"Paused by user")
+    #    while True:
+    #        self.update()
+    #        self.after(100)
+    #        if not self.is_paused:
+    #            return
 
     # def output(self, value: str, level="info") -> None:
     #    self.logger.info(value)

@@ -2,6 +2,8 @@ from app.app import App
 import argparse
 from sync.logging import SyncLogger
 from app.config import AppConfig
+from sync.sync import Sync, run_sync
+from sync.sync_strategy import SyncCSV
 
 
 def get_app_args():
@@ -24,8 +26,12 @@ if __name__ == "__main__":
     app_args = get_app_args()
     sync_logger = SyncLogger()
     sync_logger.addFileHandler()
-    if not app_args.silent:
+
+    if app_args.silent:
+        if app_args.mode == "CSV":
+            sync = Sync(logger=sync_logger.get_logger(), sync_source=SyncCSV)
+            run_sync(sync)
+
+    else:
         app = App(sync_logger=sync_logger, app_config=AppConfig())
         app.mainloop()
-    else:
-        pass
