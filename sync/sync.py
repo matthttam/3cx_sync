@@ -1,4 +1,5 @@
-import tkinter as tk
+import logging
+
 from app.config import AppConfig
 from sync.sync_strategy import SyncSourceStrategy
 from tcx_api.tcx_api_connection import TCX_API_Connection
@@ -12,16 +13,16 @@ from tcx_api.resources.users_exceptions import UserCreateError, UserUpdateError,
 class Sync:
     user_data = list()
 
-    def __init__(self, app: tk.Tk, sync_source: SyncSourceStrategy) -> None:
-        self.app = app
-        self.sync_source = sync_source(output=self.app.output)
+    def __init__(self, logger: logging.Logger, sync_source: SyncSourceStrategy) -> None:
+        self.logger = logger
+        self.sync_source = sync_source(output=self.logger.info)
 
     def sync(self):
-        self.app.output("Initializing Sync")
-        self.app.output("Loading 3CX Config")
+        self.logger.info("Initializing Sync")
+        self.logger.info("Loading 3CX Config")
         self.config = AppConfig()
-        self.app.output("3CX Config Loaded")
-        self.app.output("Initializing API Connection")
+        self.logger.info("3CX Config Loaded")
+        self.logger.info("Initializing API Connection")
         self.api_connection = TCX_API_Connection(
             server_url=self.config.server_url
         )
@@ -42,21 +43,21 @@ class Sync:
         user_change_details = user_comparer.get_user_change_details()
         user_change_details.sort(key=lambda x: x.user_to_update.Number)
         if len(user_change_details) > 0:
-            self.app.output(f"Count of users to update: {
+            self.logger.info(f"Count of users to update: {
                             len(user_change_details)}")
             self.update_users(user_change_details=user_change_details)
         else:
-            self.app.output("No users to update.")
+            self.logger.info("No users to update.")
 
         users_to_create = user_comparer.get_users_to_create()
         if len(users_to_create) > 0:
-            self.app.output(f"Count of users to create: {
+            self.logger.info(f"Count of users to create: {
                             len(users_to_create)}")
             self.create_users(users=users_to_create)
         else:
-            self.app.output("No users to create.")
+            self.logger.info("No users to create.")
 
-        self.app.output("Sync Complete")
+        self.logger.info("Sync Complete")
 
     def index_users(self, users: list[User], key: str = "Number") -> dict[str, User]:
         return {getattr(user, key): user for user in users if user is not None and getattr(user, key) is not None}
@@ -67,13 +68,13 @@ class Sync:
 
     def create_user(self, user: User):
         try:
-            self.app.output(f"Creating 3CX user {user.Number}")
+            self.logger.info(f"Creating 3CX user {user.Number}")
             new_user_dict = self.get_new_user()
             merged_user_dict = new_user_dict | user.model_dump()
             self.user_resource.create_user(merged_user_dict)
-            self.app.output(f"Created 3CX user {merged_user_dict['Number']}")
+            self.logger.info(f"Created 3CX user {merged_user_dict['Number']}")
         except UserCreateError as e:
-            self.app.output(str(e))
+            self.logger.info(str(e))
 
     def get_new_user(self):
         new_user = self.user_resource.get_new_user()
@@ -102,42 +103,51 @@ class Sync:
             hotdesk_users = self.user_resource.get_hotdesks_by_assigned_user_number(user_number=user_number)
             if hotdesk_users:
                 for hotdesk_user in hotdesk_users:
-                    self.app.output(f"Logging user {user_number} out of hotdesk {hotdesk_user.Number}")
+                    self.logger.info(f"Logging user {user_number} out of hotdesk {hotdesk_user.Number}")
                     self.user_resource.clear_hotdesk_assignment(hotdesk_user)
             else:
-                self.app.output(f"User {user_number} is being disabled. No action required for hotdesking as the user is not currently signed in to any hotdesk.")
+                self.logger.info(f"User {user_number} is being disabled. No action required for hotdesking as the user is not currently signed in to any hotdesk.")
         except UserHotdeskLogoutError as e:
-            self.app.output(str(e))
+            self.logger.info(str(e))
 
     def update_user(self, user_change_detail: UserChangeDetail):
         try:
-            self.app.output(f"Updating 3CX user {
+            self.logger.info(f"Updating 3CX user {
                 user_change_detail.Number}")
-            self.app.output(f"Changing {str(user_change_detail)}")
+            self.logger.info(f"Changing {str(user_change_detail)}")
             self.user_resource.update_user(user_change_detail.user_to_update)
 
         except UserUpdateError as e:
-            self.app.output(str(e))
+            self.logger.info(str(e))
 
     def get_users(self) -> list[User]:
         try:
-            self.app.output("Fetching Users From 3CX")
+            self.logger.info("Fetching Users From 3CX")
             users = self.user_resource.list_user(
                 params=ListUserParameters(expand="Groups($expand=Rights,GroupRights),ForwardingProfiles,ForwardingExceptions,Phones,Greetings"))
         except UserListError as e:
-            self.app.output(f"Failed to Fetch Users: {str(e)}")
+            self.logger.info(f"Failed to Fetch Users: {str(e)}")
             raise
-        self.app.output(f"Fetched {len(users)} Users From 3CX")
+        self.logger.info(f"Fetched {len(users)} Users From 3CX")
         return users
 
     def authenticate(self) -> None:
-        self.app.output(f"Authenticating to 3CX at {self.config.server_url}")
+        self.logger.info(f"Authenticating to 3CX at {self.config.server_url}")
         try:
             self.api_connection.authenticate(
                 username=self.config["3cx"].get("username"),
                 password=self.config["3cx"].get("password"),
             )
-            self.app.output("Authentication Successful")
+            self.logger.info("Authentication Successful")
         except APIAuthenticationError as e:
-            self.app.output(f"Failed to authenticate: {str(e)}")
+            self.logger.info(f"Failed to authenticate: {str(e)}")
             raise
+
+def run_sync(logger: logging.Logger, sync_source:SyncSourceStrategy):
+    sync = Sync(logger=logger, sync_source=sync_source)
+    try:
+        sync.sync()
+    except APIAuthenticationError:
+        logger.error("Failed to sync. Unable to authenticate.")
+    except Exception as e:
+        logger.error(f"Failed to sync. {e}")

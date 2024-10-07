@@ -1,8 +1,9 @@
 import tkinter as tk
+import logging
 from app.windows import WindowCSVMapping, WindowAppConfig, WindowPreferences
 from app.config import AppConfig
 from sync.sync_strategy import SyncCSV
-from sync.sync import Sync
+from sync.sync import run_sync, Sync
 from tcx_api.exceptions import APIAuthenticationError
 from tkinter.scrolledtext import ScrolledText
 from sync.logging import SyncLogger
@@ -10,19 +11,17 @@ from sync.logging import SyncLogger
 
 class App(tk.Tk):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, sync_logger: SyncLogger, app_config: AppConfig, **kwargs):
+        # app_args = kwargs.pop("app_args")
+        # logger = kwargs.pop("logger")
         tk.Tk.__init__(self, *args, **kwargs)
 
         self.is_paused = False
-        self.app_config = AppConfig()
-
-        # Add Logging
-        sync_logger = SyncLogger()
-        sync_logger.addFileHandler()
+        self.app_config = app_config  # AppConfig()
 
         self.build_gui()
         sync_logger.addTextWindowHandler(self.txt_output)
-        self.sync_logger = sync_logger.get_logger()
+        self.logger = sync_logger.get_logger()
 
     def build_gui(self):
         # Window Options
@@ -106,13 +105,7 @@ class App(tk.Tk):
         self.destroy()
 
     def handle_csv_sync_click(self):
-        sync = Sync(app=self, sync_source=SyncCSV)
-        try:
-            sync.sync()
-        except APIAuthenticationError:
-            self.output("Failed to sync. Unable to authenticate.")
-        except Exception as e:
-            self.output(f"Failed to sync. {e}")
+        run_sync(logger=self.logger, sync_source=SyncCSV)
 
     def handle_pause_resume(self):
         self.is_paused = not self.is_paused
@@ -121,13 +114,13 @@ class App(tk.Tk):
             self.pause_app()
 
     def pause_app(self):
-        self.output(f"Paused by user")
+        self.logger.info(f"Paused by user")
         while True:
             self.update()
             self.after(100)
             if not self.is_paused:
                 return
 
-    def output(self, value: str, level="info") -> None:
-        self.sync_logger.info(value)
-        self.update()
+    # def output(self, value: str, level="info") -> None:
+    #    self.logger.info(value)
+    #    self.update()

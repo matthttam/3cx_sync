@@ -42,6 +42,6 @@ class SyncLogger:
         self.logger.addHandler(text_window_handler)
 
     @staticmethod
-    def get_logger():
+    def get_logger() -> logging.Logger:
         """Returns the configured logger instance."""
         return logging.getLogger(SyncLogger.logger_name)
