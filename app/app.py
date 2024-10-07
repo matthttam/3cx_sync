@@ -1,11 +1,9 @@
 import tkinter as tk
-import logging
 import threading
 from app.windows import WindowCSVMapping, WindowAppConfig, WindowPreferences
 from app.config import AppConfig
 from sync.sync_strategy import SyncCSV
 from sync.sync import run_sync, Sync
-from tcx_api.exceptions import APIAuthenticationError
 from tkinter.scrolledtext import ScrolledText
 from sync.logging import SyncLogger
 
