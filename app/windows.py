@@ -5,7 +5,6 @@ from tkinter import messagebox
 from app.widgets import Checkbox, ExtensionMappingFieldSet
 from app.config import AppConfig
 from app.mapping import CSVMapping
-from app.exceptions import ConfigSaveError
 
 
 def update_nested_dict(d: dict, keys: list, value) -> None:
@@ -24,6 +23,39 @@ class Window(tk.Toplevel):
         self.header_y_padding = (5, 15)
         self.paragraph_x_padding = (15, 0)
         self.frame_iy_padding = 5
+
+        self._current_row = 0
+        self._current_column = 0
+
+    def increment_row(self, reset_column=True) -> None:
+        self._current_row = self._current_row + 1
+        if reset_column:
+            self.reset_column()
+
+    def reset_row_and_column(self) -> None:
+        self._current_row = 0
+        self.reset_column()
+
+    def get_current_row(self) -> int:
+        return self._current_row
+
+    def get_next_row(self, increment=True) -> int:
+        current_row = self._current_row
+        if increment:
+            self.increment_row()
+        return current_row
+
+    def increment_column(self) -> None:
+        self._current_column = self._current_column + 1
+
+    def reset_column(self) -> None:
+        self._current_column = 0
+
+    def get_next_column(self, increment=True) -> int:
+        current_column = self._current_column
+        if increment:
+            self.increment_column()
+        return current_column
 
 
 class WindowPreferences(Window):
@@ -121,6 +153,12 @@ class WindowAppConfig(Window):
             self.vars[section][var] = tk_var
             trace_tk_variables(tk_var, section, var)
 
+        # Create BooleanVars for '3cx' section
+        for var in ["store_credential_securely"]:
+            tk_var = tk.BooleanVar(self, self.app_config.getboolean(section, var))
+            self.vars[section][var] = tk_var
+            trace_tk_variables(tk_var, section, var)
+
         # Create BooleanVars for 'app' section
         section = "app"
         for var in ["logout_hotdesk_on_disable"]:
@@ -129,34 +167,32 @@ class WindowAppConfig(Window):
             trace_tk_variables(tk_var, section, var)
 
     def build_gui(self) -> None:
+        self.create_widgets()
+        self.place_widgets()
+
+    def create_widgets(self) -> None:
         # Create a window frame
         self.widgets["frm_window"] = tk.Frame(master=self)
-        self.widgets["frm_window"].pack(fill="both", expand=True)
 
-        # 3cx Header
+        # Create the 3cx header
         self.widgets["lbl_3cx_settings_header"] = tk.Label(
             master=self.widgets["frm_window"], text="3CX Settings", font=("Arial", 15)
         )
-        self.widgets["lbl_3cx_settings_header"].pack()
-
-        # Create 3cx options frame
+        # Create the 3cx options frame
         self.widgets["frm_3cx_options"] = tk.Frame(master=self.widgets["frm_window"])
         self.widgets["frm_3cx_options"].config(
             width=300, height=200, relief="ridge", borderwidth=2
         )
-        self.widgets["frm_3cx_options"].pack(fill="both", expand=True)
 
-        # 3cx URL
+        # Create the 3cx URL
         self.widgets["lbl_3cx_url"] = tk.Label(
             master=self.widgets["frm_3cx_options"], text="3CX URL:"
         )
-        self.widgets["lbl_3cx_url"].grid(row=0, column=0, padx=(5, 0), sticky="w")
 
         # Create a 3cx URL frame in that window
         self.widgets["frm_3cx_url"] = tk.Frame(master=self.widgets["frm_3cx_options"])
-        self.widgets["frm_3cx_url"].grid_columnconfigure(2, weight=1)
-        self.widgets["frm_3cx_url"].grid(row=0, column=1)
 
+        # Create the 3CX URL widgets
         self.widgets["opt_3cx_scheme"] = tk.OptionMenu(
             self.widgets["frm_3cx_url"], self.vars["3cx"]["scheme"], *["https", "http"]
         )
@@ -175,17 +211,7 @@ class WindowAppConfig(Window):
             width=5,
         )
 
-        elements = [
-            self.widgets["opt_3cx_scheme"],
-            self.widgets["lbl_3cx_scheme_ending"],
-            self.widgets["ent_3cx_domain"],
-            self.widgets["lbl_3cx_server_ending"],
-            self.widgets["ent_3cx_port"],
-        ]
-
-        for y, element in enumerate(elements):
-            element.grid(row=1, column=y, sticky="we")
-
+        # Create the 3CX username widgets
         self.widgets["lbl_3cx_username"] = tk.Label(
             master=self.widgets["frm_3cx_options"], text="Username:"
         )
@@ -194,6 +220,7 @@ class WindowAppConfig(Window):
             textvariable=self.vars["3cx"]["username"],
         )
 
+        # Create the 3CX password widgets
         self.widgets["lbl_3cx_password"] = tk.Label(
             master=self.widgets["frm_3cx_options"], text="Password:"
         )
@@ -202,52 +229,49 @@ class WindowAppConfig(Window):
             textvariable=self.vars["3cx"]["password"],
             show="*",
         )
-        self.widgets["lbl_3cx_username"].grid(row=2, column=0, padx=(5, 0))
-        self.widgets["ent_3cx_username"].grid(row=2, column=1, sticky="we")
-        self.widgets["lbl_3cx_password"].grid(row=3, column=0, padx=(5, 0))
-        self.widgets["ent_3cx_password"].grid(row=3, column=1, sticky="we")
 
-        # Button: Test
+        # Create the Store credential securely widgets
+        self.widgets["lbl_store_credential_securely"] = tk.Label(
+            master=self.widgets["frm_3cx_options"], text="Store Credential Securely:"
+        )
+        self.widgets["chk_store_credential_securely"] = tk.Checkbutton(
+            master=self.widgets["frm_3cx_options"],
+            variable=self.vars["3cx"]["store_credential_securely"],
+        )
+
+        # Create the test button widget
         self.widgets["btn_test"] = tk.Button(
             master=self.widgets["frm_3cx_options"],
             name="btn_test",
             text="Test",
             command=self.handle_test_connection,
         )
-        self.widgets["btn_test"].grid(
-            row=4, column=1, columnspan=2, padx=5, sticky="we"
-        )
 
-        # App Settings Header
+        # Create the App Settings header
         self.widgets["lbl_app_settings_header"] = tk.Label(
             master=self.widgets["frm_window"], text="App Settings", font=("Arial", 15)
         )
-        self.widgets["lbl_app_settings_header"].pack()
 
-        # frm: App Options
-        self.widgets["frm_app_options"] = tk.Frame(master=self.widgets["frm_window"])
-        self.widgets["frm_app_options"].config(
-            width=300, height=200, relief="ridge", borderwidth=2
+        # Create the form App Options
+        self.widgets["frm_app_options"] = tk.Frame(
+            master=self.widgets["frm_window"],
+            width=300,
+            height=200,
+            relief="ridge",
+            borderwidth=2,
         )
-        self.widgets["frm_app_options"].pack(fill="both", expand=True)
 
-        # lbl: Log out hotdesk on disable
+        # Create the Log out hotdesk on disable widgets
         self.widgets["lbl_app_logout_hotdesk_on_disable"] = tk.Label(
             master=self.widgets["frm_app_options"], text="Logout hotdesk on disable:"
         )
-        self.widgets["lbl_app_logout_hotdesk_on_disable"].grid(row=0, column=0)
-
-        # chk: Sign out of Hotdesk on Disable
         self.widgets["chk_app_logout_hotdesk_on_disable"] = tk.Checkbutton(
             master=self.widgets["frm_app_options"],
-            # value=self.vars["app"]["logout_hotdesk_on_disable"].get(),
             variable=self.vars["app"]["logout_hotdesk_on_disable"],
         )
-        self.widgets["chk_app_logout_hotdesk_on_disable"].grid(row=0, column=1)
 
-        # Apply, Save, and Cancel Buttons
+        # Create the Apply, Save, and Cnacel Buttons
         self.widgets["frm_navigation"] = tk.Frame(master=self.widgets["frm_window"])
-        self.widgets["frm_navigation"].pack(side="bottom", anchor="e")
         self.widgets["btn_apply"] = tk.Button(
             master=self.widgets["frm_navigation"],
             name="btn_apply",
@@ -266,9 +290,120 @@ class WindowAppConfig(Window):
             text="Cancel",
             command=self.handle_cancel_click,
         )
-        self.widgets["btn_apply"].grid(row=0, column=1, padx=5)
-        self.widgets["btn_save"].grid(row=0, column=2, padx=5)
-        self.widgets["btn_cancel"].grid(row=0, column=3, padx=5)
+
+    def place_widgets(self) -> None:
+        # Place the window frame
+        self.widgets["frm_window"].pack(fill="both", expand=True)
+
+        # Place the 3cx header
+        self.widgets["lbl_3cx_settings_header"].pack()
+
+        # Place the 3cx options frame
+        self.widgets["frm_3cx_options"].pack(fill="both", expand=True)
+
+        # Place the 3cx URL
+        self.widgets["lbl_3cx_url"].grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            padx=(5, 0),
+            sticky="e",
+        )
+
+        # Place the 3cx URL frame in that window
+        self.widgets["frm_3cx_url"].grid_columnconfigure(2, weight=1)
+        self.widgets["frm_3cx_url"].grid(
+            row=self.get_current_row(), column=self.get_next_column()
+        )
+
+        # Create the 3CX URL widgets
+        self.widgets["opt_3cx_scheme"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
+        )
+        self.widgets["lbl_3cx_scheme_ending"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
+        )
+        self.widgets["ent_3cx_domain"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
+        )
+        self.widgets["lbl_3cx_server_ending"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
+        )
+        self.widgets["ent_3cx_port"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
+        )
+
+        # Place the 3CX username widgets
+        self.increment_row()
+        self.widgets["lbl_3cx_username"].grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            padx=(5, 0),
+            sticky="e",
+        )
+        self.widgets["ent_3cx_username"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
+        )
+
+        # Place the 3CX password widgets
+        self.increment_row()
+        self.widgets["lbl_3cx_password"].grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            padx=(5, 0),
+            sticky="e",
+        )
+        self.widgets["ent_3cx_password"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
+        )
+
+        # Place the Store credential securely widgets
+        self.increment_row()
+        self.widgets["lbl_store_credential_securely"].grid(
+            row=self.get_current_row(), column=self.get_next_column()
+        )
+        self.widgets["chk_store_credential_securely"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), sticky="w"
+        )
+
+        # Place the Test Button Widget
+        self.increment_row()
+        self.increment_column()
+        self.widgets["btn_test"].grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            columnspan=2,
+            padx=5,
+            sticky="we",
+        )
+
+        # Place the App Settings Header
+        self.widgets["lbl_app_settings_header"].pack()
+
+        # Place the form app options
+        self.widgets["frm_app_options"].pack(fill="both", expand=True)
+
+        # Place the Log out hotdesk on disable widgets
+        self.reset_row_and_column()
+        self.widgets["lbl_app_logout_hotdesk_on_disable"].grid(
+            row=self.get_current_row(), column=self.get_next_column()
+        )
+        self.widgets["chk_app_logout_hotdesk_on_disable"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), sticky="w"
+        )
+
+        # Apply, Save, and Cancel Buttons
+        self.widgets["frm_navigation"].pack(side="bottom", anchor="e")
+        self.reset_row_and_column()
+        self.increment_column()
+        self.widgets["btn_apply"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), padx=5
+        )
+        self.widgets["btn_save"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), padx=5
+        )
+        self.widgets["btn_cancel"].grid(
+            row=self.get_current_row(), column=self.get_next_column(), padx=5
+        )
 
     def handle_test_connection(self):
         api = TCX_API_Connection(server_url=self.app_config.server_url)
@@ -299,7 +434,7 @@ class WindowAppConfig(Window):
     def confirm_discard_changes(self) -> bool:
         return messagebox.askyesno(
             "Unsaved Changes",
-            "You have unsaved changes. Do you really want to discard them?",
+            "Discard unsaved changes?",
         )
 
     def save_config(self):
