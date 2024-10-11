@@ -65,7 +65,7 @@ class WindowPreferences(Window):
         self.focus_force()
 
         # Frame: window
-        self.frm_window = tk.Frame(master=self, name="preferences")
+        self.frm_window = tk.Frame(master=self.widgets["self"], name="preferences")
         self.frm_window.pack(fill="both", expand=True)
 
         # Frame: Mapping
@@ -79,7 +79,7 @@ class WindowPreferences(Window):
 
         # Label: User Preferences
         self.lbl_user_preferences_header = tk.Label(
-            master=self.frm_user_preferences,
+            master=self.widgets["self.frm_user_preferences"],
             text="User Preferences",
             font=("Arial", 15),
         )
@@ -109,7 +109,9 @@ class WindowPreferences(Window):
 
         # Label: User On Enable
         self.lbl_user_on_disable = tk.Label(
-            master=self.frm_user_preferences_left, text="On Enable", font=("Arial", 15)
+            master=self.widgets["self.frm_user_preferences_left"],
+            text="On Enable",
+            font=("Arial", 15),
         )
         self.lbl_user_on_disable.grid(
             row=0, column=1, pady=self.header_y_padding, sticky="w", columnspan=3
@@ -117,7 +119,7 @@ class WindowPreferences(Window):
 
         # Label: User On Disable
         self.lbl_user_on_disable = tk.Label(
-            master=self.frm_user_preferences_right,
+            master=self.widgets["self.frm_user_preferences_right"],
             text="On Disable",
             font=("Arial", 15),
         )
@@ -143,7 +145,9 @@ class WindowAppConfig(Window):
         def trace_tk_variables(tk_var: tk.Variable, section, var):
             tk_var.trace_add(
                 "write",
-                lambda *args: self.app_config.update(section, var, str(tk_var.get())),
+                lambda *args: self.app_config.set_value(
+                    section, var, str(tk_var.get())
+                ),
             )
 
         # Create StringVars for '3cx' section
@@ -176,7 +180,9 @@ class WindowAppConfig(Window):
 
         # Create the 3cx header
         self.widgets["lbl_3cx_settings_header"] = tk.Label(
-            master=self.widgets["frm_window"], text="3CX Settings", font=("Arial", 15)
+            master=self.widgets["frm_window"],
+            text="3CX Settings",
+            font=("Arial", 15),
         )
         # Create the 3cx options frame
         self.widgets["frm_3cx_options"] = tk.Frame(master=self.widgets["frm_window"])
@@ -200,7 +206,8 @@ class WindowAppConfig(Window):
             master=self.widgets["frm_3cx_url"], text="://"
         )
         self.widgets["ent_3cx_domain"] = tk.Entry(
-            master=self.widgets["frm_3cx_url"], textvariable=self.vars["3cx"]["domain"]
+            master=self.widgets["frm_3cx_url"],
+            textvariable=self.vars["3cx"]["domain"],
         )
         self.widgets["lbl_3cx_server_ending"] = tk.Label(
             master=self.widgets["frm_3cx_url"], text=":"
@@ -232,7 +239,8 @@ class WindowAppConfig(Window):
 
         # Create the Store credential securely widgets
         self.widgets["lbl_store_credential_securely"] = tk.Label(
-            master=self.widgets["frm_3cx_options"], text="Store Credential Securely:"
+            master=self.widgets["frm_3cx_options"],
+            text="Store Credential Securely:",
         )
         self.widgets["chk_store_credential_securely"] = tk.Checkbutton(
             master=self.widgets["frm_3cx_options"],
@@ -249,7 +257,9 @@ class WindowAppConfig(Window):
 
         # Create the App Settings header
         self.widgets["lbl_app_settings_header"] = tk.Label(
-            master=self.widgets["frm_window"], text="App Settings", font=("Arial", 15)
+            master=self.widgets["frm_window"],
+            text="App Settings",
+            font=("Arial", 15),
         )
 
         # Create the form App Options
@@ -263,7 +273,8 @@ class WindowAppConfig(Window):
 
         # Create the Log out hotdesk on disable widgets
         self.widgets["lbl_app_logout_hotdesk_on_disable"] = tk.Label(
-            master=self.widgets["frm_app_options"], text="Logout hotdesk on disable:"
+            master=self.widgets["frm_app_options"],
+            text="Logout hotdesk on disable:",
         )
         self.widgets["chk_app_logout_hotdesk_on_disable"] = tk.Checkbutton(
             master=self.widgets["frm_app_options"],
@@ -447,143 +458,164 @@ class WindowAppConfig(Window):
 
 class WindowCSVMapping(Window):
 
-    def __init__(self, master, *args, **kwargs):
+    def __init__(self, master, *args, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
+        self.widgets = {}
         self.mapping = CSVMapping()
         self.initialize_variables()
         self.build_gui()
 
-    def initialize_variables(self):
+    def initialize_variables(self) -> None:
         self.mapping_fields = []
         self.ceckbox_key_state = tk.StringVar(self, "normal")
         extension = self.mapping.get("Extension", {})
         self.var_csv_mapping_extension_path = tk.StringVar(
             self, value=extension.get("Path", "")
         )
-        # self.var_csv_mapping_extension_path.trace_add(
-        #    "write",
-        #    lambda *args: update_nested_dict(
-        #        self.mapping,
-        #        ["Extension", "Path"],
-        #        self.var_csv_mapping_extension_path.get(),
-        #    ),
-        # )
         self.key_checked = False
 
-        # self.var_csv_mapping_extension_path.set(extension.get("Path", ""))
+    def build_gui(self) -> None:
+        self.create_widgets()
+        self.place_widgets()
 
-    def build_gui(self):
+    def create_widgets(self) -> None:
         # Frame: window
-        frm_window = tk.Frame(master=self, name="csv_mapping")
-        frm_window.pack(fill="both", expand=True)
+        self.widgets["frm_window"] = tk.Frame(master=self, name="csv_mapping")
+        # Frame: Mapping
+        self.widgets["frm_csv_mapping"] = tk.Frame(
+            master=self.widgets["frm_window"], relief="ridge", borderwidth=2
+        )
+
+        # Extension Header
+        self.widgets["lbl_extension_header"] = tk.Label(
+            master=self.widgets["frm_csv_mapping"],
+            text="Extension Mapping",
+            font=("Arial", 15),
+        )
+        # Field: Extension Path
+        self.widgets["lbl_extension_path"] = tk.Label(
+            master=self.widgets["frm_csv_mapping"], text="Path:"
+        )
+        self.widgets["ent_extension_path"] = tk.Entry(
+            master=self.widgets["frm_csv_mapping"],
+            textvariable=self.var_csv_mapping_extension_path,
+        )
+        self.widgets["btn_extension_path_browse"] = tk.Button(
+            master=self.widgets["frm_csv_mapping"],
+            text=">",
+            font=40,
+            command=self.browse_file_csv,
+        )
+
+        # Frame: CSV Mapping Fields
+        self.widgets["frm_csv_mapping_fields"] = tk.Frame(
+            master=self.widgets["frm_window"],
+            name="csv_mapping_fields",
+            relief="sunken",
+            borderwidth=2,
+        )
+
+        # CSV Mapping Headers
+        self.widgets["lbl_csv_mapping_3cx_field"] = tk.Label(
+            master=self.widgets["frm_csv_mapping_fields"], text="3cx Field", width=20
+        )
+        self.widgets["lbl_csv_mapping_header"] = tk.Label(
+            master=self.widgets["frm_csv_mapping_fields"], text="CSV Header", width=20
+        )
+        self.widgets["lbl_csv_mapping_update"] = tk.Label(
+            master=self.widgets["frm_csv_mapping_fields"], text="Static", width=5
+        )
+        self.widgets["lbl_csv_mapping_update"] = tk.Label(
+            master=self.widgets["frm_csv_mapping_fields"], text="Update", width=5
+        )
+        self.widgets["lbl_csv_mapping_key"] = tk.Label(
+            master=self.widgets["frm_csv_mapping_fields"], text="Key", width=5
+        )
+
+        # Frame: Add Remove Fields
+        self.widgets["frm_add_delete_fields"] = tk.Frame(
+            master=self.widgets["frm_window"]
+        )
+        self.widgets["btn_add_field"] = tk.Button(
+            master=self.widgets["frm_add_delete_fields"],
+            text="+",
+            command=self.add_mapping_field_set,
+        )
+        self.widgets["btn_delete_field"] = tk.Button(
+            master=self.widgets["frm_add_delete_fields"],
+            text="-",
+            command=self.delete_mapping_field_set,
+        )
+
+        # Frame: Navigation
+        self.widgets["frm_navigation"] = tk.Frame(master=self.widgets["frm_window"])
+        self.widgets["btn_save"] = tk.Button(
+            master=self.widgets["frm_navigation"],
+            text="Save",
+            command=self.handle_save_click,
+        )
+        self.widgets["btn_cancel"] = tk.Button(
+            master=self.widgets["frm_navigation"],
+            text="Cancel",
+            command=self.handle_cancel_click,
+        )
+
+    def place_widgets(self):
+        # Frame: window
+        self.widgets["frm_window"].pack(fill="both", expand=True)
 
         # Frame: Mapping
-        frm_csv_mapping = tk.Frame(master=frm_window)
-        frm_csv_mapping.config(relief="ridge", borderwidth=2)
-        frm_csv_mapping.pack(
+        self.widgets["frm_csv_mapping"].pack(
             side="top", fill="both", ipady=self.frame_iy_padding, expand=True
         )
 
         # Extension Header
-        lbl_extension_header = tk.Label(
-            master=frm_csv_mapping, text="Extension Mapping", font=("Arial", 15)
-        )
-        lbl_extension_header.grid(
+        self.widgets["lbl_extension_header"].grid(
             row=0, column=1, pady=self.header_y_padding, sticky="w", columnspan=3
         )
 
         # Field: Extension Path
-        lbl_extension_path = tk.Label(master=frm_csv_mapping, text="Path:")
-        lbl_extension_path.grid(
+        self.widgets["lbl_extension_path"].grid(
             row=2, column=1, padx=self.paragraph_x_padding, sticky="w"
         )
-
-        ent_extension_path = tk.Entry(
-            master=frm_csv_mapping,
-            textvariable=self.var_csv_mapping_extension_path,
-        )
-        ent_extension_path.grid(row=2, column=2, sticky="w")
-        btn_extension_path_browse = tk.Button(
-            master=frm_csv_mapping, text=">", font=40, command=self.browse_file_csv
-        )
-        btn_extension_path_browse.grid(row=2, column=3, sticky="w")
+        self.widgets["ent_extension_path"].grid(row=2, column=2, sticky="w")
+        self.widgets["btn_extension_path_browse"].grid(row=2, column=3, sticky="w")
 
         # Frame: CSV Mapping Fields
-        frm_csv_mapping_fields = tk.Frame(master=frm_window, name="csv_mapping_fields")
-        frm_csv_mapping_fields.config(relief="sunken", borderwidth=2)
-        frm_csv_mapping_fields.pack(
+        self.widgets["frm_csv_mapping_fields"].pack(
             side="top", fill="both", ipady=self.frame_iy_padding, expand=True
         )
 
         # CSV Mapping Headers
-        # Header: 3cx Field
-        lbl_csv_mapping_3cx_field = tk.Label(
-            master=frm_csv_mapping_fields, text="3cx Field", width=20
-        )
-        lbl_csv_mapping_3cx_field.grid(row=1, column=1, sticky="w")
-
-        # Header: CSV Header
-        lbl_csv_mapping_header = tk.Label(
-            master=frm_csv_mapping_fields, text="CSV Header", width=20
-        )
-        lbl_csv_mapping_header.grid(row=1, column=2, sticky="w")
-
-        # Header: Update
-        lbl_csv_mapping_update = tk.Label(
-            master=frm_csv_mapping_fields, text="Static", width=5
-        )
-        lbl_csv_mapping_update.grid(row=1, column=3, sticky="w")
-
-        # Header: Update
-        lbl_csv_mapping_update = tk.Label(
-            master=frm_csv_mapping_fields, text="Update", width=5
-        )
-        lbl_csv_mapping_update.grid(row=1, column=4, sticky="w")
-
-        # Header: Key
-        lbl_csv_mapping_key = tk.Label(
-            master=frm_csv_mapping_fields, text="Key", width=5
-        )
-        lbl_csv_mapping_key.grid(row=1, column=5, sticky="w")
+        self.widgets["lbl_csv_mapping_3cx_field"].grid(row=1, column=1, sticky="w")
+        self.widgets["lbl_csv_mapping_header"].grid(row=1, column=2, sticky="w")
+        self.widgets["lbl_csv_mapping_update"].grid(row=1, column=3, sticky="w")
+        self.widgets["lbl_csv_mapping_update"].grid(row=1, column=4, sticky="w")
+        self.widgets["lbl_csv_mapping_key"].grid(row=1, column=5, sticky="w")
 
         # self.add_mapping_field_set()
         self.initialize_mapping_field_sets()
 
         # Frame: Add Remove Fields
-        frm_add_delete_fields = tk.Frame(master=frm_window)
-        frm_add_delete_fields.pack(
+        self.widgets["frm_add_delete_fields"].pack(
             side="top", anchor="center", expand=True, fill="both"
         )
-
-        # Button: Add +
-        btn_add_field = tk.Button(
-            master=frm_add_delete_fields, text="+", command=self.add_mapping_field_set
-        )
-        btn_add_field.grid(row=1, column=1)
-
-        # Button: Delete -
-        btn_delete_field = tk.Button(
-            master=frm_add_delete_fields,
-            text="-",
-            command=self.delete_mapping_field_set,
-        )
-        btn_delete_field.grid(row=1, column=2)
+        self.widgets["btn_add_field"].grid(row=1, column=1)
+        self.widgets["btn_delete_field"].grid(row=1, column=2)
 
         # Frame: Navigation
-        frm_navigation = tk.Frame(master=frm_window)
-        frm_navigation.pack(side="bottom", anchor="e", expand=True)
-
-        btn_save = tk.Button(
-            master=frm_navigation, text="Save", command=self.handle_save_click
-        )
-        btn_cancel = tk.Button(
-            master=frm_navigation, text="Cancel", command=self.handle_cancel_click
-        )
-
-        btn_save.grid(row=1, column=1, padx=5)
-        btn_cancel.grid(row=1, column=2, padx=5)
+        self.widgets["frm_navigation"].pack(side="bottom", anchor="e", expand=True)
+        self.widgets["btn_save"].grid(row=1, column=1, padx=5)
+        self.widgets["btn_cancel"].grid(row=1, column=2, padx=5)
 
     def handle_save_click(self):
+        self.set_mapping_values()
+        self.mapping.save()
+        messagebox.showinfo(title="Saved!", message="Config saved!")
+        self.destroy()
+
+    def set_mapping_values(self):
+        """Update the mapping config with values from the form"""
         self.mapping["Extension"] = {
             "Path": self.var_csv_mapping_extension_path.get(),
         }
@@ -601,12 +633,20 @@ class WindowCSVMapping(Window):
         self.mapping["Extension"]["New"] = mapping_new
         self.mapping["Extension"]["Update"] = mapping_update
         self.mapping["Extension"]["Static"] = mapping_static
-        self.mapping.save()
-        messagebox.showinfo(title="Saved!", message="Config saved!")
-        self.destroy()
 
     def handle_cancel_click(self):
+        self.set_mapping_values()
+        if self.mapping.is_dirty:
+            if not self.confirm_discard_changes():
+                return
+        self.mapping.load()
         self.destroy()
+
+    def confirm_discard_changes(self) -> bool:
+        return messagebox.askyesno(
+            "Unsaved Changes",
+            "Discard unsaved changes?",
+        )
 
     def browse_file_csv(self):
         filename = askopenfilename(filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
@@ -646,21 +686,23 @@ class WindowCSVMapping(Window):
 
         # Static Value Checkbox
         chk_csv_mapping_static_value = Checkbox(
-            master=frm_csv_mapping_fields, value=static
+            master=self.widgets["frm_csv_mapping_fields"], value=static
         )
         chk_csv_mapping_static_value.grid(
             row=len(self.mapping_fields) + 2, column=3, sticky="w"
         )
 
         # Update Checkbox
-        chk_csv_mapping_update = Checkbox(master=frm_csv_mapping_fields, value=update)
+        chk_csv_mapping_update = Checkbox(
+            master=self.widgets["frm_csv_mapping_fields"], value=update
+        )
         chk_csv_mapping_update.grid(
             row=len(self.mapping_fields) + 2, column=4, sticky="w"
         )
 
         # Key Checkbox
         chk_csv_mapping_key = Checkbox(
-            master=frm_csv_mapping_fields,
+            master=self.widgets["frm_csv_mapping_fields"],
             state=self.ceckbox_key_state.get(),
             command=self.handle_checkbox_key_change,
             # value=key,
@@ -669,7 +711,7 @@ class WindowCSVMapping(Window):
 
         # Remove Button
         btn_csv_mapping_remove = tk.Button(
-            master=frm_csv_mapping_fields,
+            master=self.widgets["frm_csv_mapping_fields"],
             text="-",
             command=lambda row_index=len(
                 self.mapping_fields

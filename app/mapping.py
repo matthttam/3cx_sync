@@ -1,55 +1,71 @@
 import os
 import json
+import copy
 from collections import UserDict
 from typing import Any
+import platformdirs
 
 
 class CSVMapping(UserDict):
+    def __init__(self, *args, supress_load=False, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.original_config = None
+        if not supress_load:
+            self.load_defaults()
+            self.load()
 
     @property
     def mapping_file_path(self):
-        return os.path.join(os.getcwd(), "conf", "csv_mapping.json")
+        app_data_dir = platformdirs.user_config_dir("3cx_sync", "3cx_sync")
+        config_file_path = os.path.join(app_data_dir, "conf")
+        os.makedirs(config_file_path, exist_ok=True)
+        return os.path.join(config_file_path, "csv_mapping.json")
 
-    def __init__(self, *args, suppress_load=False, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        if not suppress_load:
-            self.load()
+    @property
+    def is_dirty(self) -> bool:
+        return self.original_config != self.data
 
-    def __setitem__(self, key: Any, item: Any) -> None:
-        return super().__setitem__(key, item)
+    def load_defaults(self) -> None:
+        default_config = {
+            "Extension": {
+                "Path": platformdirs.user_documents_dir(),
+                "Key": "Number",
+                "New": {
+                    "Number": "Number",
+                    "FirstName": "FirstName",
+                    "LastName": "LastName",
+                    "EmailAddress": "Email",
+                    "VMPIN": "VMPIN",
+                    "VMEmailOptions": "VMEmailOptions",
+                    "OutboundCallerID": "OutboundCallerID",
+                    "SendEmailMissedCalls": "SendEmailMissedCalls",
+                    "Enabled": "Enabled",
+                    "EnableHotdesking": "AllowToUseHotdesking",
+                    "RecordCalls": "RecordCalls",
+                    "RecordExternalCallsOnly": "RecordExternalCallsOnly",
+                    "VMEnabled": "VMEnabled",
+                    "WebMeetingFriendlyName": "WebMeetingFriendlyName",
+                },
+                "Update": ["FirstName", "LastName", "EmailAddress", "Enabled"],
+            }
+        }
+        self.update(default_config)
 
-    def __getitem__(self, key: Any) -> Any:
-        return super().__getitem__(key)
-
-    def load(self):
-        if not self.load_mapping_config():
-            self.initialize_mapping_file()
-
-    def load_mapping_config(self) -> bool:
-        if not os.path.exists(self.mapping_file_path):
-            return False
-
-        if os.stat(self.mapping_file_path).st_size == 0:
-            return False
-
-        self.load_mapping_file()
-        return True
-
-    def load_mapping_file(self):
-        with open(self.mapping_file_path, "r") as mapping_file:
-            mapping_config = json.load(mapping_file)
-            mapping_file.close()
-            self.update(mapping_config)
-
-    def initialize_mapping_file(self):
-        with open(self.mapping_file_path, "w") as mapping_file:
-            mapping_file.write("{}")
-            mapping_file.close()
+    def load(self) -> None:
+        if (
+            not os.path.exists(self.mapping_file_path)
+            or os.stat(self.mapping_file_path).st_size == 0
+        ):
+            return
+        try:
+            with open(self.mapping_file_path, "r") as mapping_file:
+                mapping_config = json.load(mapping_file)
+                self.update(mapping_config)
+            self.original_config = copy.deepcopy(self.data)
+        except (IOError, json.JSONDecodeError) as e:
+            print(f"Error loading mapping file: {e}")
 
     def save(self):
-        self.save_mapping_file()
-
-    def save_mapping_file(self):
         with open(self.mapping_file_path, "w") as mapping_file:
-            json.dump(self.__dict__["data"], mapping_file)
-            mapping_file.close()
+            json.dump(self.data, mapping_file)
+        self.original_config = copy.deepcopy(self.data)
