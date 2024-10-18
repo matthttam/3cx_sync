@@ -1,10 +1,14 @@
 import tkinter as tk
+from tkinter import ttk
 from tcx_api.tcx_api_connection import TCX_API_Connection
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
-from app.widgets import Checkbox, ExtensionMappingFieldSet
+from app.widgets import Checkbox, ExtensionMappingFieldSet, WidgetList
 from app.config import AppConfig
 from app.mapping import CSVMapping
+from tkinter.scrolledtext import ScrolledText
+import threading
+from sync.logging import SyncLogger
 
 
 def update_nested_dict(d: dict, keys: list, value) -> None:
@@ -14,18 +18,22 @@ def update_nested_dict(d: dict, keys: list, value) -> None:
     d[keys[-1]] = value
 
 
-class Window(tk.Toplevel):
-    def __init__(self, master, *args, **kwargs):
-        super().__init__(master, *args, **kwargs)
-        self.grab_set()
-        self.focus_force()
+class Window:
+    header_y_padding = (5, 15)
+    paragraph_x_padding = (15, 0)
+    frame_iy_padding = 5
+    _current_row = 0
+    _current_column = 0
 
-        self.header_y_padding = (5, 15)
-        self.paragraph_x_padding = (15, 0)
-        self.frame_iy_padding = 5
-
-        self._current_row = 0
-        self._current_column = 0
+    # Default configurations
+    lbl_grid_defaults = {"padx": (0, 10), "sticky": tk.E}
+    lbl_pack_defaults = {"padx": (0, 10), "fill": tk.X}
+    ent_grid_defaults = {"pady": (5, 5), "sticky": tk.EW}
+    ent_pack_defaults = {"pady": (5, 5), "fill": tk.X}
+    frm_default = {"padx": 5, "pady": 5, "side": tk.LEFT}
+    btn_pack_default = {"padx": 5, "pady": (5, 5), "fill": tk.X}
+    lblfrm_defaults = {"padx": 20, "pady": 10, "fill": tk.BOTH, "expand": True}
+    chk_defaults = {"padx": 5, "pady": 5}
 
     def increment_row(self, reset_column=True) -> None:
         self._current_row = self._current_row + 1
@@ -58,81 +66,19 @@ class Window(tk.Toplevel):
         return current_column
 
 
-class WindowPreferences(Window):
+class PopupWindow(tk.Toplevel, Window):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.grab_set()
         self.focus_force()
 
-        # Frame: window
-        self.frm_window = tk.Frame(master=self.widgets["self"], name="preferences")
-        self.frm_window.pack(fill="both", expand=True)
 
-        # Frame: Mapping
-        self.frm_user_preferences = tk.Frame(master=self.frm_window)
-        self.frm_user_preferences.config(
-            relief="ridge", borderwidth=2, background="yellow"
-        )
-        self.frm_user_preferences.pack(
-            side="top", fill="both", ipady=self.frame_iy_padding, expand=True
-        )
-
-        # Label: User Preferences
-        self.lbl_user_preferences_header = tk.Label(
-            master=self.widgets["self.frm_user_preferences"],
-            text="User Preferences",
-            font=("Arial", 15),
-        )
-        self.lbl_user_preferences_header.grid(
-            row=0, column=0, pady=self.header_y_padding, sticky="w", columnspan=2
-        )
-
-        # Frame: User Preferences Left
-        self.frm_user_preferences_left = tk.Frame(master=self.frm_user_preferences)
-        self.frm_user_preferences_left.config(
-            relief="ridge", borderwidth=2, background="green"
-        )
-        self.frm_user_preferences_left.grid(row=2, column=0, sticky="nsew")
-
-        # Frame: User Preferences Right
-        self.frm_user_preferences_right = tk.Frame(master=self.frm_user_preferences)
-        self.frm_user_preferences_right.config(
-            relief="ridge", borderwidth=2, background="red"
-        )
-        self.frm_user_preferences_right.grid(row=2, column=1, sticky="nsew")
-
-        # Configuring grid weights for frm_user_preferences to expand equally
-        self.frm_user_preferences.grid_columnconfigure(0, weight=1)
-        self.frm_user_preferences.grid_columnconfigure(1, weight=1)
-        self.frm_user_preferences.grid_rowconfigure(1, weight=1)
-        self.frm_user_preferences.grid_rowconfigure(2, weight=1)
-
-        # Label: User On Enable
-        self.lbl_user_on_disable = tk.Label(
-            master=self.widgets["self.frm_user_preferences_left"],
-            text="On Enable",
-            font=("Arial", 15),
-        )
-        self.lbl_user_on_disable.grid(
-            row=0, column=1, pady=self.header_y_padding, sticky="w", columnspan=3
-        )
-
-        # Label: User On Disable
-        self.lbl_user_on_disable = tk.Label(
-            master=self.widgets["self.frm_user_preferences_right"],
-            text="On Disable",
-            font=("Arial", 15),
-        )
-        self.lbl_user_on_disable.grid(
-            row=0, column=1, pady=self.header_y_padding, sticky="w", columnspan=3
-        )
-
-
-class WindowAppConfig(Window):
+class WindowAppConfig(PopupWindow):
 
     def __init__(self, master, app_config: AppConfig, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
-        self.widgets = {}
+        self.resizable(height=False, width=False)
+        self.widgets = WidgetList()
         self.app_config = app_config
         # self.app_config.load()
         self.initialize_variables()
@@ -171,249 +117,259 @@ class WindowAppConfig(Window):
             trace_tk_variables(tk_var, section, var)
 
     def build_gui(self) -> None:
-        self.create_widgets()
-        self.place_widgets()
-
-    def create_widgets(self) -> None:
         # Create a window frame
-        self.widgets["frm_window"] = tk.Frame(master=self)
+        self.widgets.frm_window = ttk.Frame(self)
+        self.widgets.frm_window.pack(fill="both", expand=True)
+
+        self.widgets.frm_3cx_options = ttk.LabelFrame(
+            self.widgets.frm_window, text="3CX Settings", padding=(20, 10)
+        )
+        self.widgets.frm_3cx_options.pack(**self.lblfrm_defaults)
 
         # Create the 3cx header
-        self.widgets["lbl_3cx_settings_header"] = tk.Label(
-            master=self.widgets["frm_window"],
-            text="3CX Settings",
-            font=("Arial", 15),
-        )
-        # Create the 3cx options frame
-        self.widgets["frm_3cx_options"] = tk.Frame(master=self.widgets["frm_window"])
-        self.widgets["frm_3cx_options"].config(
-            width=300, height=200, relief="ridge", borderwidth=2
-        )
+        # self.widgets.lbl_3cx_settings_header = ttk.Label(
+        #    self.widgets.frm_window,
+        #    text="3CX Settings",
+        #    font=("Arial", 15),
+        # )
+        # self.widgets.lbl_3cx_settings_header.pack()
 
+        # Create the 3cx options frame
+        # self.widgets.frm_3cx_options = ttk.Frame(self.widgets.frm_window)
+        # self.widgets.frm_3cx_options.config(
+        #    width=300, height=200, relief="ridge", borderwidth=2
+        # )
+        # self.widgets.frm_3cx_options.pack(fill="both", expand=True)
+        # self.lbl_defaults = {"padx": (0, 10), "sticky": tk.E}
+        # self.frm_field_defaults = {"pady": (5, 5), "sticky": tk.EW}
         # Create the 3cx URL
-        self.widgets["lbl_3cx_url"] = tk.Label(
-            master=self.widgets["frm_3cx_options"], text="3CX URL:"
+        self.widgets.lbl_3cx_url = ttk.Label(
+            self.widgets.frm_3cx_options, text="3CX URL:"
+        )
+        self.widgets.lbl_3cx_url.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.lbl_grid_defaults,
         )
 
         # Create a 3cx URL frame in that window
-        self.widgets["frm_3cx_url"] = tk.Frame(master=self.widgets["frm_3cx_options"])
+        self.widgets.frm_3cx_url = ttk.Frame(self.widgets.frm_3cx_options)
+        self.widgets.frm_3cx_url.grid_columnconfigure(2, weight=1)
+        self.widgets.frm_3cx_url.grid(
+            row=self.get_current_row(), column=self.get_next_column(), pady=(0, 5)
+        )
 
         # Create the 3CX URL widgets
-        self.widgets["opt_3cx_scheme"] = tk.OptionMenu(
-            self.widgets["frm_3cx_url"], self.vars["3cx"]["scheme"], *["https", "http"]
+        self.widgets.opt_3cx_scheme = ttk.OptionMenu(
+            self.widgets.frm_3cx_url, self.vars["3cx"]["scheme"], *["https", "http"]
         )
-        self.widgets["lbl_3cx_scheme_ending"] = tk.Label(
-            master=self.widgets["frm_3cx_url"], text="://"
+        self.widgets.lbl_3cx_scheme_ending = ttk.Label(
+            self.widgets.frm_3cx_url, text="://"
         )
-        self.widgets["ent_3cx_domain"] = tk.Entry(
-            master=self.widgets["frm_3cx_url"],
+        self.widgets.ent_3cx_domain = ttk.Entry(
+            self.widgets.frm_3cx_url,
             textvariable=self.vars["3cx"]["domain"],
         )
-        self.widgets["lbl_3cx_server_ending"] = tk.Label(
-            master=self.widgets["frm_3cx_url"], text=":"
+        self.widgets.lbl_3cx_server_ending = ttk.Label(
+            self.widgets.frm_3cx_url, text=":"
         )
-        self.widgets["ent_3cx_port"] = tk.Entry(
-            master=self.widgets["frm_3cx_url"],
+        self.widgets.ent_3cx_port = ttk.Entry(
+            self.widgets.frm_3cx_url,
             textvariable=self.vars["3cx"]["port"],
             width=5,
         )
 
-        # Create the 3CX username widgets
-        self.widgets["lbl_3cx_username"] = tk.Label(
-            master=self.widgets["frm_3cx_options"], text="Username:"
+        self.widgets.opt_3cx_scheme.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.ent_grid_defaults,
         )
-        self.widgets["ent_3cx_username"] = tk.Entry(
-            master=self.widgets["frm_3cx_options"],
+        self.widgets.lbl_3cx_scheme_ending.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.ent_grid_defaults,
+        )
+        self.widgets.ent_3cx_domain.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.ent_grid_defaults,
+        )
+        self.widgets.lbl_3cx_server_ending.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.ent_grid_defaults,
+        )
+        self.widgets.ent_3cx_port.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.ent_grid_defaults,
+        )
+
+        # Create the 3CX username widgets
+        self.widgets.lbl_3cx_username = ttk.Label(
+            self.widgets.frm_3cx_options,
+            text="Username:",
+        )
+        self.widgets.ent_3cx_username = ttk.Entry(
+            self.widgets.frm_3cx_options,
             textvariable=self.vars["3cx"]["username"],
         )
 
-        # Create the 3CX password widgets
-        self.widgets["lbl_3cx_password"] = tk.Label(
-            master=self.widgets["frm_3cx_options"], text="Password:"
+        self.increment_row()
+        self.widgets.lbl_3cx_username.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.lbl_grid_defaults,
         )
-        self.widgets["ent_3cx_password"] = tk.Entry(
-            master=self.widgets["frm_3cx_options"],
+        self.widgets.ent_3cx_username.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.ent_grid_defaults,
+        )
+
+        # Create the 3CX password widgets
+        self.widgets.lbl_3cx_password = ttk.Label(
+            self.widgets.frm_3cx_options, text="Password:"
+        )
+        self.widgets.ent_3cx_password = ttk.Entry(
+            self.widgets.frm_3cx_options,
             textvariable=self.vars["3cx"]["password"],
             show="*",
         )
 
+        self.increment_row()
+        self.widgets.lbl_3cx_password.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.lbl_grid_defaults,
+        )
+        self.widgets.ent_3cx_password.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.ent_grid_defaults,
+        )
+
         # Create the Store credential securely widgets
-        self.widgets["lbl_store_credential_securely"] = tk.Label(
-            master=self.widgets["frm_3cx_options"],
+        self.widgets.lbl_store_credential_securely = ttk.Label(
+            self.widgets.frm_3cx_options,
             text="Store Credential Securely:",
         )
-        self.widgets["chk_store_credential_securely"] = tk.Checkbutton(
-            master=self.widgets["frm_3cx_options"],
+        self.widgets.chk_store_credential_securely = ttk.Checkbutton(
+            self.widgets.frm_3cx_options,
             variable=self.vars["3cx"]["store_credential_securely"],
         )
 
+        self.increment_row()
+        self.widgets.lbl_store_credential_securely.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.lbl_grid_defaults,
+        )
+        self.widgets.chk_store_credential_securely.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            sticky="w",
+            **self.chk_defaults,
+        )
+
         # Create the test button widget
-        self.widgets["btn_test"] = tk.Button(
-            master=self.widgets["frm_3cx_options"],
+        self.widgets.btn_test = ttk.Button(
+            self.widgets.frm_3cx_options,
             name="btn_test",
             text="Test",
             command=self.handle_test_connection,
         )
 
-        # Create the App Settings header
-        self.widgets["lbl_app_settings_header"] = tk.Label(
-            master=self.widgets["frm_window"],
-            text="App Settings",
-            font=("Arial", 15),
-        )
-
-        # Create the form App Options
-        self.widgets["frm_app_options"] = tk.Frame(
-            master=self.widgets["frm_window"],
-            width=300,
-            height=200,
-            relief="ridge",
-            borderwidth=2,
-        )
-
-        # Create the Log out hotdesk on disable widgets
-        self.widgets["lbl_app_logout_hotdesk_on_disable"] = tk.Label(
-            master=self.widgets["frm_app_options"],
-            text="Logout hotdesk on disable:",
-        )
-        self.widgets["chk_app_logout_hotdesk_on_disable"] = tk.Checkbutton(
-            master=self.widgets["frm_app_options"],
-            variable=self.vars["app"]["logout_hotdesk_on_disable"],
-        )
-
-        # Create the Apply, Save, and Cnacel Buttons
-        self.widgets["frm_navigation"] = tk.Frame(master=self.widgets["frm_window"])
-        self.widgets["btn_apply"] = tk.Button(
-            master=self.widgets["frm_navigation"],
-            name="btn_apply",
-            text="Apply",
-            command=self.handle_apply_click,
-        )
-        self.widgets["btn_save"] = tk.Button(
-            master=self.widgets["frm_navigation"],
-            name="btn_save",
-            text="Save",
-            command=self.handle_save_click,
-        )
-        self.widgets["btn_cancel"] = tk.Button(
-            master=self.widgets["frm_navigation"],
-            name="btn_cancel",
-            text="Cancel",
-            command=self.handle_cancel_click,
-        )
-
-    def place_widgets(self) -> None:
-        # Place the window frame
-        self.widgets["frm_window"].pack(fill="both", expand=True)
-
-        # Place the 3cx header
-        self.widgets["lbl_3cx_settings_header"].pack()
-
-        # Place the 3cx options frame
-        self.widgets["frm_3cx_options"].pack(fill="both", expand=True)
-
-        # Place the 3cx URL
-        self.widgets["lbl_3cx_url"].grid(
-            row=self.get_current_row(),
-            column=self.get_next_column(),
-            padx=(5, 0),
-            sticky="e",
-        )
-
-        # Place the 3cx URL frame in that window
-        self.widgets["frm_3cx_url"].grid_columnconfigure(2, weight=1)
-        self.widgets["frm_3cx_url"].grid(
-            row=self.get_current_row(), column=self.get_next_column()
-        )
-
-        # Create the 3CX URL widgets
-        self.widgets["opt_3cx_scheme"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
-        )
-        self.widgets["lbl_3cx_scheme_ending"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
-        )
-        self.widgets["ent_3cx_domain"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
-        )
-        self.widgets["lbl_3cx_server_ending"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
-        )
-        self.widgets["ent_3cx_port"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
-        )
-
-        # Place the 3CX username widgets
-        self.increment_row()
-        self.widgets["lbl_3cx_username"].grid(
-            row=self.get_current_row(),
-            column=self.get_next_column(),
-            padx=(5, 0),
-            sticky="e",
-        )
-        self.widgets["ent_3cx_username"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
-        )
-
-        # Place the 3CX password widgets
-        self.increment_row()
-        self.widgets["lbl_3cx_password"].grid(
-            row=self.get_current_row(),
-            column=self.get_next_column(),
-            padx=(5, 0),
-            sticky="e",
-        )
-        self.widgets["ent_3cx_password"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), sticky="we"
-        )
-
-        # Place the Store credential securely widgets
-        self.increment_row()
-        self.widgets["lbl_store_credential_securely"].grid(
-            row=self.get_current_row(), column=self.get_next_column()
-        )
-        self.widgets["chk_store_credential_securely"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), sticky="w"
-        )
-
-        # Place the Test Button Widget
         self.increment_row()
         self.increment_column()
-        self.widgets["btn_test"].grid(
+        self.widgets.btn_test.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
             columnspan=2,
             padx=5,
+            pady=5,
             sticky="we",
         )
 
-        # Place the App Settings Header
-        self.widgets["lbl_app_settings_header"].pack()
+        # Create the App Settings header
+        self.widgets.lblfrm_app_settings = ttk.LabelFrame(
+            self.widgets.frm_window, text="App Settings", padding=(20, 10)
+        )
+        self.widgets.lblfrm_app_settings.pack(**self.lblfrm_defaults)
+        # self.widgets.lbl_app_settings_header = ttk.Label(
+        #    self.widgets.frm_window,
+        #    text="App Settings",
+        #    font=("Arial", 15),
+        # )
+        # self.widgets.lbl_app_settings_header.pack()
 
-        # Place the form app options
-        self.widgets["frm_app_options"].pack(fill="both", expand=True)
+        # Create the form App Options
+        # self.widgets.frm_app_options = ttk.Frame(
+        #    self.widgets.lbl_app_settings_header,
+        #    width=300,
+        #    height=200,
+        #    relief="ridge",
+        #    borderwidth=2,
+        # )
+        # self.widgets.frm_app_options.pack(fill="both", expand=True)
 
-        # Place the Log out hotdesk on disable widgets
+        # Create the Log out hotdesk on disable widgets
+        self.widgets.lbl_app_logout_hotdesk_on_disable = ttk.Label(
+            self.widgets.lblfrm_app_settings,
+            text="Logout hotdesk on disable:",
+        )
+        self.widgets.chk_app_logout_hotdesk_on_disable = ttk.Checkbutton(
+            self.widgets.lblfrm_app_settings,
+            variable=self.vars["app"]["logout_hotdesk_on_disable"],
+        )
         self.reset_row_and_column()
-        self.widgets["lbl_app_logout_hotdesk_on_disable"].grid(
-            row=self.get_current_row(), column=self.get_next_column()
+        self.widgets.lbl_app_logout_hotdesk_on_disable.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.lbl_grid_defaults,
         )
-        self.widgets["chk_app_logout_hotdesk_on_disable"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), sticky="w"
+        self.widgets.chk_app_logout_hotdesk_on_disable.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            sticky="w",
+            **self.chk_defaults,
         )
 
-        # Apply, Save, and Cancel Buttons
-        self.widgets["frm_navigation"].pack(side="bottom", anchor="e")
+        # Create the Apply, Save, and Cnacel Buttons
+        self.widgets.frm_navigation = ttk.Frame(self.widgets.frm_window)
+        self.widgets.btn_apply = ttk.Button(
+            self.widgets.frm_navigation,
+            text="Apply",
+            command=self.handle_apply_click,
+        )
+        self.widgets.btn_save = ttk.Button(
+            self.widgets.frm_navigation,
+            text="Save",
+            command=self.handle_save_click,
+        )
+        self.widgets.btn_cancel = ttk.Button(
+            self.widgets.frm_navigation,
+            text="Cancel",
+            command=self.handle_cancel_click,
+        )
+
+        self.widgets.frm_navigation.pack(side="bottom", anchor="e")
         self.reset_row_and_column()
         self.increment_column()
-        self.widgets["btn_apply"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), padx=5
+        self.widgets.btn_apply.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.btn_pack_default,
         )
-        self.widgets["btn_save"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), padx=5
+        self.widgets.btn_save.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.btn_pack_default,
         )
-        self.widgets["btn_cancel"].grid(
-            row=self.get_current_row(), column=self.get_next_column(), padx=5
+        self.widgets.btn_cancel.grid(
+            row=self.get_current_row(),
+            column=self.get_next_column(),
+            **self.btn_pack_default,
         )
 
     def handle_test_connection(self):
@@ -456,12 +412,13 @@ class WindowAppConfig(Window):
             messagebox.showerror(title="Error!", message=f"{e}")
 
 
-class WindowCSVMapping(Window):
+class WindowCSVMapping(PopupWindow):
 
     def __init__(self, master, *args, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
-        self.widgets = {}
+        self.widgets = WidgetList()
         self.mapping = CSVMapping()
+        self.title("CSV Mapping Settings")
         self.initialize_variables()
         self.build_gui()
 
@@ -469,144 +426,118 @@ class WindowCSVMapping(Window):
         self.mapping_fields = []
         self.ceckbox_key_state = tk.StringVar(self, "normal")
         extension = self.mapping.get("Extension", {})
-        self.var_csv_mapping_extension_path = tk.StringVar(
+        self.var_csv_mapping_import_file_path = tk.StringVar(
             self, value=extension.get("Path", "")
         )
         self.key_checked = False
 
     def build_gui(self) -> None:
-        self.create_widgets()
-        self.place_widgets()
-
-    def create_widgets(self) -> None:
         # Frame: window
-        self.widgets["frm_window"] = tk.Frame(master=self, name="csv_mapping")
-        # Frame: Mapping
-        self.widgets["frm_csv_mapping"] = tk.Frame(
-            master=self.widgets["frm_window"], relief="ridge", borderwidth=2
+        self.widgets.frm_window = ttk.Frame(self, name="csv_mapping")
+        self.widgets.frm_window.pack(fill="both", expand=True)
+
+        # Field: Extension Path
+        self.widgets.lblfrm_import_file_path = ttk.LabelFrame(
+            self.widgets.frm_window, text="Import File Path", padding=(20, 10)
+        )
+        self.widgets.lblfrm_import_file_path.pack(**self.lblfrm_defaults)
+
+        self.widgets.lbl_import_file_path = ttk.Label(
+            self.widgets.lblfrm_import_file_path, text="Path:"
+        )
+        self.widgets.lbl_import_file_path.pack(**self.lbl_pack_defaults)
+
+        self.widgets.ent_import_file_path = ttk.Entry(
+            self.widgets.lblfrm_import_file_path,
+            textvariable=self.var_csv_mapping_import_file_path,
+        )
+        self.widgets.ent_import_file_path.pack(**self.ent_pack_defaults)
+
+        self.widgets.btn_import_file_path_browse = ttk.Button(
+            self.widgets.lblfrm_import_file_path, text=">", command=self.browse_file_csv
+        )
+        self.widgets.btn_import_file_path_browse.pack(
+            **self.btn_pack_default,
         )
 
-        # Extension Header
-        self.widgets["lbl_extension_header"] = tk.Label(
-            master=self.widgets["frm_csv_mapping"],
-            text="Extension Mapping",
-            font=("Arial", 15),
+        # Frame: Mapping
+        self.widgets.frm_csv_mapping = ttk.Frame(
+            self.widgets.frm_window, relief="ridge", borderwidth=2
         )
-        # Field: Extension Path
-        self.widgets["lbl_extension_path"] = tk.Label(
-            master=self.widgets["frm_csv_mapping"], text="Path:"
-        )
-        self.widgets["ent_extension_path"] = tk.Entry(
-            master=self.widgets["frm_csv_mapping"],
-            textvariable=self.var_csv_mapping_extension_path,
-        )
-        self.widgets["btn_extension_path_browse"] = tk.Button(
-            master=self.widgets["frm_csv_mapping"],
-            text=">",
-            font=40,
-            command=self.browse_file_csv,
+        self.widgets.frm_csv_mapping.pack(
+            side="top", fill="both", ipady=self.frame_iy_padding, expand=True
         )
 
         # Frame: CSV Mapping Fields
-        self.widgets["frm_csv_mapping_fields"] = tk.Frame(
-            master=self.widgets["frm_window"],
+        self.widgets.frm_csv_mapping_fields = ttk.Frame(
+            self.widgets.frm_window,
             name="csv_mapping_fields",
             relief="sunken",
             borderwidth=2,
         )
-
-        # CSV Mapping Headers
-        self.widgets["lbl_csv_mapping_3cx_field"] = tk.Label(
-            master=self.widgets["frm_csv_mapping_fields"], text="3cx Field", width=20
-        )
-        self.widgets["lbl_csv_mapping_header"] = tk.Label(
-            master=self.widgets["frm_csv_mapping_fields"], text="CSV Header", width=20
-        )
-        self.widgets["lbl_csv_mapping_update"] = tk.Label(
-            master=self.widgets["frm_csv_mapping_fields"], text="Static", width=5
-        )
-        self.widgets["lbl_csv_mapping_update"] = tk.Label(
-            master=self.widgets["frm_csv_mapping_fields"], text="Update", width=5
-        )
-        self.widgets["lbl_csv_mapping_key"] = tk.Label(
-            master=self.widgets["frm_csv_mapping_fields"], text="Key", width=5
-        )
-
-        # Frame: Add Remove Fields
-        self.widgets["frm_add_delete_fields"] = tk.Frame(
-            master=self.widgets["frm_window"]
-        )
-        self.widgets["btn_add_field"] = tk.Button(
-            master=self.widgets["frm_add_delete_fields"],
-            text="+",
-            command=self.add_mapping_field_set,
-        )
-        self.widgets["btn_delete_field"] = tk.Button(
-            master=self.widgets["frm_add_delete_fields"],
-            text="-",
-            command=self.delete_mapping_field_set,
-        )
-
-        # Frame: Navigation
-        self.widgets["frm_navigation"] = tk.Frame(master=self.widgets["frm_window"])
-        self.widgets["btn_save"] = tk.Button(
-            master=self.widgets["frm_navigation"],
-            text="Save",
-            command=self.handle_save_click,
-        )
-        self.widgets["btn_cancel"] = tk.Button(
-            master=self.widgets["frm_navigation"],
-            text="Cancel",
-            command=self.handle_cancel_click,
-        )
-
-    def place_widgets(self):
-        # Frame: window
-        self.widgets["frm_window"].pack(fill="both", expand=True)
-
-        # Frame: Mapping
-        self.widgets["frm_csv_mapping"].pack(
-            side="top", fill="both", ipady=self.frame_iy_padding, expand=True
-        )
-
-        # Extension Header
-        self.widgets["lbl_extension_header"].grid(
-            row=0, column=1, pady=self.header_y_padding, sticky="w", columnspan=3
-        )
-
-        # Field: Extension Path
-        self.widgets["lbl_extension_path"].grid(
-            row=2, column=1, padx=self.paragraph_x_padding, sticky="w"
-        )
-        self.widgets["ent_extension_path"].grid(row=2, column=2, sticky="w")
-        self.widgets["btn_extension_path_browse"].grid(row=2, column=3, sticky="w")
-
-        # Frame: CSV Mapping Fields
-        self.widgets["frm_csv_mapping_fields"].pack(
+        self.widgets.frm_csv_mapping_fields.pack(
             side="top", fill="both", ipady=self.frame_iy_padding, expand=True
         )
 
         # CSV Mapping Headers
-        self.widgets["lbl_csv_mapping_3cx_field"].grid(row=1, column=1, sticky="w")
-        self.widgets["lbl_csv_mapping_header"].grid(row=1, column=2, sticky="w")
-        self.widgets["lbl_csv_mapping_update"].grid(row=1, column=3, sticky="w")
-        self.widgets["lbl_csv_mapping_update"].grid(row=1, column=4, sticky="w")
-        self.widgets["lbl_csv_mapping_key"].grid(row=1, column=5, sticky="w")
+        self.widgets.lbl_csv_mapping_3cx_field = ttk.Label(
+            self.widgets.frm_csv_mapping_fields, text="3cx Field", width=20
+        )
+        self.widgets.lbl_csv_mapping_header = ttk.Label(
+            self.widgets.frm_csv_mapping_fields, text="CSV Header", width=20
+        )
+        self.widgets.lbl_csv_mapping_update = ttk.Label(
+            self.widgets.frm_csv_mapping_fields, text="Static", width=5
+        )
+        self.widgets.lbl_csv_mapping_update = ttk.Label(
+            self.widgets.frm_csv_mapping_fields, text="Update", width=5
+        )
+        self.widgets.lbl_csv_mapping_key = ttk.Label(
+            self.widgets.frm_csv_mapping_fields, text="Key", width=5
+        )
+        self.widgets.lbl_csv_mapping_3cx_field.grid(row=1, column=1, sticky="w")
+        self.widgets.lbl_csv_mapping_header.grid(row=1, column=2, sticky="w")
+        self.widgets.lbl_csv_mapping_update.grid(row=1, column=3, sticky="w")
+        self.widgets.lbl_csv_mapping_update.grid(row=1, column=4, sticky="w")
+        self.widgets.lbl_csv_mapping_key.grid(row=1, column=5, sticky="w")
 
         # self.add_mapping_field_set()
         self.initialize_mapping_field_sets()
 
         # Frame: Add Remove Fields
-        self.widgets["frm_add_delete_fields"].pack(
+        self.widgets.frm_add_delete_fields = ttk.Frame(self.widgets.frm_window)
+        self.widgets.btn_add_field = ttk.Button(
+            self.widgets.frm_add_delete_fields,
+            text="+",
+            command=self.add_mapping_field_set,
+        )
+        self.widgets.btn_delete_field = ttk.Button(
+            self.widgets.frm_add_delete_fields,
+            text="-",
+            command=self.delete_mapping_field_set,
+        )
+
+        self.widgets.frm_add_delete_fields.pack(
             side="top", anchor="center", expand=True, fill="both"
         )
-        self.widgets["btn_add_field"].grid(row=1, column=1)
-        self.widgets["btn_delete_field"].grid(row=1, column=2)
+        self.widgets.btn_add_field.grid(row=1, column=1)
+        self.widgets.btn_delete_field.grid(row=1, column=2)
 
         # Frame: Navigation
-        self.widgets["frm_navigation"].pack(side="bottom", anchor="e", expand=True)
-        self.widgets["btn_save"].grid(row=1, column=1, padx=5)
-        self.widgets["btn_cancel"].grid(row=1, column=2, padx=5)
+        self.widgets.frm_navigation = ttk.Frame(self.widgets.frm_window)
+        self.widgets.btn_save = ttk.Button(
+            self.widgets.frm_navigation,
+            text="Save",
+            command=self.handle_save_click,
+        )
+        self.widgets.btn_cancel = ttk.Button(
+            self.widgets.frm_navigation,
+            text="Cancel",
+            command=self.handle_cancel_click,
+        )
+        self.widgets.frm_navigation.pack(side="bottom", anchor="e", expand=True)
+        self.widgets.btn_save.grid(row=1, column=1, padx=5)
+        self.widgets.btn_cancel.grid(row=1, column=2, padx=5)
 
     def handle_save_click(self):
         self.set_mapping_values()
@@ -617,7 +548,7 @@ class WindowCSVMapping(Window):
     def set_mapping_values(self):
         """Update the mapping config with values from the form"""
         self.mapping["Extension"] = {
-            "Path": self.var_csv_mapping_extension_path.get(),
+            "Path": self.var_csv_mapping_import_file_path.get(),
         }
         mapping_new = {}
         mapping_update = []
@@ -650,7 +581,7 @@ class WindowCSVMapping(Window):
 
     def browse_file_csv(self):
         filename = askopenfilename(filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
-        self.var_csv_mapping_extension_path.set(filename)
+        self.var_csv_mapping_import_file_path.set(filename)
 
     def initialize_mapping_field_sets(self):
         extension_mapping = self.mapping.get("Extension", {})
@@ -671,14 +602,14 @@ class WindowCSVMapping(Window):
         frm_csv_mapping_fields = self.nametowidget("csv_mapping.csv_mapping_fields")
 
         # 3CX Field
-        ent_csv_mapping_3cx_field = tk.Entry(master=frm_csv_mapping_fields)
+        ent_csv_mapping_3cx_field = ttk.Entry(frm_csv_mapping_fields)
         ent_csv_mapping_3cx_field.insert(0, field)
         ent_csv_mapping_3cx_field.grid(
             row=len(self.mapping_fields) + 2, column=1, sticky="w"
         )
 
         # CSV Header Field
-        ent_csv_mapping_header = tk.Entry(master=frm_csv_mapping_fields)
+        ent_csv_mapping_header = ttk.Entry(frm_csv_mapping_fields)
         ent_csv_mapping_header.insert(0, header)
         ent_csv_mapping_header.grid(
             row=len(self.mapping_fields) + 2, column=2, sticky="w"
@@ -686,7 +617,7 @@ class WindowCSVMapping(Window):
 
         # Static Value Checkbox
         chk_csv_mapping_static_value = Checkbox(
-            master=self.widgets["frm_csv_mapping_fields"], value=static
+            self.widgets.frm_csv_mapping_fields, value=static
         )
         chk_csv_mapping_static_value.grid(
             row=len(self.mapping_fields) + 2, column=3, sticky="w"
@@ -694,7 +625,7 @@ class WindowCSVMapping(Window):
 
         # Update Checkbox
         chk_csv_mapping_update = Checkbox(
-            master=self.widgets["frm_csv_mapping_fields"], value=update
+            self.widgets.frm_csv_mapping_fields, value=update
         )
         chk_csv_mapping_update.grid(
             row=len(self.mapping_fields) + 2, column=4, sticky="w"
@@ -702,7 +633,7 @@ class WindowCSVMapping(Window):
 
         # Key Checkbox
         chk_csv_mapping_key = Checkbox(
-            master=self.widgets["frm_csv_mapping_fields"],
+            self.widgets.frm_csv_mapping_fields,
             state=self.ceckbox_key_state.get(),
             command=self.handle_checkbox_key_change,
             # value=key,
@@ -710,8 +641,8 @@ class WindowCSVMapping(Window):
         chk_csv_mapping_key.grid(row=len(self.mapping_fields) + 2, column=5, sticky="w")
 
         # Remove Button
-        btn_csv_mapping_remove = tk.Button(
-            master=self.widgets["frm_csv_mapping_fields"],
+        btn_csv_mapping_remove = ttk.Button(
+            self.widgets.frm_csv_mapping_fields,
             text="-",
             command=lambda row_index=len(
                 self.mapping_fields
@@ -758,3 +689,68 @@ class WindowCSVMapping(Window):
         self.ceckbox_key_state.set("normal")
         for row in self.mapping_fields:
             row.key.configure(state="normal")
+
+
+class WindowSync(PopupWindow):
+    def __init__(self, master, sync_logger: SyncLogger, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        self.resizable(height=False, width=False)
+
+        self.widgets = WidgetList()
+        self.is_paused = False
+        self.sync_running = True
+
+        self.build_gui()
+        sync_logger.addTextWindowHandler(self.widgets.txt_output)
+        self.logger = sync_logger.get_logger()
+
+        self.sync_thread = threading.Thread(target=self.master.run_sync_in_thread)
+        self.sync_thread.start()
+        self.periodic_update()
+
+    def build_gui(self):
+        # Frame: Window
+        self.widgets.frm_window = ttk.Frame(self, width=500, height=1000)
+        self.widgets.frm_window.pack(fill="both", anchor="nw", expand=True)
+
+        # Text:  Output
+        self.widgets.txt_output = ScrolledText(
+            self.widgets.frm_window, relief="sunken", name="output"
+        )
+        self.widgets.txt_output.pack(fill="both", expand=True)
+
+        # Form: Sync Buttons
+        self.widgets.frm_sync_buttons = ttk.Frame(self.widgets.frm_window)
+        self.widgets.frm_sync_buttons.pack(side="bottom")
+
+        # Button: Pause/Resume
+        self.widgets.btn_pause_resume = ttk.Button(
+            self.widgets.frm_sync_buttons,
+            text="Pause",
+            command=self.handle_pause_resume,
+        )
+        self.widgets.btn_pause_resume.pack(side="left", anchor="s")
+
+        # Form: Navigation Buttons
+        self.widgets.frm_navigation = ttk.Frame(self)
+        self.widgets.frm_navigation.pack(side="bottom", anchor="e", pady=5)
+
+    def handle_pause_resume(self):
+        if not self.sync_running:
+            return
+        self.is_paused = not self.is_paused
+        # self.btn_pause_resume.configure(text="Resume" if self.is_paused else "Pause")
+        if self.is_paused:
+            self.logger.info(f"Paused by user")
+            self.master.sync.pause_sync()
+            self.widgets.btn_pause_resume.configure(text="Resume")
+        else:
+            self.logger.info(f"Resumed by user")
+            self.master.sync.resume_sync()
+            self.widgets.btn_pause_resume.configure(text="Pause")
+
+    def periodic_update(self) -> None:
+        if not self.sync_running:
+            return
+        self.update()
+        self.after(100, self.periodic_update)
