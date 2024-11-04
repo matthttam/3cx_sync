@@ -36,12 +36,12 @@ class App(tk.Tk, Window):
 
     def load_theme(self):
         """Load and apply the custom theme."""
-        self.option_add("*tearOff", False)
-        self.style = ttk.Style(self)
+        # self.option_add("*tearOff", False)
+        # self.style = ttk.Style(self)
 
-        self.tk.call("source", self.get_theme_path())
-        self.style.theme_use("forest-dark")
-        self.style.configure(".", font=("Helvetica", 15))
+        # self.tk.call("source", self.get_theme_path())
+        # self.style.theme_use("forest-dark")
+        # self.style.configure(".", font=("Helvetica", 15))
         self.geometry("600x400")
 
     def get_theme_path(self):
