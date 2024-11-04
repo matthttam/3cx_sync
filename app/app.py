@@ -36,12 +36,12 @@ class App(tk.Tk, Window):
 
     def load_theme(self):
         """Load and apply the custom theme."""
-        # self.option_add("*tearOff", False)
-        # self.style = ttk.Style(self)
+        self.option_add("*tearOff", False)
+        self.style = ttk.Style(self)
 
-        # self.tk.call("source", self.get_theme_path())
-        # self.style.theme_use("forest-dark")
-        # self.style.configure(".", font=("Helvetica", 15))
+        self.tk.call("source", self.get_theme_path())
+        self.style.theme_use("forest-dark")
+        self.style.configure(".", font=("Helvetica", 15))
         self.geometry("600x400")
 
     def get_theme_path(self):
@@ -62,7 +62,7 @@ class App(tk.Tk, Window):
 
         # Frame: Left Column
         self.widgets.frm_left_column = ttk.Frame(self.widgets.frm_window)
-        self.widgets.frm_left_column.pack(**self.frm_default, fill=tk.Y)
+        self.widgets.frm_left_column.pack(**self.frm_pack_defaults, fill=tk.Y)
 
         # Button: Configure App
         self.widgets.btn_show_window_app_config = ttk.Button(
@@ -71,7 +71,7 @@ class App(tk.Tk, Window):
             command=self.show_WindowAppConfig,
         )
 
-        self.widgets.btn_show_window_app_config.pack(**self.btn_pack_default)
+        self.widgets.btn_show_window_app_config.pack(**self.btn_pack_defaults)
 
         # Button: Export Config
         self.widgets.btn_export_configs = ttk.Button(
@@ -79,7 +79,7 @@ class App(tk.Tk, Window):
             text="Export Configs",
             command=self.show_WindowAppConfig,
         )
-        self.widgets.btn_export_configs.pack(**self.btn_pack_default)
+        self.widgets.btn_export_configs.pack(**self.btn_pack_defaults)
 
         # Button: Exit
         self.widgets.btn_exit = ttk.Button(
@@ -87,12 +87,14 @@ class App(tk.Tk, Window):
             text="Exit",
             command=self.handle_exit_click,
         )
-        self.widgets.btn_exit.pack(**self.btn_pack_default, side=tk.BOTTOM)
+        self.widgets.btn_exit.pack(**self.btn_pack_defaults, side=tk.BOTTOM)
         # self.widgets.btn_exit.grid(row=0, column=1, padx=5)
 
         # Frame: Right Frame
         self.widgets.frm_right_column = ttk.Frame(self.widgets.frm_window)
-        self.widgets.frm_right_column.pack(fill="both", expand=True, **self.frm_default)
+        self.widgets.frm_right_column.pack(
+            fill="both", expand=True, **self.frm_pack_defaults
+        )
 
         # Notebook: Sync Options
         self.widgets.notebook_sync_options = ttk.Notebook(self.widgets.frm_right_column)
@@ -117,7 +119,7 @@ class App(tk.Tk, Window):
             command=self.show_WindowCSVMapping,
         )
 
-        self.widgets.btn_show_window_csv_config.pack(**self.btn_pack_default)
+        self.widgets.btn_show_window_csv_config.pack(**self.btn_pack_defaults)
 
         # Button: Sync CSV
         self.widgets.btn_sync_csv = ttk.Button(
@@ -125,7 +127,7 @@ class App(tk.Tk, Window):
             text="Sync CSV",
             command=self.handle_csv_sync_click,
         )
-        self.widgets.btn_sync_csv.pack(**self.btn_pack_default)
+        self.widgets.btn_sync_csv.pack(**self.btn_pack_defaults)
 
         # Button: Pause/Resume
         # self.widgets.btn_pause_resume = ttk.Button(

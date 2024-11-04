@@ -30,9 +30,11 @@ class Window:
     lbl_pack_defaults = {"padx": (0, 10), "fill": tk.X}
     ent_grid_defaults = {"pady": (5, 5), "sticky": tk.EW}
     ent_pack_defaults = {"pady": (5, 5), "fill": tk.X}
-    frm_default = {"padx": 5, "pady": 5, "side": tk.LEFT}
-    btn_pack_default = {"padx": 5, "pady": (5, 5), "fill": tk.X}
-    lblfrm_defaults = {"padx": 20, "pady": 10, "fill": tk.BOTH, "expand": True}
+    frm_pack_defaults = {"padx": 5, "pady": 5, "side": tk.LEFT}
+    btn_pack_defaults = {"padx": 5, "pady": (5, 5)}
+    btn_grid_defaults = {"padx": 5, "pady": (5, 5), "sticky": tk.EW}
+    lblfrm_pack_defaults = {"padx": 20, "pady": 10, "fill": tk.BOTH, "expand": True}
+    lblfrm_grid_defaults = {"padx": 20, "pady": 10, "expand": True}
     chk_defaults = {"padx": 5, "pady": 5}
 
     def increment_row(self, reset_column=True) -> None:
@@ -124,7 +126,7 @@ class WindowAppConfig(PopupWindow):
         self.widgets.frm_3cx_options = ttk.LabelFrame(
             self.widgets.frm_window, text="3CX Settings", padding=(20, 10)
         )
-        self.widgets.frm_3cx_options.pack(**self.lblfrm_defaults)
+        self.widgets.frm_3cx_options.pack(**self.lblfrm_pack_defaults)
 
         # Create the 3cx header
         # self.widgets.lbl_3cx_settings_header = ttk.Label(
@@ -295,7 +297,7 @@ class WindowAppConfig(PopupWindow):
         self.widgets.lblfrm_app_settings = ttk.LabelFrame(
             self.widgets.frm_window, text="App Settings", padding=(20, 10)
         )
-        self.widgets.lblfrm_app_settings.pack(**self.lblfrm_defaults)
+        self.widgets.lblfrm_app_settings.pack(**self.lblfrm_pack_defaults)
         # self.widgets.lbl_app_settings_header = ttk.Label(
         #    self.widgets.frm_window,
         #    text="App Settings",
@@ -359,17 +361,17 @@ class WindowAppConfig(PopupWindow):
         self.widgets.btn_apply.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.btn_pack_default,
+            **self.btn_grid_defaults,
         )
         self.widgets.btn_save.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.btn_pack_default,
+            **self.btn_grid_defaults,
         )
         self.widgets.btn_cancel.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.btn_pack_default,
+            **self.btn_grid_defaults,
         )
 
     def handle_test_connection(self):
@@ -440,7 +442,7 @@ class WindowCSVMapping(PopupWindow):
         self.widgets.lblfrm_import_file_path = ttk.LabelFrame(
             self.widgets.frm_window, text="Import File Path", padding=(20, 10)
         )
-        self.widgets.lblfrm_import_file_path.pack(**self.lblfrm_defaults)
+        self.widgets.lblfrm_import_file_path.pack(**self.lblfrm_pack_defaults)
 
         self.widgets.lbl_import_file_path = ttk.Label(
             self.widgets.lblfrm_import_file_path, text="Path:"
@@ -457,7 +459,7 @@ class WindowCSVMapping(PopupWindow):
             self.widgets.lblfrm_import_file_path, text=">", command=self.browse_file_csv
         )
         self.widgets.btn_import_file_path_browse.pack(
-            **self.btn_pack_default,
+            **self.btn_pack_defaults,
         )
 
         # Frame: Mapping
