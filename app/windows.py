@@ -26,16 +26,35 @@ class Window:
     _current_column = 0
 
     # Default configurations
-    lbl_grid_defaults = {"padx": (0, 10), "sticky": tk.E}
-    lbl_pack_defaults = {"padx": (0, 10), "fill": tk.X}
-    ent_grid_defaults = {"pady": (5, 5), "sticky": tk.EW}
-    ent_pack_defaults = {"pady": (5, 5), "fill": tk.X}
-    frm_pack_defaults = {"padx": 5, "pady": 5, "side": tk.LEFT}
-    btn_pack_defaults = {"padx": 5, "pady": (5, 5)}
-    btn_grid_defaults = {"padx": 5, "pady": (5, 5), "sticky": tk.EW}
-    lblfrm_pack_defaults = {"padx": 20, "pady": 10, "fill": tk.BOTH, "expand": True}
-    lblfrm_grid_defaults = {"padx": 20, "pady": 10, "expand": True}
-    chk_defaults = {"padx": 5, "pady": 5}
+    pack_defaults = {
+        "frm": {"padx": 5, "pady": 5, "side": tk.LEFT},
+        "lbl": {"padx": (0, 10), "fill": tk.X},
+        "btn": {"padx": 5, "pady": (5, 5)},
+        "ent": {"pady": (5, 5), "fill": tk.X},
+        "lblfrm": {"padx": 20, "pady": 10, "fill": tk.BOTH, "expand": True},
+    }
+    grid_defaults = {
+        "lbl": {"padx": (0, 10), "sticky": tk.E},
+        "lbl": {"padx": (0, 10), "sticky": tk.E},
+        "ent": {"pady": (5, 5), "sticky": tk.EW},
+        "btn": {"padx": 5, "pady": (5, 5), "sticky": tk.EW},
+        "lblfrm": {"padx": 20, "pady": 10, "expand": True},
+        "chk": {"padx": 5, "pady": 5},
+    }
+
+    # frm_pack_defaults = {"fill": "both", "expand": True}
+    # frm_pack_defaults = {"padx": 5, "pady": 5, "side": tk.LEFT}
+
+    # pack_defaults["lbl"] = {"padx": (0, 10), "fill": tk.X}
+    # pack_defaults["btn"] = {"padx": 5, "pady": (5, 5)}
+    # pack_defaults["ent"] = {"pady": (5, 5), "fill": tk.X}
+    # pack_defaults["lblfrm"] = {"padx": 20, "pady": 10, "fill": tk.BOTH, "expand": True}
+
+    # grid_defaults["lbl"] = {"padx": (0, 10), "sticky": tk.E}
+    # grid_defaults["ent"] = {"pady": (5, 5), "sticky": tk.EW}
+    # grid_defaults["btn"] = {"padx": 5, "pady": (5, 5), "sticky": tk.EW}
+    # grid_defaults["lblfrm"] = {"padx": 20, "pady": 10, "expand": True}
+    # grid_defaults["chk"] = {"padx": 5, "pady": 5}
 
     def increment_row(self, reset_column=True) -> None:
         self._current_row = self._current_row + 1
@@ -126,7 +145,7 @@ class WindowAppConfig(PopupWindow):
         self.widgets.frm_3cx_options = ttk.LabelFrame(
             self.widgets.frm_window, text="3CX Settings", padding=(20, 10)
         )
-        self.widgets.frm_3cx_options.pack(**self.lblfrm_pack_defaults)
+        self.widgets.frm_3cx_options.pack(**self.pack_defaults["lblfrm"])
 
         # Create the 3cx header
         # self.widgets.lbl_3cx_settings_header = ttk.Label(
@@ -151,7 +170,7 @@ class WindowAppConfig(PopupWindow):
         self.widgets.lbl_3cx_url.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.lbl_grid_defaults,
+            **self.grid_defaults["lbl"],
         )
 
         # Create a 3cx URL frame in that window
@@ -184,27 +203,27 @@ class WindowAppConfig(PopupWindow):
         self.widgets.opt_3cx_scheme.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.ent_grid_defaults,
+            **self.grid_defaults["ent"],
         )
         self.widgets.lbl_3cx_scheme_ending.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.ent_grid_defaults,
+            **self.grid_defaults["ent"],
         )
         self.widgets.ent_3cx_domain.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.ent_grid_defaults,
+            **self.grid_defaults["ent"],
         )
         self.widgets.lbl_3cx_server_ending.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.ent_grid_defaults,
+            **self.grid_defaults["ent"],
         )
         self.widgets.ent_3cx_port.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.ent_grid_defaults,
+            **self.grid_defaults["ent"],
         )
 
         # Create the 3CX username widgets
@@ -221,12 +240,12 @@ class WindowAppConfig(PopupWindow):
         self.widgets.lbl_3cx_username.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.lbl_grid_defaults,
+            **self.grid_defaults["lbl"],
         )
         self.widgets.ent_3cx_username.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.ent_grid_defaults,
+            **self.grid_defaults["ent"],
         )
 
         # Create the 3CX password widgets
@@ -243,12 +262,12 @@ class WindowAppConfig(PopupWindow):
         self.widgets.lbl_3cx_password.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.lbl_grid_defaults,
+            **self.grid_defaults["lbl"],
         )
         self.widgets.ent_3cx_password.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.ent_grid_defaults,
+            **self.grid_defaults["ent"],
         )
 
         # Create the Store credential securely widgets
@@ -265,13 +284,13 @@ class WindowAppConfig(PopupWindow):
         self.widgets.lbl_store_credential_securely.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.lbl_grid_defaults,
+            **self.grid_defaults["lbl"],
         )
         self.widgets.chk_store_credential_securely.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
             sticky="w",
-            **self.chk_defaults,
+            **self.grid_defaults["chk"],
         )
 
         # Create the test button widget
@@ -297,7 +316,7 @@ class WindowAppConfig(PopupWindow):
         self.widgets.lblfrm_app_settings = ttk.LabelFrame(
             self.widgets.frm_window, text="App Settings", padding=(20, 10)
         )
-        self.widgets.lblfrm_app_settings.pack(**self.lblfrm_pack_defaults)
+        self.widgets.lblfrm_app_settings.pack(**self.pack_defaults["lblfrm"])
         # self.widgets.lbl_app_settings_header = ttk.Label(
         #    self.widgets.frm_window,
         #    text="App Settings",
@@ -328,13 +347,13 @@ class WindowAppConfig(PopupWindow):
         self.widgets.lbl_app_logout_hotdesk_on_disable.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.lbl_grid_defaults,
+            **self.grid_defaults["lbl"],
         )
         self.widgets.chk_app_logout_hotdesk_on_disable.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
             sticky="w",
-            **self.chk_defaults,
+            **self.grid_defaults["chk"],
         )
 
         # Create the Apply, Save, and Cnacel Buttons
@@ -361,17 +380,17 @@ class WindowAppConfig(PopupWindow):
         self.widgets.btn_apply.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.btn_grid_defaults,
+            **self.grid_defaults["btn"],
         )
         self.widgets.btn_save.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.btn_grid_defaults,
+            **self.grid_defaults["btn"],
         )
         self.widgets.btn_cancel.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **self.btn_grid_defaults,
+            **self.grid_defaults["btn"],
         )
 
     def handle_test_connection(self):
@@ -436,70 +455,75 @@ class WindowCSVMapping(PopupWindow):
     def build_gui(self) -> None:
         # Frame: window
         self.widgets.frm_window = ttk.Frame(self, name="csv_mapping")
-        self.widgets.frm_window.pack(fill="both", expand=True)
+        self.widgets.frm_window.pack(**self.pack_defaults["frm"])
 
         # Field: Extension Path
         self.widgets.lblfrm_import_file_path = ttk.LabelFrame(
-            self.widgets.frm_window, text="Import File Path", padding=(20, 10)
+            self.widgets.frm_window, text="Import File Path"
         )
-        self.widgets.lblfrm_import_file_path.pack(**self.lblfrm_pack_defaults)
+        self.widgets.lblfrm_import_file_path.pack(**self.pack_defaults["lblfrm"])
 
         self.widgets.lbl_import_file_path = ttk.Label(
             self.widgets.lblfrm_import_file_path, text="Path:"
         )
-        self.widgets.lbl_import_file_path.pack(**self.lbl_pack_defaults)
+        self.widgets.lbl_import_file_path.pack(**self.pack_defaults["lbl"])
 
         self.widgets.ent_import_file_path = ttk.Entry(
             self.widgets.lblfrm_import_file_path,
             textvariable=self.var_csv_mapping_import_file_path,
         )
-        self.widgets.ent_import_file_path.pack(**self.ent_pack_defaults)
+        self.widgets.ent_import_file_path.pack(**self.pack_defaults["ent"])
 
         self.widgets.btn_import_file_path_browse = ttk.Button(
             self.widgets.lblfrm_import_file_path, text=">", command=self.browse_file_csv
         )
         self.widgets.btn_import_file_path_browse.pack(
-            **self.btn_pack_defaults,
+            **self.pack_defaults["btn"],
         )
 
         # Frame: Mapping
-        self.widgets.frm_csv_mapping = ttk.Frame(
-            self.widgets.frm_window, relief="ridge", borderwidth=2
+        # self.widgets.lblfrm_csv_mapping = ttk.LabelFrame(
+        #    self.widgets.frm_window, text="CSV" relief="ridge", borderwidth=2
+        # )
+        # self.widgets.lblfrm_csv_mapping.pack(**self.pack_defaults["lblfrm"])
+        self.widgets.lblfrm_csv_mapping = ttk.Frame(
+            self.widgets.frm_window, relief="ridge", borderwidth=2, name="csv_mapping"
         )
-        self.widgets.frm_csv_mapping.pack(
+        self.widgets.lblfrm_csv_mapping.pack(
             side="top", fill="both", ipady=self.frame_iy_padding, expand=True
         )
 
         # Frame: CSV Mapping Fields
-        self.widgets.frm_csv_mapping_fields = ttk.Frame(
+        self.widgets.lblfrm_csv_mapping_fields = ttk.LabelFrame(
             self.widgets.frm_window,
+            text="CSV Mapping",
             name="csv_mapping_fields",
             relief="sunken",
             borderwidth=2,
         )
-        self.widgets.frm_csv_mapping_fields.pack(
+        self.widgets.lblfrm_csv_mapping_fields.pack(
             side="top", fill="both", ipady=self.frame_iy_padding, expand=True
         )
 
         # CSV Mapping Headers
         self.widgets.lbl_csv_mapping_3cx_field = ttk.Label(
-            self.widgets.frm_csv_mapping_fields, text="3cx Field", width=20
+            self.widgets.lblfrm_csv_mapping_fields, text="3cx Field", width=20
         )
         self.widgets.lbl_csv_mapping_header = ttk.Label(
-            self.widgets.frm_csv_mapping_fields, text="CSV Header", width=20
+            self.widgets.lblfrm_csv_mapping_fields, text="CSV Header", width=20
+        )
+        self.widgets.lbl_csv_mapping_static = ttk.Label(
+            self.widgets.lblfrm_csv_mapping_fields, text="Static", width=5
         )
         self.widgets.lbl_csv_mapping_update = ttk.Label(
-            self.widgets.frm_csv_mapping_fields, text="Static", width=5
-        )
-        self.widgets.lbl_csv_mapping_update = ttk.Label(
-            self.widgets.frm_csv_mapping_fields, text="Update", width=5
+            self.widgets.lblfrm_csv_mapping_fields, text="Update", width=5
         )
         self.widgets.lbl_csv_mapping_key = ttk.Label(
-            self.widgets.frm_csv_mapping_fields, text="Key", width=5
+            self.widgets.lblfrm_csv_mapping_fields, text="Key", width=5
         )
         self.widgets.lbl_csv_mapping_3cx_field.grid(row=1, column=1, sticky="w")
         self.widgets.lbl_csv_mapping_header.grid(row=1, column=2, sticky="w")
-        self.widgets.lbl_csv_mapping_update.grid(row=1, column=3, sticky="w")
+        self.widgets.lbl_csv_mapping_static.grid(row=1, column=3, sticky="w")
         self.widgets.lbl_csv_mapping_update.grid(row=1, column=4, sticky="w")
         self.widgets.lbl_csv_mapping_key.grid(row=1, column=5, sticky="w")
 
@@ -601,58 +625,49 @@ class WindowCSVMapping(PopupWindow):
     def add_mapping_field_set(
         self, header="", field="", static=False, update=False, key=False
     ):
-        frm_csv_mapping_fields = self.nametowidget("csv_mapping.csv_mapping_fields")
+        current_row = len(self.mapping_fields) + 2
+        lblfrm_csv_mapping_fields = self.nametowidget("csv_mapping.csv_mapping_fields")
 
         # 3CX Field
-        ent_csv_mapping_3cx_field = ttk.Entry(frm_csv_mapping_fields)
+        ent_csv_mapping_3cx_field = ttk.Entry(lblfrm_csv_mapping_fields)
         ent_csv_mapping_3cx_field.insert(0, field)
-        ent_csv_mapping_3cx_field.grid(
-            row=len(self.mapping_fields) + 2, column=1, sticky="w"
-        )
+        ent_csv_mapping_3cx_field.grid(row=current_row, column=1, sticky="w")
 
         # CSV Header Field
-        ent_csv_mapping_header = ttk.Entry(frm_csv_mapping_fields)
+        ent_csv_mapping_header = ttk.Entry(lblfrm_csv_mapping_fields)
         ent_csv_mapping_header.insert(0, header)
-        ent_csv_mapping_header.grid(
-            row=len(self.mapping_fields) + 2, column=2, sticky="w"
-        )
+        ent_csv_mapping_header.grid(row=current_row, column=2, sticky="w")
 
         # Static Value Checkbox
         chk_csv_mapping_static_value = Checkbox(
-            self.widgets.frm_csv_mapping_fields, value=static
+            self.widgets.lblfrm_csv_mapping_fields, value=static
         )
-        chk_csv_mapping_static_value.grid(
-            row=len(self.mapping_fields) + 2, column=3, sticky="w"
-        )
+        chk_csv_mapping_static_value.grid(row=current_row, column=3, sticky="w")
 
         # Update Checkbox
         chk_csv_mapping_update = Checkbox(
-            self.widgets.frm_csv_mapping_fields, value=update
+            self.widgets.lblfrm_csv_mapping_fields, value=update
         )
-        chk_csv_mapping_update.grid(
-            row=len(self.mapping_fields) + 2, column=4, sticky="w"
-        )
+        chk_csv_mapping_update.grid(row=current_row, column=4, sticky="w")
 
         # Key Checkbox
         chk_csv_mapping_key = Checkbox(
-            self.widgets.frm_csv_mapping_fields,
+            self.widgets.lblfrm_csv_mapping_fields,
             state=self.ceckbox_key_state.get(),
             command=self.handle_checkbox_key_change,
             # value=key,
         )
-        chk_csv_mapping_key.grid(row=len(self.mapping_fields) + 2, column=5, sticky="w")
+        chk_csv_mapping_key.grid(row=current_row, column=5, sticky="w")
 
         # Remove Button
         btn_csv_mapping_remove = ttk.Button(
-            self.widgets.frm_csv_mapping_fields,
+            self.widgets.lblfrm_csv_mapping_fields,
             text="-",
             command=lambda row_index=len(
                 self.mapping_fields
             ): self.delete_mapping_field_set(row_index),
         )
-        btn_csv_mapping_remove.grid(
-            row=len(self.mapping_fields) + 2, column=6, sticky="w"
-        )
+        btn_csv_mapping_remove.grid(row=current_row, column=6)
 
         if key:
             chk_csv_mapping_key.invoke()
@@ -669,7 +684,7 @@ class WindowCSVMapping(PopupWindow):
 
     def delete_mapping_field_set(self, row_index=None):
         if row_index is None:
-            row_index = len(self.mapping_fields)
+            row_index = len(self.mapping_fields) - 1
 
         row = self.mapping_fields.pop(row_index)
         for widget in row:

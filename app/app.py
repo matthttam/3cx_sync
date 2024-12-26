@@ -62,7 +62,7 @@ class App(tk.Tk, Window):
 
         # Frame: Left Column
         self.widgets.frm_left_column = ttk.Frame(self.widgets.frm_window)
-        self.widgets.frm_left_column.pack(**self.frm_pack_defaults, fill=tk.Y)
+        self.widgets.frm_left_column.pack(**self.pack_defaults["frm"], fill=tk.Y)
 
         # Button: Configure App
         self.widgets.btn_show_window_app_config = ttk.Button(
@@ -71,7 +71,7 @@ class App(tk.Tk, Window):
             command=self.show_WindowAppConfig,
         )
 
-        self.widgets.btn_show_window_app_config.pack(**self.btn_pack_defaults)
+        self.widgets.btn_show_window_app_config.pack(**self.pack_defaults["btn"])
 
         # Button: Export Config
         self.widgets.btn_export_configs = ttk.Button(
@@ -79,7 +79,7 @@ class App(tk.Tk, Window):
             text="Export Configs",
             command=self.show_WindowAppConfig,
         )
-        self.widgets.btn_export_configs.pack(**self.btn_pack_defaults)
+        self.widgets.btn_export_configs.pack(**self.pack_defaults["btn"])
 
         # Button: Exit
         self.widgets.btn_exit = ttk.Button(
@@ -87,13 +87,13 @@ class App(tk.Tk, Window):
             text="Exit",
             command=self.handle_exit_click,
         )
-        self.widgets.btn_exit.pack(**self.btn_pack_defaults, side=tk.BOTTOM)
+        self.widgets.btn_exit.pack(**self.pack_defaults["btn"], side=tk.BOTTOM)
         # self.widgets.btn_exit.grid(row=0, column=1, padx=5)
 
         # Frame: Right Frame
         self.widgets.frm_right_column = ttk.Frame(self.widgets.frm_window)
         self.widgets.frm_right_column.pack(
-            fill="both", expand=True, **self.frm_pack_defaults
+            fill="both", expand=True, **self.pack_defaults["frm"]
         )
 
         # Notebook: Sync Options
@@ -119,7 +119,7 @@ class App(tk.Tk, Window):
             command=self.show_WindowCSVMapping,
         )
 
-        self.widgets.btn_show_window_csv_config.pack(**self.btn_pack_defaults)
+        self.widgets.btn_show_window_csv_config.pack(**self.pack_defaults["btn"])
 
         # Button: Sync CSV
         self.widgets.btn_sync_csv = ttk.Button(
@@ -127,7 +127,7 @@ class App(tk.Tk, Window):
             text="Sync CSV",
             command=self.handle_csv_sync_click,
         )
-        self.widgets.btn_sync_csv.pack(**self.btn_pack_defaults)
+        self.widgets.btn_sync_csv.pack(**self.pack_defaults["btn"])
 
         # Button: Pause/Resume
         # self.widgets.btn_pause_resume = ttk.Button(
