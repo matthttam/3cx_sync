@@ -2,7 +2,7 @@ from decimal import Decimal
 from uuid import UUID
 from datetime import datetime
 from typing import Optional
-from pydantic import conlist, Field, field_validator
+from pydantic import Field
 from tcx_api.components.schema import Schema
 from tcx_api.components.schemas.enums import *
 
@@ -252,7 +252,7 @@ class FxsVariableChoice(Schema):
 
 
 class FxsVariable(Schema):
-    Choices: Optional[conlist(FxsVariableChoice)] = None
+    Choices: Optional[list[FxsVariableChoice]] = Field(default=None)
     Name: str
     Title: str
     ValidationType: Optional[str] = None
@@ -292,7 +292,8 @@ class LiveChatStyling(Schema):
 
 class GeneralLiveChatSettings(Schema):
     AllowSoundNotifications: Optional[bool] = None
-    Authentication: Optional[Authentication] = None
+    authentication: Optional[Authentication] = Field(
+        None, alias="Authentication")
     DisableOfflineMessages: Optional[bool] = None
     EnableGA: Optional[bool] = None
     EnableOnMobile: Optional[bool] = None
@@ -308,12 +309,15 @@ class LiveChatAdvancedSettings(Schema):
 
 
 class LiveChatBox(Schema):
-    ButtonIconType: Optional[ButtonIconType] = None
+    button_icon_type: Optional[ButtonIconType] = Field(
+        None, alias="ButtonIconType")
     ButtonIconUrl: Optional[str] = None
     ChatDelay: Optional[int] = None
     Height: Optional[str] = None
-    LiveChatLanguage: Optional[LiveChatLanguage] = None
-    LiveMessageUserinfoFormat: Optional[LiveMessageUserinfoFormat] = None
+    live_chat_language: Optional[LiveChatLanguage] = Field(
+        None, alias="LiveChatLanguage")
+    live_message_userinfo_format: Optional[LiveMessageUserinfoFormat] = Field(
+        None, alias="LiveMessageUserinfoFormat")
     MessageDateformat: Optional[LiveChatMessageDateformat] = None
     MinimizedStyle: Optional[LiveChatMinimizedStyle] = None
     OperatorIcon: Optional[str] = None
@@ -333,7 +337,8 @@ class UpdateItem(Schema):
     Name: str
     OutOfDate: Optional[bool] = None
     ServerVersion: str
-    UpdateType: Optional[UpdateType] = None
+    update_type: Optional[UpdateType] = Field(
+        None, alias="UpdateType")
 
 
 class CategoryUpdate(Schema):
@@ -377,7 +382,7 @@ class QualityParty(Schema):
 class CrmParameter(Schema):
     Default: Optional[str] = None
     Editor: Optional[EditorType] = None
-    ListValues: Optional[conlist(str)] = None
+    ListValues: Optional[list[str]] = None
     ListValuesText: Optional[str] = None
     Name: Optional[str] = None
     Parent: Optional[str] = None
@@ -391,7 +396,7 @@ class CrmParameter(Schema):
 
 class CrmAuthentication(Schema):
     Type: Optional[AuthenticationType] = None
-    Values: Optional[conlist(str)] = None
+    Values: Optional[list[str]] = None
 
 
 class CDRSettingsField(Schema):
@@ -404,7 +409,7 @@ class ADUsersSyncConfiguration(Schema):
     IsEnabled: Optional[bool] = None
     IsSyncOfficePhone: Optional[bool] = None
     IsSyncPhoto: Optional[bool] = None
-    SelectedUsers: Optional[conlist(str)] = None
+    SelectedUsers: Optional[list[str]] = None
     StartingExtensionNumber: str
     SyncEvents: Optional[bool] = None
     SyncGuestUsers: Optional[bool] = None
@@ -414,7 +419,7 @@ class ADUsersSyncConfiguration(Schema):
 
 class UsersSyncConfiguration(Schema):
     IsEnabled: Optional[bool] = None
-    SelectedUsers: Optional[conlist(str)] = None
+    SelectedUsers: Optional[list[str]] = None
     SyncType: Optional[IntegrationSyncType] = None
 
 
@@ -505,9 +510,9 @@ class UserGroup(Schema):
 
 class Receptionist(Schema):
     BreakRoute: Optional[Route] = None
-    Forwards: conlist(ReceptionistForward) = Field(default_factory=list)
+    Forwards: list[ReceptionistForward] = Field(default_factory=list)
     ForwardSmsTo: Optional[str] = None
-    Groups: conlist(UserGroup) = Field(default_factory=list)
+    Groups: list[UserGroup] = Field(default_factory=list)
     HolidaysRoute: Optional[Route] = None
     Id: int
     InvalidKeyForwardDN: Optional[str] = None
@@ -541,11 +546,11 @@ class RingGroup(Schema):
     CallUsRequirement: Optional[Authentication] = None
     ClickToCallId: Optional[str] = None
     ForwardNoAnswer: Optional[Destination] = None
-    Groups: conlist(UserGroup) = Field(default_factory=list)
+    Groups: list[UserGroup] = Field(default_factory=list)
     HolidaysRoute: Optional[Route] = None
     Id: int
     IsRegistered: Optional[bool] = None
-    Members: conlist(RingGroupMember) = Field(default_factory=list)
+    Members: list[RingGroupMember] = Field(default_factory=list)
     MulticastAddress: Optional[str] = None
     MulticastCodec: Optional[str] = None
     MulticastPacketTime: Optional[int] = None
@@ -591,8 +596,8 @@ class QueueAgent(Schema):
 
 class ContactsDirSearchSettings(Schema):
     ExchangeCalendarProfileSwitching: Optional[bool] = None
-    ExchangeEmailAddresses: Optional[conlist(str)] = None
-    ExchangeFolders: Optional[conlist(str)] = None
+    ExchangeEmailAddresses: Optional[list[str]] = None
+    ExchangeFolders: Optional[list[str]] = None
     ExchangePassword: Optional[str] = None
     ExchangeServerUrl: Optional[str] = None
     ExchangeUser: Optional[str] = None
@@ -606,7 +611,7 @@ class QueueManager(Schema):
 
 class Queue(Schema):
     AgentAvailabilityMode: Optional[bool] = None
-    Agents: conlist(QueueAgent) = Field(default_factory=list)
+    Agents: list[QueueAgent] = Field(default_factory=list)
     AnnouncementInterval: Optional[int] = None
     AnnounceQueuePosition: Optional[bool] = None
     BreakRoute: Optional[Route] = None
@@ -619,16 +624,16 @@ class Queue(Schema):
     ClickToCallId: Optional[str] = None
     EnableIntro: Optional[bool] = None
     ForwardNoAnswer: Optional[Destination] = None
-    Groups: conlist(UserGroup) = Field(default_factory=list)
+    Groups: list[UserGroup] = Field(default_factory=list)
     HolidaysRoute: Optional[Route] = None
     Id: int
     IntroFile: Optional[str] = None
     IsRegistered: Optional[bool] = None
-    Managers: conlist(QueueManager) = Field(default_factory=list)
+    Managers: list[QueueManager] = Field(default_factory=list)
     MasterTimeout: Optional[int] = None
     MaxCallersInQueue: Optional[int] = None
     Name: Optional[str] = None
-    NotifyCodes: conlist(QueueNotifyCode) = Field(default_factory=list)
+    NotifyCodes: list[QueueNotifyCode] = Field(default_factory=list)
     Number: Optional[str] = None
     OfficeRoute: Optional[Route] = None
     OnHoldFile: Optional[str] = None
@@ -656,7 +661,7 @@ class Period(Schema):
 
 class Schedule(Schema):
     IgnoreHolidays: Optional[bool] = None
-    Periods: Optional[conlist(Period)] = None
+    Periods: Optional[list[Period]] = None
     Type: RuleHoursType
 
 
@@ -733,33 +738,33 @@ class PhoneRegistrar(Schema):
 
 class PhoneTemplate(Schema):
     AddAllowed: Optional[bool] = None
-    AllowedNetConfigs: Optional[conlist(str)] = None
+    AllowedNetConfigs: Optional[list[str]] = None
     AllowSSLProvisioning: Optional[bool] = None
-    BacklightTimeouts: Optional[conlist(str)] = None
-    Codecs: Optional[conlist(str)] = None
+    BacklightTimeouts: Optional[list[str]] = None
+    Codecs: Optional[list[str]] = None
     Content: Optional[str] = None
-    DateFormats: Optional[conlist(str)] = None
+    DateFormats: Optional[list[str]] = None
     DefaultQueueRingTone: Optional[str] = None
     HotdeskingAllowed: Optional[bool] = None
     Id: str
     IsCustom: Optional[bool] = None
-    Languages: Optional[conlist(str)] = None
+    Languages: Optional[list[str]] = None
     MaxQueueCustomRingtones: Optional[int] = None
-    Models: Optional[conlist(PhoneModel)] = None
-    PowerLedSettings: Optional[conlist(str)] = None
-    QueueRingTones: Optional[conlist(str)] = None
-    RingTones: Optional[conlist(str)] = None
+    Models: Optional[list[PhoneModel]] = None
+    PowerLedSettings: Optional[list[str]] = None
+    QueueRingTones: Optional[list[str]] = None
+    RingTones: Optional[list[str]] = None
     RpsEnabled: Optional[bool] = None
-    ScreenSaverTimeouts: Optional[conlist(str)] = None
+    ScreenSaverTimeouts: Optional[list[str]] = None
     template_type: Optional[TemplateType] = Field(None, alias="TemplateType")
-    TimeFormats: Optional[conlist(str)] = None
-    TimeZones: Optional[conlist(str)] = None
+    TimeFormats: Optional[list[str]] = None
+    TimeZones: Optional[list[str]] = None
     URL: Optional[str] = None
     XferTypeEnabled: Optional[bool] = None
 
 
 class TrunkMessagingTemplate(Schema):
-    MessagingVariables: Optional[conlist(TrunkVariable)] = None
+    MessagingVariables: Optional[list[TrunkVariable]] = None
     _Optional: Optional[bool] = None
     Outbound: Optional[bool] = None
     Provider: Optional[str] = None
@@ -769,13 +774,13 @@ class TrunkMessagingTemplate(Schema):
 class TrunkTemplate(Schema):
     AddAllowed: Optional[bool] = None
     Content: Optional[str] = None
-    Countries: Optional[conlist(str)] = None
+    Countries: Optional[list[str]] = None
     Description: Optional[str] = None
-    Editors: conlist(TrunkEditorType) = Field(default_factory=list)
+    Editors: list[TrunkEditorType] = Field(default_factory=list)
     Id: str
     MessagingTemplate: Optional[TrunkMessagingTemplate] = None
     Name: str
-    Tags: Optional[conlist(str)] = None
+    Tags: Optional[list[str]] = None
     TemplateType: TemplateType
     Url: Optional[str] = None
 
@@ -826,7 +831,7 @@ class RecordingSettings(Schema):
 
 
 class SystemDirectory(Schema):
-    Dirs: Optional[conlist(str)] = None
+    Dirs: Optional[list[str]] = None
     Path: Optional[str] = None
 
 
@@ -841,7 +846,7 @@ class Group(Schema):
     AnswerAfter: Optional[int] = None
     BreakRoute: Optional[Route] = None
     BreakTime: Optional[Schedule] = None
-    CallHandlingMode: conlist(CallHandlingFlags) = Field(default_factory=list)
+    CallHandlingMode: list[CallHandlingFlags] = Field(default_factory=list)
     CallUsEnableChat: Optional[bool] = None
     CallUsEnablePhone: Optional[bool] = None
     CallUsEnableVideo: Optional[bool] = None
@@ -852,7 +857,7 @@ class Group(Schema):
     CustomPrompt: Optional[str] = None
     DisableCustomPrompt: Optional[bool] = None
     GloballyVisible: Optional[bool] = None
-    Groups: conlist(UserGroup) = Field(default_factory=list)
+    Groups: list[UserGroup] = Field(default_factory=list)
     HasMembers: Optional[bool] = None
     HolidaysRoute: Optional[Route] = None
     Hours: Optional[Schedule] = None
@@ -860,17 +865,17 @@ class Group(Schema):
     IsDefault: Optional[bool] = None
     Language: Optional[str] = None
     LastLoginTime: Optional[datetime] = None
-    Members: conlist(UserGroup) = Field(default_factory=list)
+    Members: list[UserGroup] = Field(default_factory=list)
     Name: Optional[str] = None
     Number: Optional[str] = None
-    OfficeHolidays: conlist(Holiday) = Field(default_factory=list)
+    OfficeHolidays: list[Holiday] = Field(default_factory=list)
     OfficeRoute: Optional[Route] = None
     OutOfOfficeRoute: Optional[Route] = None
     OverrideExpiresAt: Optional[datetime] = None
     OverrideHolidays: Optional[bool] = None
     PromptSet: Optional[str] = None
     Props: Optional[GroupProps] = None
-    rights: conlist(Rights) = Field(default_factory=list, alias="Rights")
+    rights: list[Rights] = Field(default_factory=list, alias="Rights")
     TimeZoneId: Optional[str] = None
 
 
@@ -885,20 +890,20 @@ class Restrictions(Schema):
 
 
 class OutboundRule(Schema):
-    DNRanges: Optional[conlist(DNRange)] = None
+    DNRanges: Optional[list[DNRange]] = None
     EmergencyRule: Optional[bool] = None
-    GroupIds: conlist(int)
-    GroupNames: Optional[conlist(str)] = None
+    GroupIds: list[int]
+    GroupNames: Optional[list[str]] = None
     Id: int
     Name: Optional[str] = None
     NumberLengthRanges: Optional[str] = None
     Prefix: Optional[str] = None
     Priority: Optional[int] = None
-    Routes: Optional[conlist(OutboundRoute)] = None
+    Routes: Optional[list[OutboundRoute]] = None
 
 
 class XOutboundRulePurge(Schema):
-    Ids: conlist(int)
+    Ids: list[int]
 
 
 class Parameter(Schema):
@@ -918,22 +923,22 @@ class DNProperty(Schema):
 class Peer(Schema):
     Hidden: Optional[bool] = None
     Id: int
-    MemberOf: conlist(PeerGroup)
+    MemberOf: list[PeerGroup]
     Name: Optional[str] = None
     Number: Optional[str] = None
-    Tags: conlist(UserTag)
+    Tags: list[UserTag]
     Type: Optional[PeerType] = None
 
 
 class SetRouteRequest(Schema):
     Id: int
-    Routes: conlist(SetRoute)
+    Routes: list[SetRoute]
 
 
 class XTelegramAuth(Schema):
     ApiHash: str
     ApiId: str
-    RequiredFields: conlist(KeyValuePair_2OfString_String)
+    RequiredFields: list[KeyValuePair_2OfString_String]
     Session: str
     TrunkNo: str
 
@@ -955,26 +960,26 @@ class InboundRule(Schema):
 
 
 class Gateway(Schema):
-    Codecs: Optional[conlist(str)] = None
+    Codecs: Optional[list[str]] = None
     DeliverAudio: Optional[bool] = None
     DestNumberInRemotePartyIDCalled: Optional[bool] = None
     DestNumberInRequestLineURI: Optional[bool] = None
     DestNumberInTo: Optional[bool] = None
     Host: Optional[str] = None
     Id: Optional[int] = None
-    InboundParams: Optional[conlist(GatewayParameterBinding)] = None
+    InboundParams: Optional[list[GatewayParameterBinding]] = None
     Internal: Optional[bool] = None
     IPInRegistrationContact: Optional[IPInRegistrationContactType] = None
     Lines: Optional[int] = None
     MatchingStrategy: Optional[MatchingStrategyType] = None
     Name: Optional[str] = None
     OutboundCallerID: Optional[str] = None
-    OutboundParams: Optional[conlist(GatewayParameterBinding)] = None
+    OutboundParams: Optional[list[GatewayParameterBinding]] = None
     Port: Optional[int] = None
     ProxyHost: Optional[str] = None
     ProxyPort: Optional[int] = None
     RequireRegistrationFor: Optional[RequireRegistrationForType] = None
-    SourceIdentification: Optional[conlist(GatewayParameterBinding)] = None
+    SourceIdentification: Optional[list[GatewayParameterBinding]] = None
     SpecifiedIPForRegistrationContact: Optional[str] = None
     SRTPMode: Optional[SRTPModeType] = None
     SupportReinvite: Optional[bool] = None
@@ -983,14 +988,14 @@ class Gateway(Schema):
     TimeBetweenReg: Optional[int] = None
     Type: GatewayType
     UseIPInContact: Optional[bool] = None
-    VariableChoices: Optional[conlist(Choice)] = None
+    VariableChoices: Optional[list[Choice]] = None
 
 
 class Trunk(Schema):
     AuthID: Optional[str] = None
     AuthPassword: Optional[str] = None
     ConfigurationIssue: Optional[str] = None
-    DidNumbers: Optional[conlist(str)] = None
+    DidNumbers: Optional[list[str]] = None
     Direction: Optional[DirectionType] = None
     DisableVideo: Optional[bool] = None
     E164CountryCode: Optional[str] = None
@@ -999,24 +1004,24 @@ class Trunk(Schema):
     EnableOutboundCalls: Optional[bool] = None
     ExternalNumber: Optional[str] = None
     gateway: Optional[Gateway] = Field(None, alias="Gateway")
-    Groups: conlist(UserGroup)
+    Groups: list[UserGroup]
     Id: int
-    InCIDFormatting: Optional[conlist(CIDFormatting)] = None
+    InCIDFormatting: Optional[list[CIDFormatting]] = None
     IPRestriction: Optional[TypeOfIPDestriction] = None
     IsOnline: Optional[bool] = None
     IsWebmeetingBridge: Optional[bool] = None
     Messaging: Optional[TrunkMessaging] = None
     Number: Optional[str] = None
     OutboundCallerID: Optional[str] = None
-    OutCIDFormatting: Optional[conlist(CIDFormatting)] = None
-    PublicInfoGroups: Optional[conlist(str)] = None
+    OutCIDFormatting: Optional[list[CIDFormatting]] = None
+    PublicInfoGroups: Optional[list[str]] = None
     PublicIPinSIP: Optional[str] = None
     PublishInfo: Optional[bool] = None
-    ReceiveExtensions: Optional[conlist(str)] = None
+    ReceiveExtensions: Optional[list[str]] = None
     ReceiveInfo: Optional[bool] = None
     RemoteMyPhoneUriHost: Optional[str] = None
     RemotePBXPreffix: Optional[str] = None
-    RoutingRules: conlist(InboundRule)
+    RoutingRules: list[InboundRule]
     SecondaryRegistrar: Optional[str] = None
     SeparateAuthId: Optional[str] = None
     SimultaneousCalls: Optional[int] = None
@@ -1030,7 +1035,7 @@ class Trunk(Schema):
 class Country(Schema):
     Continent: Optional[str] = None
     CountryCode: Optional[str] = None
-    CountryCodes: Optional[conlist(str)] = None
+    CountryCodes: Optional[list[str]] = None
     DownloadUrl: Optional[str] = None
     ErpCode: Optional[str] = None
     ExitCode: Optional[str] = None
@@ -1047,27 +1052,27 @@ class RegistrarFxs(Schema):
 
 
 class FxsTemplate(Schema):
-    AllowedNetConfigs: Optional[conlist(str)] = None
+    AllowedNetConfigs: Optional[list[str]] = None
     AllowSSLProvisioning: Optional[bool] = None
     Brand: str
     Content: Optional[str] = None
     DeviceType: DeviceType
     Id: str
     IsCustom: bool
-    Languages: Optional[conlist(str)] = None
-    Models: conlist(FxsModel)
+    Languages: Optional[list[str]] = None
+    Models: list[FxsModel]
     NumberOfExtensions: int
     TemplateType: TemplateType
-    TimeZones: Optional[conlist(str)] = None
+    TimeZones: Optional[list[str]] = None
     URL: str
-    Variables: conlist(FxsVariable)
+    Variables: list[FxsVariable]
 
 
 class Fxs(Schema):
     Brand: Optional[str] = None
-    Codecs: Optional[conlist(str)] = None
+    Codecs: Optional[list[str]] = None
     FxsLineCount: Optional[int] = None
-    FxsLines: Optional[conlist(DeviceLine)] = None
+    FxsLines: Optional[list[DeviceLine]] = None
     Group: Optional[str] = None
     Language: Optional[str] = None
     MacAddress: str
@@ -1080,7 +1085,7 @@ class Fxs(Schema):
     Secret: Optional[str] = None
     Template: Optional[FxsTemplate] = None
     TimeZone: Optional[str] = None
-    Variables: Optional[conlist(Variable)] = None
+    Variables: Optional[list[Variable]] = None
 
 
 class LicenseStatus(Schema):
@@ -1113,7 +1118,7 @@ class PromptSet(Schema):
     Folder: Optional[str] = None
     Id: int
     LanguageCode: Optional[str] = None
-    Prompts: conlist(Prompt)
+    Prompts: list[Prompt]
     PromptSetName: Optional[str] = None
     prompt_set_type: Optional[PromptSetType] = Field(
         None, alias="PromptSetType")
@@ -1152,7 +1157,7 @@ class Weblink(Schema):
     Name: Optional[str] = None
     Styling: Optional[LiveChatStyling] = None
     Translations: Optional[WebsiteLinksTranslations] = None
-    Website: Optional[conlist(str)] = None
+    Website: Optional[list[str]] = None
 
 
 class ChatLinkNameValidation(Schema):
@@ -1166,24 +1171,24 @@ class UpdateSettings(Schema):
 
 
 class UpdateList(Schema):
-    Entries: Optional[conlist(UpdateItem)] = None
+    Entries: Optional[list[UpdateItem]] = None
     IsMaintananceExpired: Optional[bool] = None
     Key: UUID = None
     LastSuccessfulUpdate: Optional[datetime]
 
 
 class InstallUpdates(Schema):
-    Entries: conlist(UUID)
+    Entries: list[UUID]
     Key: UUID
 
 
 class UpdatesStats(Schema):
-    PerPage: Optional[conlist(CategoryUpdate)] = None
-    TcxUpdate: Optional[conlist(CategoryUpdate)] = None
+    PerPage: Optional[list[CategoryUpdate]] = None
+    TcxUpdate: Optional[list[CategoryUpdate]] = None
 
 
 class Parking(Schema):
-    Groups: conlist(UserGroup)
+    Groups: list[UserGroup]
     Id: int
     Number: Optional[str] = None
 
@@ -1293,7 +1298,7 @@ class ChatHistoryView(Schema):
     ParticipantEmail: Optional[str] = None
     ParticipantIp: Optional[str] = None
     ParticipantPhone: Optional[str] = None
-    ParticipantsGroupsArray: Optional[conlist(str)] = None
+    ParticipantsGroupsArray: Optional[list[str]] = None
     ProviderName: Optional[str] = None
     ProviderType: Optional[ChatType] = None
     QueueNumber: Optional[str] = None
@@ -1306,7 +1311,7 @@ class ChatMessagesHistoryView(Schema):
     IsExternal: bool
     Message: Optional[str] = None
     MessageId: int
-    ParticipantsGroupsArray: Optional[conlist(str)] = None
+    ParticipantsGroupsArray: Optional[list[str]] = None
     QueueNumber: Optional[str] = None
     Recipients: Optional[str] = None
     SenderParticipantEmail: Optional[str] = None
@@ -1526,7 +1531,7 @@ class CallFlowApp(Schema):
     CompilationLastSuccess: Optional[datetime]
     CompilationResult: Optional[str] = None
     CompilationSucceeded: Optional[bool] = None
-    Groups: conlist(UserGroup)
+    Groups: list[UserGroup]
     Id: int
     InvalidScript: Optional[bool] = None
     IsRegistered: Optional[bool] = None
@@ -1617,7 +1622,7 @@ class InboundRuleReport(Schema):
 class CrmTemplate(Schema):
     Authentication: Optional[CrmAuthentication] = None
     Name: str
-    Parameters: Optional[conlist(CrmParameter)] = None
+    Parameters: Optional[list[CrmParameter]] = None
 
 
 class NetworkSettings(Schema):
@@ -1645,10 +1650,10 @@ class NetworkSettings(Schema):
 
 class CDRSettings(Schema):
     Enabled: Optional[bool] = None
-    EnabledFields: Optional[conlist(CDRSettingsField)] = None
+    EnabledFields: Optional[list[CDRSettingsField]] = None
     LogSize: Optional[int] = None
     LogType: Optional[TypeOfCDRLog] = None
-    PossibleFields: Optional[conlist(str)] = None
+    PossibleFields: Optional[list[str]] = None
     RemoveCommaDelimiters: Optional[bool] = None
     SocketIpAddress: Optional[str] = None
     SocketPort: Optional[int] = None
@@ -1685,7 +1690,7 @@ class EventLog(Schema):
     GroupName: Optional[str] = None
     Id: int
     Message: Optional[str] = None
-    Params: Optional[conlist(str)] = None
+    Params: Optional[list[str]] = None
     Source: Optional[str] = None
     TimeGenerated: Optional[datetime]
     Type: Optional[EventLogType] = None
@@ -1704,7 +1709,7 @@ class ServiceInfo(Schema):
 
 
 class XServiceManageOptions(Schema):
-    ServiceNames: Optional[conlist(str)] = None
+    ServiceNames: Optional[list[str]] = None
 
 
 class FirewallState(Schema):
@@ -1741,7 +1746,7 @@ class Microsoft365Status(Schema):
 
 class Microsoft365UsersPage(Schema):
     Total: Optional[int] = None
-    Users: Optional[conlist(Microsoft365User)] = None
+    Users: Optional[list[Microsoft365User]] = None
 
 
 class UsersRequestOptions(Schema):
@@ -1813,7 +1818,7 @@ class NotificationSettings(Schema):
     MailAddress: Optional[str] = None
     MailPassword: Optional[str] = None
     MailServer: Optional[str] = None
-    MailServerType: Optional[MailServerType] = None
+    mail_server_type: Optional[MailServerType] = Field(default=None, alias="MailServerType")
     MailSslEnabled: Optional[bool] = None
     MailUser: Optional[str] = None
     NotifyCallDenied: Optional[bool] = None
@@ -1840,7 +1845,7 @@ class NotificationSettings(Schema):
 
 class TestResult(Schema):
     Error: Optional[str] = None
-    Parameters: Optional[conlist(str)] = None
+    Parameters: Optional[list[str]] = None
     Success: Optional[bool] = None
 
 
@@ -1857,7 +1862,7 @@ class EmailTemplate(Schema):
 
 class HotelServices(Schema):
     Enabled: Optional[bool] = None
-    HotelGroups: Optional[conlist(str)] = None
+    HotelGroups: Optional[list[str]] = None
     IntegrationType: Optional[PmsIntegrationType] = None
     IpAddress: Optional[str] = None
     NoAnswerDestination: Optional[Destination] = None
@@ -1867,7 +1872,7 @@ class HotelServices(Schema):
 
 class FirmwareState(Schema):
     Count: Optional[int] = None
-    FileNames: Optional[conlist(str)] = None
+    FileNames: Optional[list[str]] = None
     Id: str
     TotalSize: Optional[int] = None
 
@@ -1962,7 +1967,7 @@ class SystemHealthStatus(Schema):
 
 class Playlist(Schema):
     AutoGain: Optional[bool] = None
-    Files: Optional[conlist(str)] = None
+    Files: Optional[list[str]] = None
     MaxVolumePercent: Optional[int] = None
     Name: str
     PromptName: Optional[str] = None
@@ -1983,7 +1988,7 @@ class Fax(Schema):
     AuthID: Optional[str] = None
     AuthPassword: Optional[str] = None
     FaxServer: Optional[bool] = None
-    Groups: conlist(UserGroup)
+    Groups: list[UserGroup]
     Id: int
     Number: Optional[str] = None
     OutboundCallerId: Optional[str] = None
@@ -2002,7 +2007,7 @@ class Codec(Schema):
 
 
 class VoipProvider(Schema):
-    Countries: Optional[conlist(str)] = None
+    Countries: Optional[list[str]] = None
     Id: str
     Name: str
     Type: TemplateType
@@ -2025,18 +2030,18 @@ class GatewayParameter(Schema):
     CanHaveDID: Optional[bool] = None
     Description: Optional[str] = None
     Id: int
-    InboundPossibleValues: Optional[conlist(str)] = None
+    InboundPossibleValues: Optional[list[str]] = None
     Name: Optional[str] = None
-    OutboundPossibleValues: Optional[conlist(str)] = None
-    SourceIDPossibleValues: Optional[conlist(str)] = None
+    OutboundPossibleValues: Optional[list[str]] = None
+    SourceIDPossibleValues: Optional[list[str]] = None
 
 
 class Defs(Schema):
-    Codecs: conlist(Codec)
-    GatewayParameters: conlist(GatewayParameter)
-    GatewayParameterValues: conlist(GatewayParameterValue)
+    Codecs: list[Codec]
+    GatewayParameters: list[GatewayParameter]
+    GatewayParameterValues: list[GatewayParameterValue]
     Id: int
-    TimeZones: conlist(TimeZone)
+    TimeZones: list[TimeZone]
 
 
 class LicenseInfo(Schema):
@@ -2064,9 +2069,9 @@ class LicenseInfo(Schema):
 class PhoneSettings(Schema):
     AllowCustomQueueRingtones: Optional[bool] = None
     Backlight: Optional[str] = None
-    Codecs: Optional[conlist(str)] = None
+    Codecs: Optional[list[str]] = None
     CustomLogo: Optional[str] = None
-    CustomQueueRingtones: Optional[conlist(CustomQueueRingtone)] = None
+    CustomQueueRingtones: Optional[list[CustomQueueRingtone]] = None
     DateFormat: Optional[str] = None
     Firmware: Optional[str] = None
     FirmwareLang: Optional[str] = None
@@ -2077,7 +2082,7 @@ class PhoneSettings(Schema):
     LocalRTPPortStart: Optional[int] = None
     LocalSipPort: Optional[int] = None
     LogoDescription: Optional[str] = None
-    LogoFileExtensionAllowed: Optional[conlist(str)] = None
+    LogoFileExtensionAllowed: Optional[list[str]] = None
     OwnBlfs: Optional[bool] = None
     PhoneLanguage: Optional[str] = None
     PowerLed: Optional[str] = None
@@ -2093,7 +2098,7 @@ class PhoneSettings(Schema):
     Srtp: Optional[str] = None
     TimeFormat: Optional[str] = None
     TimeZone: Optional[str] = None
-    VlanInfos: Optional[conlist(PhoneDeviceVlanInfo)] = None
+    VlanInfos: Optional[list[PhoneDeviceVlanInfo]] = None
     XferType: Optional[XferTypeEnum] = None
 
 
@@ -2131,12 +2136,11 @@ class User(Schema):
     Enabled: Optional[bool] = None
     EnableHotdesking: Optional[bool] = None
     FirstName: Optional[str] = None
-    ForwardingExceptions: conlist(ExtensionRule) = Field(default_factory=list)
-    ForwardingProfiles: conlist(
-        ForwardingProfile) = Field(default_factory=list)
+    ForwardingExceptions: list[ExtensionRule] = Field(default_factory=list)
+    ForwardingProfiles: list[ForwardingProfile] = Field(default_factory=list)
     GoogleSignInEnabled: Optional[bool] = None
-    Greetings: conlist(Greeting) = Field(default_factory=list)
-    Groups: conlist(UserGroup) = Field(default_factory=list)
+    Greetings: list[Greeting] = Field(default_factory=list)
+    Groups: list[UserGroup] = Field(default_factory=list)
     HideInPhonebook: Optional[bool] = None
     HotdeskingAssignment: Optional[str] = None
     Hours: Optional[Schedule] = None
@@ -2155,9 +2159,9 @@ class User(Schema):
     MyPhonePush: Optional[bool] = None
     MyPhoneShowRecordings: Optional[bool] = None
     Number: Optional[str] = None
-    OfficeHoursProps: conlist(OfficeHoursBits) = Field(default_factory=list)
+    OfficeHoursProps: list[OfficeHoursBits] = Field(default_factory=list)
     OutboundCallerID: Optional[str] = None
-    Phones: conlist(Phone) = Field(default_factory=list)
+    Phones: list[Phone] = Field(default_factory=list)
     PinProtected: Optional[bool] = None
     PinProtectTimeout: Optional[int] = None
     PrimaryGroupId: Optional[int] = None
@@ -2169,7 +2173,7 @@ class User(Schema):
     Require2FA: Optional[bool] = None
     SendEmailMissedCalls: Optional[bool] = None
     SIPID: Optional[str] = None
-    Tags: conlist(UserTag) = Field(default_factory=list)
+    Tags: list[UserTag] = Field(default_factory=list)
     VMDisablePinAuth: Optional[bool] = None
     VMEmailOptions: Optional[VMEmailOptionsType] = None
     VMEnabled: Optional[bool] = None
@@ -2239,7 +2243,7 @@ class SystemParameters(Schema):
     IsHosted3CX: Optional[bool] = None
     IsMulticompanyMode: Optional[bool] = None
     IsStaticIp: Optional[bool] = None
-    License: Optional[License] = None
+    license: Optional[License] = Field(default=None, alias="License")
     PbxExternalHost: Optional[str] = None
     RpsEnabled: Optional[bool] = None
     SipPort: Optional[int] = None
@@ -2261,7 +2265,7 @@ class GoogleSettings(Schema):
 class ConsoleRestrictions(Schema):
     AccessRestricted: Optional[bool] = None
     Id: str
-    IpWhitelist: Optional[conlist(str)] = None
+    IpWhitelist: Optional[list[str]] = None
     MyIpAddress: Optional[str] = None
 
 
@@ -2282,8 +2286,8 @@ class MusicOnHoldSettings(Schema):
 
 
 class CodecsSettings(Schema):
-    ExternalCodecList: Optional[conlist(str)] = None
-    LocalCodecList: Optional[conlist(str)] = None
+    ExternalCodecList: Optional[list[str]] = None
+    LocalCodecList: Optional[list[str]] = None
 
 
 class GeneralSettingsForApps(Schema):
@@ -2348,7 +2352,7 @@ class E164Settings(Schema):
 
 
 class CountryCodes(Schema):
-    CountryCodes: Optional[conlist(str)] = None
+    CountryCodes: Optional[list[str]] = None
 
 
 class SecureSipSettings(Schema):
@@ -2366,7 +2370,7 @@ class PhonesSettings(Schema):
 class OfficeHours(Schema):
     BreakTime: Optional[Schedule] = None
     Hours: Optional[Schedule] = None
-    OfficeHolidays: conlist(Holiday) = Field(default_factory=list)
+    OfficeHolidays: list[Holiday] = Field(default_factory=list)
     SystemLanguage: Optional[str] = None
     TimeZoneId: Optional[str] = None
 
@@ -2427,12 +2431,12 @@ class CrmIntegration(Schema):
     phonebook_priority_options: Optional[PhonebookPriorityOptions] = Field(
         None, alias="PhonebookPriorityOptions")
     PhonebookSynchronization: Optional[bool] = None
-    PossibleValues: conlist(CrmSelectableValue) = Field(default_factory=list)
-    VariableChoices: Optional[conlist(CrmChoice)] = None
+    PossibleValues: list[CrmSelectableValue] = Field(default_factory=list)
+    VariableChoices: Optional[list[CrmChoice]] = None
 
 
 class CrmTestResult(Schema):
     IsError: Optional[bool] = None
     Log: Optional[str] = None
     Message: Optional[str] = None
-    SearchResult: Optional[conlist(CrmContact)] = None
+    SearchResult: Optional[list[CrmContact]] = None
