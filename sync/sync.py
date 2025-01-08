@@ -1,6 +1,4 @@
-import logging
 import threading
-import time
 from app.config import AppConfig
 from sync.sync_strategy import SyncSourceStrategy
 from tcx_api.tcx_api_connection import TCX_API_Connection
