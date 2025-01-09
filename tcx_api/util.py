@@ -1,4 +1,4 @@
-from enum import StrEnum, EnumMeta
+from enum import StrEnum, EnumMeta, auto
 
 
 class TcxStrEnumMeta(EnumMeta):
@@ -15,3 +15,11 @@ class TcxStrEnum(StrEnum, metaclass=TcxStrEnumMeta):
     @staticmethod
     def _generate_next_value_(name, start, count, last_values):
         return TcxStrEnumMeta.SPECIAL_STRING_MAP_INV.get(name, name)
+
+# Function to create a dynamic enum class
+def create_enum_from_model(model_class):
+    # Extract field names from the model class
+    field_names = model_class.__annotations__.keys()
+
+    # Create a new TcxStrEnum
+    return TcxStrEnum(model_class.__name__ + "Properties", {field_name: auto() for field_name in field_names})

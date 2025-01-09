@@ -3,7 +3,7 @@ import requests
 from typing import List
 from enum import auto
 from tcx_api.resources.api_resource import APIResource
-from tcx_api.util import TcxStrEnum
+from tcx_api.util import create_enum_from_model
 from tcx_api.components.schemas.pbx import Group
 from tcx_api.components.parameters import (
     ExpandParameters,
@@ -13,44 +13,7 @@ from tcx_api.components.parameters import (
 )
 from tcx_api import exceptions as TCX_Exceptions
 
-
-class GroupProperties(TcxStrEnum):
-    AllowCallService = auto()
-    AnswerAfter = auto()
-    BreakRoute = auto()
-    BreakTime = auto()
-    CallHandlingMode = auto()
-    CallUsEnableChat = auto()
-    CallUsEnablePhone = auto()
-    CallUsEnableVideo = auto()
-    CallUsRequirement = auto()
-    ClickToCallId = auto()
-    CurrentGroupHours = auto()
-    CustomOperator = auto()
-    CustomPrompt = auto()
-    DisableCustomPrompt = auto()
-    GloballyVisible = auto()
-    Groups = auto()
-    HasMembers = auto()
-    HolidaysRoute = auto()
-    Hours = auto()
-    Id = auto()
-    IsDefault = auto()
-    Language = auto()
-    LastLoginTime = auto()
-    Members = auto()
-    Name = auto()
-    Number = auto()
-    OfficeHolidays = auto()
-    OfficeRoute = auto()
-    OutOfOfficeRoute = auto()
-    OverrideExpiresAt = auto()
-    OverrideHolidays = auto()
-    PromptSet = auto()
-    Props = auto()
-    Rights = auto()
-    TimeZoneId = auto()
-
+GroupProperties = create_enum_from_model(Group)
 
 class ListGroupParameters(
     ListParameters,
