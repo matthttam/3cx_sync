@@ -66,9 +66,10 @@ class TCX_API_Connection(API):
         self.session = requests.Session()
         self.token_expiry_time = 0
 
-    def get(self, endpoint: str, params: QueryParameters) -> requests.Response:
+    def get(self, endpoint: str, params: QueryParameters | None = None) -> requests.Response:
+        request_params = params.model_dump(exclude_none=True, by_alias=True) if params else None
         return self._make_request(
-            "get", endpoint, params=params.model_dump(exclude_none=True, by_alias=True)
+            "get", endpoint, params = request_params
         )
 
     def post(self, endpoint: str, data: dict) -> requests.Response:

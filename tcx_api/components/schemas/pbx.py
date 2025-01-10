@@ -188,7 +188,9 @@ class TrunkMessaging(Schema):
     Enabled: Optional[bool] = None
     Provider: Optional[str] = None
     Webhook: Optional[str] = None
-    additionalProperties: str
+    # The schema specifies an additional property for this object is type string.
+    # I'm not entirley sure what it means by this.
+    #additionalProperties: str
 
 
 class GatewayParameterBinding(Schema):
@@ -1004,7 +1006,7 @@ class Trunk(Schema):
     EnableOutboundCalls: Optional[bool] = None
     ExternalNumber: Optional[str] = None
     gateway: Optional[Gateway] = Field(None, alias="Gateway")
-    Groups: list[UserGroup]
+    Groups: list[UserGroup] = Field(default_factory=list)
     Id: int
     InCIDFormatting: Optional[list[CIDFormatting]] = None
     IPRestriction: Optional[TypeOfIPDestriction] = None
@@ -1021,7 +1023,7 @@ class Trunk(Schema):
     ReceiveInfo: Optional[bool] = None
     RemoteMyPhoneUriHost: Optional[str] = None
     RemotePBXPreffix: Optional[str] = None
-    RoutingRules: list[InboundRule]
+    RoutingRules: list[InboundRule] = Field(default_factory=list)
     SecondaryRegistrar: Optional[str] = None
     SeparateAuthId: Optional[str] = None
     SimultaneousCalls: Optional[int] = None

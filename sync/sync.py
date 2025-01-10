@@ -6,8 +6,8 @@ from tcx_api.resources.users import UsersResource, ListUserParameters
 from tcx_api.components.schemas.pbx import User
 from tcx_api.exceptions import APIAuthenticationError
 from sync.comparison import UserChangeDetail, UserComparer
-from tcx_api.resources.group import GroupResource
-from tcx_api.resources.users_exceptions import (
+from tcx_api.resources.groups import GroupsResource
+from tcx_api.resources.exceptions.users_exceptions import (
     UserCreateError,
     UserUpdateError,
     UserListError,
@@ -60,7 +60,7 @@ class Sync:
             raise
 
         self.user_resource = UsersResource(api=self.api_connection)
-        self.group_resource = GroupResource(api=self.api_connection)
+        self.group_resource = GroupsResource(api=self.api_connection)
 
         self._pause_if_needed()
         self.sync_source.initialize()
