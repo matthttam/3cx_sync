@@ -46,12 +46,14 @@ class TrunkDeleteError(APIError):
         error_message = f"Unable to delete trunk with ID {trunk_id}."
         super().__init__(e, error_message)
 
+
 class TrunkGetByNumberError(APIError):
     """Error raised when there is an issue getting a trunk by number."""
 
     def __init__(self, e: HTTPError, number: str):
         error_message = f"Unable to retrieve trunk with number '{number}'."
         super().__init__(e, error_message)
+
 
 class TrunkGetInitTrunkError(APIError):
     """Error raised when there is an issue initializing a new trunk with a template."""
