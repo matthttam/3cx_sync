@@ -52,15 +52,12 @@ class GroupProperties(TcxStrEnum):
     TimeZoneId = auto()
 
 
-class ListGroupParameters(
-    ListParameters,
-    OrderbyParameters,
-    SelectParameters[GroupProperties],
-    ExpandParameters,
-): ...
+class ListGroupParameters(ListParameters, OrderbyParameters, SelectParameters[GroupProperties], ExpandParameters):
+    ...
 
 
-class GetGroupParameters(SelectParameters[GroupProperties], ExpandParameters): ...
+class GetGroupParameters(SelectParameters[GroupProperties], ExpandParameters):
+    ...
 
 
 class GroupResource(APIResource):

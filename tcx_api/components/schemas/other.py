@@ -1,8 +1,5 @@
 from typing import Optional
-from tcx_api.components.schemas.enums import *
 from typing import Any
-
-
 from tcx_api.components.schemas.pbx import Schema
 
 

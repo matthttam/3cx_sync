@@ -1,4 +1,14 @@
+from enum import StrEnum
 import logging
+
+
+class LogLevel(StrEnum):
+    CRITICAL = 'critical'
+    FATAL = 'fatal'
+    ERROR = 'error'
+    WARNING = 'warning'
+    INFO = 'info'
+    DEBUG = 'debug'
 
 
 class TextWindowHandler(logging.Handler):
@@ -26,7 +36,7 @@ class SyncLogger:
         self.default_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
     def addFileHandler(self, path="app.log"):
-        file_handler = logging.FileHandler("app.log")
+        file_handler = logging.FileHandler(path)
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(self.default_format)
         file_handler.setFormatter(file_formatter)
@@ -40,6 +50,21 @@ class SyncLogger:
         text_window_formatter = logging.Formatter(self.default_format)
         text_window_handler.setFormatter(text_window_formatter)
         self.logger.addHandler(text_window_handler)
+
+    def log(self, log_level, message, *args, **kwargs) -> None:
+        """Logs a message using the specified method after checking if sync should pause.
+
+        Args:
+            method (str): The logging method to call (e.g., 'info', 'error').
+            message (str): The message to log.
+            *args: Positional arguments for the logger method.
+            **kwargs: Keyword arguments for the logger method.
+        """
+        log_method = getattr(self.logger, log_level, None)
+        if callable(log_method):
+            log_method(message, *args, **kwargs)
+        else:
+            raise ValueError(f"Invalid logging method: {log_level}")
 
     @staticmethod
     def get_logger() -> logging.Logger:

@@ -26,12 +26,8 @@ class PeerProperties(TcxStrEnum):
     Type = auto()
 
 
-class ListPeerParameters(
-    ListParameters,
-    OrderbyParameters,
-    SelectParameters[PeerProperties],
-    ExpandParameters,
-): ...
+class ListPeerParameters(ListParameters, OrderbyParameters, SelectParameters[PeerProperties], ExpandParameters):
+    ...
 
 
 class PeersResource(APIResource):

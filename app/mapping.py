@@ -2,7 +2,6 @@ import os
 import json
 import copy
 from collections import UserDict
-from typing import Any
 import platformdirs
 
 

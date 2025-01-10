@@ -2,12 +2,11 @@ import os
 import sys
 import tkinter as tk
 from tkinter import ttk
-import threading
 from app.windows import WindowCSVMapping, WindowAppConfig, Window, WindowSync
 from app.config import AppConfig
 from app.widgets import WidgetList
 from sync.sync_strategy import SyncCSV
-from sync.sync import run_sync, Sync
+from sync.sync import run_sync
 
 from sync.logging import SyncLogger
 
@@ -16,7 +15,7 @@ from sync.logging import SyncLogger
 
 class App(tk.Tk, Window):
 
-    def __init__(self, *args, sync_logger: SyncLogger, app_config: AppConfig, **kwargs):
+    def __init__(self, *args, logger: SyncLogger, app_config: AppConfig, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.title("3cx Sync")
         self.resizable(height=True, width=True)
@@ -30,9 +29,7 @@ class App(tk.Tk, Window):
         self.load_theme()
 
         self.build_gui()
-        self.sync_logger = sync_logger
-        # sync_logger.addTextWindowHandler(self.widgets.txt_output)
-        # self.logger = sync_logger.get_logger()
+        self.logger = logger
 
     def load_theme(self):
         """Load and apply the custom theme."""
@@ -88,7 +85,6 @@ class App(tk.Tk, Window):
             command=self.handle_exit_click,
         )
         self.widgets.btn_exit.pack(**self.pack_defaults["btn"], side=tk.BOTTOM)
-        # self.widgets.btn_exit.grid(row=0, column=1, padx=5)
 
         # Frame: Right Frame
         self.widgets.frm_right_column = ttk.Frame(self.widgets.frm_window)
@@ -101,16 +97,6 @@ class App(tk.Tk, Window):
         self.widgets.tab_sync_csv = ttk.Frame(self.widgets.notebook_sync_options)
         self.widgets.notebook_sync_options.add(self.widgets.tab_sync_csv, text="CSV")
         self.widgets.notebook_sync_options.pack(fill="both", expand=True)
-
-        # Text:  Output
-        # self.widgets.txt_output = ScrolledText(
-        #    self.widgets.frm_right_column, relief="sunken", name="output"
-        # )
-        # self.widgets.txt_output.pack(fill="both", expand=True)
-
-        # Form: Sync Buttons
-        # self.widgets.frm_sync_buttons = ttk.Frame(self.widgets.frm_right_column)
-        # self.widgets.frm_sync_buttons.pack(side="bottom")
 
         # Button: Configure CSV
         self.widgets.btn_show_window_csv_config = ttk.Button(
@@ -129,18 +115,6 @@ class App(tk.Tk, Window):
         )
         self.widgets.btn_sync_csv.pack(**self.pack_defaults["btn"])
 
-        # Button: Pause/Resume
-        # self.widgets.btn_pause_resume = ttk.Button(
-        #    self.widgets.frm_sync_buttons,
-        #    text="Pause",
-        #    command=self.handle_pause_resume,
-        # )
-        # self.widgets.btn_pause_resume.pack(side="left", anchor="s")
-
-        # Form: Navigation Buttons
-        # self.widgets.frm_navigation = ttk.Frame(self)
-        # self.widgets.frm_navigation.pack(side="bottom", anchor="e", pady=5)
-
     def show_WindowAppConfig(self):
         WindowAppConfig(self, app_config=self.app_config)
 
@@ -151,21 +125,10 @@ class App(tk.Tk, Window):
         self.destroy()
 
     def handle_csv_sync_click(self) -> None:
-        # self.sync_running = True
-        WindowSync(self, self.sync_logger)
-        # self.sync_thread = threading.Thread(target=self.run_sync_in_thread)
-        # self.sync_thread.start()
-        # self.periodic_update()
+        WindowSync(self, self.logger)
 
     def run_sync_in_thread(self) -> None:
         try:
-            self.sync = Sync(sync_logger=self.sync_logger, sync_source=SyncCSV)
-            run_sync(self.sync)
+            run_sync(logger=self.logger, sync_source=SyncCSV)
         finally:
             self.sync_running = False
-
-    # def periodic_update(self) -> None:
-    #    if not self.sync_running:
-    #        return
-    #    self.update()
-    #    self.after(100, self.periodic_update)

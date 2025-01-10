@@ -1,4 +1,3 @@
-from pydantic import conlist
 from tcx_api.components.response import Response
 
 
@@ -8,7 +7,7 @@ class ODataCountResponse:
 
 
 class StringCollectionResponse(Response):
-    value: conlist(str)
+    value: list[str]
 
 
 class Is2FAEnabledResponse(Response):
