@@ -17,7 +17,9 @@ from tcx_api.resources.exceptions.trunks_exceptions import (
     TrunkUpdateError,
     TrunkDeleteError,
     TrunkGetByNumberError,
-    TrunkGetInitTrunkError,
+    TrunkInitializeError,
+    MasterBridgeInitializeError,
+    SlaveBridgeInitializeError,
 )
 
 TrunkProperties = create_enum_from_model(Trunk)
@@ -225,11 +227,29 @@ class TrunksResource(APIResource):
         except requests.HTTPError as e:
             raise TrunkGetByNumberError(e, number)
 
-    def get_new_trunk(self, template='Callcentric.pv.xml'):
+    def initialize_trunk(self, template='Callcentric.pv.xml'):
         try:
             response = self.api.get(
                 endpoint=self.get_endpoint(action=f"Pbx.InitTrunk(template='{template}')")
             )
             return TypeAdapter(Trunk).validate_python(response.json())
         except requests.HTTPError as e:
-            raise TrunkGetInitTrunkError(e, template)
+            raise TrunkInitializeError(e, template)
+
+    def initialize_master_bridge(self):
+        try:
+            response = self.api.get(
+                endpoint=self.get_endpoint(action=f"Pbx.InitMasterBridge")
+            )
+            return TypeAdapter(Trunk).validate_python(response.json())
+        except requests.HTTPError as e:
+            raise MasterBridgeInitializeError(e)
+
+    def initialize_slave_brdige(self):
+        try:
+            response = self.api.get(
+                endpoint=self.get_endpoint(action=f"Pbx.InitSlaveBridge")
+            )
+            return TypeAdapter(Trunk).validate_python(response.json())
+        except requests.HTTPError as e:
+            raise SlaveBridgeInitializeError(e)

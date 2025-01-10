@@ -55,9 +55,23 @@ class TrunkGetByNumberError(APIError):
         super().__init__(e, error_message)
 
 
-class TrunkGetInitTrunkError(APIError):
+class TrunkInitializeError(APIError):
     """Error raised when there is an issue initializing a new trunk with a template."""
 
     def __init__(self, e: HTTPError, template: str):
         error_message = f"Unable to create trunk with template '{template}'."
+        super().__init__(e, error_message)
+
+class MasterBridgeInitializeError(APIError):
+    """Error raised when there is an issue initializing a new trunk with a template."""
+
+    def __init__(self, e: HTTPError):
+        error_message = f"Unable to create master bridge."
+        super().__init__(e, error_message)
+
+class SlaveBridgeInitializeError(APIError):
+    """Error raised when there is an issue initializing a new trunk with a template."""
+
+    def __init__(self, e: HTTPError):
+        error_message = f"Unable to create slave bridge."
         super().__init__(e, error_message)
