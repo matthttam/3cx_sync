@@ -17,12 +17,8 @@ from tcx_api.util import create_enum_from_model
 
 PeerProperties = create_enum_from_model(Peer)
 
-class ListPeerParameters(
-    ListParameters,
-    OrderbyParameters,
-    SelectParameters[PeerProperties],
-    ExpandParameters,
-): ...
+class ListPeerParameters(ListParameters, OrderbyParameters, SelectParameters[PeerProperties], ExpandParameters):
+    ...
 
 
 class PeersResource(APIResource):

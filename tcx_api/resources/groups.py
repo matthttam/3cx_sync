@@ -15,15 +15,12 @@ from tcx_api import exceptions as TCX_Exceptions
 
 GroupProperties = create_enum_from_model(Group)
 
-class ListGroupParameters(
-    ListParameters,
-    OrderbyParameters,
-    SelectParameters[GroupProperties],
-    ExpandParameters,
-): ...
+class ListGroupParameters(ListParameters, OrderbyParameters, SelectParameters[GroupProperties], ExpandParameters):
+    ...
 
 
-class GetGroupParameters(SelectParameters[GroupProperties], ExpandParameters): ...
+class GetGroupParameters(SelectParameters[GroupProperties], ExpandParameters):
+    ...
 
 
 class GroupsResource(APIResource):

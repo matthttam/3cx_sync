@@ -51,5 +51,6 @@ class UserHotdeskLogoutError(APIError):
     """Error raised when there is an issue signing a user out of a hotdesk."""
 
     def __init__(self, e: HTTPError, hotdesk_user_id: int):
-        error_message = f"Unable to clear hotdesking assignment of hotdesk with ID {hotdesk_user_id} out of assigned hotdesk."
+        error_message = "Unable to clear hotdesking assignment of hotdesk with ID "
+        f"{hotdesk_user_id} out of assigned hotdesk."
         super().__init__(e, error_message)

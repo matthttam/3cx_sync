@@ -1,6 +1,6 @@
-import os, copy, sys
+import os
+import copy
 from configparser import ConfigParser
-from pathlib import Path
 import keyring
 import platformdirs
 

@@ -27,15 +27,12 @@ from tcx_api.resources.exceptions.users_exceptions import (
 UserProperties = create_enum_from_model(User)
 
 
-class ListUserParameters(
-    ListParameters,
-    OrderbyParameters,
-    SelectParameters[UserProperties],
-    ExpandParameters,
-): ...
+class ListUserParameters(ListParameters, OrderbyParameters, SelectParameters[UserProperties], ExpandParameters):
+    ...
 
 
-class GetUserParameters(SelectParameters[UserProperties], ExpandParameters): ...
+class GetUserParameters(SelectParameters[UserProperties], ExpandParameters):
+    ...
 
 
 class UsersResource(APIResource):
@@ -307,7 +304,6 @@ class UsersResource(APIResource):
 
     def get_new_user(self):
         auth_id = "".join(random.choices(string.ascii_letters + string.digits, k=10))
-        # return json.loads('{"Require2FA": true, "SendEmailMissedCalls": true, "AuthID": "", "Phones": [], "Groups": [{"GroupId": 3078, "Rights": {"RoleName": "users"}}], "CallUsEnableChat": true, "CallUsRequirement": "Both", "ClickToCallId": "testtest", "EmailAddress": "", "Mobile": "", "FirstName": "TEST", "LastName": "TEST", "Number": "10003", "OutboundCallerID": "", "PrimaryGroupId": 3078, "WebMeetingFriendlyName": "testtest", "WebMeetingApproveParticipants": false, "Blfs": "<PhoneDevice><BLFS/></PhoneDevice>", "ForwardingProfiles": [], "MS365CalendarEnabled": true, "MS365ContactsEnabled": true, "MS365SignInEnabled": true, "MS365TeamsEnabled": true, "GoogleSignInEnabled": true, "Enabled": true, "Internal": false, "AllowOwnRecordings": false, "MyPhoneShowRecordings": false, "MyPhoneAllowDeleteRecordings": false, "MyPhoneHideForwardings": false, "RecordCalls": false, "HideInPhonebook": false, "PinProtected": false, "CallScreening": false, "AllowLanOnly": true, "SIPID": "", "EnableHotdesking": false, "PbxDeliversAudio": false, "SRTPMode": "SRTPDisabled", "Hours": {"Type": "OfficeHours"}, "OfficeHoursProps": [], "BreakTime": {"Type": "OfficeHours"}, "VMEnabled": true, "VMPIN": "923080", "VMEmailOptions": "Notification", "VMDisablePinAuth": false, "VMPlayCallerID": false, "VMPlayMsgDateTime": "None", "PromptSet": "8210986B-9412-497f-AD77-3A554F4A9BDB", "Greetings": [{"Type": "Default", "Filename": ""}]}')
         return {
             "Require2FA": True,
             "SendEmailMissedCalls": True,

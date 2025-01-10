@@ -8,7 +8,7 @@ from app.config import AppConfig
 from app.mapping import CSVMapping
 from tkinter.scrolledtext import ScrolledText
 import threading
-from sync.logging import SyncLogger
+from sync.logging import SyncLogger, LogLevel
 
 
 def update_nested_dict(d: dict, keys: list, value) -> None:
@@ -35,26 +35,11 @@ class Window:
     }
     grid_defaults = {
         "lbl": {"padx": (0, 10), "sticky": tk.E},
-        "lbl": {"padx": (0, 10), "sticky": tk.E},
         "ent": {"pady": (5, 5), "sticky": tk.EW},
         "btn": {"padx": 5, "pady": (5, 5), "sticky": tk.EW},
         "lblfrm": {"padx": 20, "pady": 10, "expand": True},
         "chk": {"padx": 5, "pady": 5},
     }
-
-    # frm_pack_defaults = {"fill": "both", "expand": True}
-    # frm_pack_defaults = {"padx": 5, "pady": 5, "side": tk.LEFT}
-
-    # pack_defaults["lbl"] = {"padx": (0, 10), "fill": tk.X}
-    # pack_defaults["btn"] = {"padx": 5, "pady": (5, 5)}
-    # pack_defaults["ent"] = {"pady": (5, 5), "fill": tk.X}
-    # pack_defaults["lblfrm"] = {"padx": 20, "pady": 10, "fill": tk.BOTH, "expand": True}
-
-    # grid_defaults["lbl"] = {"padx": (0, 10), "sticky": tk.E}
-    # grid_defaults["ent"] = {"pady": (5, 5), "sticky": tk.EW}
-    # grid_defaults["btn"] = {"padx": 5, "pady": (5, 5), "sticky": tk.EW}
-    # grid_defaults["lblfrm"] = {"padx": 20, "pady": 10, "expand": True}
-    # grid_defaults["chk"] = {"padx": 5, "pady": 5}
 
     def increment_row(self, reset_column=True) -> None:
         self._current_row = self._current_row + 1
@@ -147,22 +132,6 @@ class WindowAppConfig(PopupWindow):
         )
         self.widgets.frm_3cx_options.pack(**self.pack_defaults["lblfrm"])
 
-        # Create the 3cx header
-        # self.widgets.lbl_3cx_settings_header = ttk.Label(
-        #    self.widgets.frm_window,
-        #    text="3CX Settings",
-        #    font=("Arial", 15),
-        # )
-        # self.widgets.lbl_3cx_settings_header.pack()
-
-        # Create the 3cx options frame
-        # self.widgets.frm_3cx_options = ttk.Frame(self.widgets.frm_window)
-        # self.widgets.frm_3cx_options.config(
-        #    width=300, height=200, relief="ridge", borderwidth=2
-        # )
-        # self.widgets.frm_3cx_options.pack(fill="both", expand=True)
-        # self.lbl_defaults = {"padx": (0, 10), "sticky": tk.E}
-        # self.frm_field_defaults = {"pady": (5, 5), "sticky": tk.EW}
         # Create the 3cx URL
         self.widgets.lbl_3cx_url = ttk.Label(
             self.widgets.frm_3cx_options, text="3CX URL:"
@@ -317,22 +286,6 @@ class WindowAppConfig(PopupWindow):
             self.widgets.frm_window, text="App Settings", padding=(20, 10)
         )
         self.widgets.lblfrm_app_settings.pack(**self.pack_defaults["lblfrm"])
-        # self.widgets.lbl_app_settings_header = ttk.Label(
-        #    self.widgets.frm_window,
-        #    text="App Settings",
-        #    font=("Arial", 15),
-        # )
-        # self.widgets.lbl_app_settings_header.pack()
-
-        # Create the form App Options
-        # self.widgets.frm_app_options = ttk.Frame(
-        #    self.widgets.lbl_app_settings_header,
-        #    width=300,
-        #    height=200,
-        #    relief="ridge",
-        #    borderwidth=2,
-        # )
-        # self.widgets.frm_app_options.pack(fill="both", expand=True)
 
         # Create the Log out hotdesk on disable widgets
         self.widgets.lbl_app_logout_hotdesk_on_disable = ttk.Label(
@@ -709,7 +662,7 @@ class WindowCSVMapping(PopupWindow):
 
 
 class WindowSync(PopupWindow):
-    def __init__(self, master, sync_logger: SyncLogger, *args, **kwargs):
+    def __init__(self, master, logger: SyncLogger, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.resizable(height=False, width=False)
 
@@ -718,9 +671,8 @@ class WindowSync(PopupWindow):
         self.sync_running = True
 
         self.build_gui()
-        sync_logger.addTextWindowHandler(self.widgets.txt_output)
-        self.logger = sync_logger.get_logger()
-
+        self.logger = logger
+        self.logger.addTextWindowHandler(self.widgets.txt_output)
         self.sync_thread = threading.Thread(target=self.master.run_sync_in_thread)
         self.sync_thread.start()
         self.periodic_update()
@@ -758,11 +710,11 @@ class WindowSync(PopupWindow):
         self.is_paused = not self.is_paused
         # self.btn_pause_resume.configure(text="Resume" if self.is_paused else "Pause")
         if self.is_paused:
-            self.logger.info(f"Paused by user")
+            self.logger.log(LogLevel.INFO, "Paused by user")
             self.master.sync.pause_sync()
             self.widgets.btn_pause_resume.configure(text="Resume")
         else:
-            self.logger.info(f"Resumed by user")
+            self.logger.log(LogLevel.INFO, "Resumed by user")
             self.master.sync.resume_sync()
             self.widgets.btn_pause_resume.configure(text="Pause")
 

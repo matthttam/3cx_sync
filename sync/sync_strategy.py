@@ -1,25 +1,12 @@
-from abc import ABC, abstractmethod
 import os
 import csv
-
+from abc import ABC, abstractmethod
 from app.mapping import CSVMapping
-from typing import Callable, Optional, List, Dict
+from typing import Optional, List
 from tcx_api.components.schemas.pbx import Group, User
 from sync.schema import CSVUser
 from pydantic import TypeAdapter
-
-
-def create_subclass_with_custom_comparison(
-    prefix: str, base_class, properties_to_compare: list[str]
-):
-    def custom_eq(self, other):
-        # Compare only the specified properties
-        for prop in properties_to_compare:
-            if getattr(self, prop) != getattr(other, prop):
-                return False
-        return True
-
-    return type(prefix + base_class.__name__, (base_class,), {"__eq__": custom_eq})
+from sync.logging import SyncLogger, LogLevel
 
 
 class SyncSourceStrategy(ABC):
@@ -27,8 +14,8 @@ class SyncSourceStrategy(ABC):
     @abstractmethod
     def mapping(self): ...
 
-    def __init__(self, output: Callable):
-        self.output = output
+    def __init__(self, logger: SyncLogger):
+        self.logger = logger
 
     @abstractmethod
     def initialize(self) -> None: ...
@@ -53,20 +40,22 @@ class SyncCSV(SyncSourceStrategy):
         self._mapping = value
 
     def initialize(self):
-        self.output("Initializing CSV Source")
-        self.output("Loading CSV Mapping")
+        self.logger.log(LogLevel.INFO, "Initializing CSV Source")
+        self.logger.log(LogLevel.INFO, "Loading CSV Mapping")
         self.mapping = CSVMapping()
         CSVUser._comparison_properties = self.mapping.get("Extension", {}).get(
             "Update", []
         )
-        self.output("CSV Mapping Loaded")
+        self.logger.log(LogLevel.INFO, "CSV Mapping Loaded")
 
     def get_source_users(self) -> Optional[List[User]]:
         user_data = list()
-        self.output("Loading CSV User Data")
+        self.logger.log(LogLevel.INFO, "Loading CSV User Data")
         csv_data_path = self.mapping.get("Extension", {}).get("Path", "")
         if not os.path.isfile(csv_data_path):
-            self.output(f"Unable to find file at: {csv_data_path}")
+            self.logger.log(
+                LogLevel.INFO, f"Unable to find file at: {csv_data_path}"
+                )
             raise (FileNotFoundError)
 
         with open(csv_data_path) as csv_file:
@@ -85,7 +74,9 @@ class SyncCSV(SyncSourceStrategy):
                     user_dict["HotdeskingAssignment"] = ""
                 user_data.append(user_dict)
         csv_user_list = TypeAdapter(List[CSVUser]).validate_python(user_data)
-        self.output(f"Loaded {len(csv_user_list)} Users from CSV File")
+        self.logger.log(
+            LogLevel.INFO, f"Loaded {len(csv_user_list)} Users from CSV File"
+            )
         return csv_user_list
 
     def get_user_update_fields(self) -> list:
