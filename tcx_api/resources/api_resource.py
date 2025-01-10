@@ -13,7 +13,8 @@ class APIResource(BaseModel, ABC):
         Returns the appropriate endpoint for resource or a specific resource.
 
         Args:
-            resource_id (Optional[int]): The ID of the resource, if provided. If None, returns the endpoint without id specified.
+            resource_id (Optional[int]): The ID of the resource, if provided.
+            If None, returns the endpoint without id specified.
             uri
         Returns:
             str: The formatted endpoint string.

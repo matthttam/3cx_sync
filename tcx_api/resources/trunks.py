@@ -1,14 +1,8 @@
-import string
-import random
-from pydantic import TypeAdapter
 import requests
-
+from pydantic import TypeAdapter
 from typing import List
-from enum import auto
 from tcx_api.resources.api_resource import APIResource
 from tcx_api.util import create_enum_from_model
-
-from tcx_api.components.responses.other import HasDuplicatedEmailResponse
 from tcx_api.components.schemas.pbx import Trunk
 from tcx_api.components.parameters import (
     ExpandParameters,
@@ -28,15 +22,13 @@ from tcx_api.resources.exceptions.trunks_exceptions import (
 
 TrunkProperties = create_enum_from_model(Trunk)
 
-class ListTrunkParameters(
-    ListParameters,
-    OrderbyParameters,
-    SelectParameters[TrunkProperties],
-    ExpandParameters,
-): ...
+
+class ListTrunkParameters(ListParameters, OrderbyParameters, SelectParameters[TrunkProperties], ExpandParameters):
+    ...
 
 
-class GetTrunkParameters(SelectParameters[TrunkProperties], ExpandParameters): ...
+class GetTrunkParameters(SelectParameters[TrunkProperties], ExpandParameters):
+    ...
 
 
 class TrunksResource(APIResource):
@@ -225,8 +217,7 @@ class TrunksResource(APIResource):
         Args:
             number:
         """
-        try:
-            
+        try:           
             response = self.api.get(
                 endpoint=self.get_endpoint(action=f"Pbx.GetTrunkByNumber(number='{number}')")
             )
