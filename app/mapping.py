@@ -3,7 +3,6 @@ import json
 from collections import UserDict
 from copy import deepcopy
 import platformdirs
-from app.util import initialize_or_get_user_config_file
 
 
 class CSVMapping(UserDict):

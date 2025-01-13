@@ -4,35 +4,35 @@ from pydantic import BaseModel
 from typing import Optional
 from tcx_api.components.schemas.pbx import User
 
+
 class ComparisonClass(SourceSchema, BaseModel):
-        prop_a: str
-        prop_b: str
-        prop_c: str
+    prop_a: str
+    prop_b: str
+    prop_c: str
+
 
 @pytest.fixture(autouse=True)
 def reset_comparison_properties():
     ComparisonClass._comparison_properties = None
     yield
 
+
 class TestSourceSchema:
-
-
     def test_set_comparison_properties(self):
         comparison_class = ComparisonClass(prop_a="a", prop_b="b", prop_c="c")
-        assert comparison_class._comparison_properties == None
+        assert comparison_class._comparison_properties is None
         ComparisonClass.set_comparison_properties(["prop_b", "prop_c"])
         assert comparison_class._comparison_properties == ["prop_b", "prop_c"]
-    
+
     def test_set_comparison_properties_invalid(self):
         with pytest.raises(TypeError):
-            ComparisonClass.set_comparison_properties(('tuple','instead','of','list'))
+            ComparisonClass.set_comparison_properties(('tuple', 'instead', 'of', 'list'))
 
-    def test_comparison_with_different_types(self):        
+    def test_comparison_with_different_types(self):
         instance_a = ComparisonClass(prop_a="a", prop_b="b", prop_c="c")
         instance_b = {"prop_a": "a", "prop_b": "b", "prop_c": "c"}
-        
         assert instance_a != instance_b, "Instances of different types should not be equal"
-    
+
     def test_source_schema_default_comparison_behavior(self):
         comparison_class_a = ComparisonClass(prop_a="a", prop_b="b", prop_c="c")
         comparison_class_b = ComparisonClass(prop_a="a", prop_b="b", prop_c="c")
@@ -44,10 +44,10 @@ class TestSourceSchema:
         class DefaultComparisonClass(SourceSchema, BaseModel):
             prop_a: Optional[str] = None
             prop_b: Optional[str] = None
-        
+
         instance_a = DefaultComparisonClass(prop_a=None, prop_b=None)
         instance_b = DefaultComparisonClass(prop_a=None, prop_b=None)
-        
+
         assert instance_a == instance_b, "Instances with None properties should be equal"
 
     def test_source_schema_comparison_properties_behavior(self):
@@ -76,12 +76,12 @@ class TestSourceSchema:
         ComparisonClass.set_comparison_properties([])
         instance_a = ComparisonClass(prop_a="a", prop_b="b", prop_c="c")
         instance_b = ComparisonClass(prop_a="a", prop_b="b", prop_c="c")
-        
+
         # Assuming empty _comparison_properties falls back to comparing all fields
         assert instance_a == instance_b
 
-class TestCSVUser:
 
+class TestCSVUser:
     def test_csv_user(self):
         csv_user = CSVUser(Id=None)
         assert isinstance(csv_user, SourceSchema)

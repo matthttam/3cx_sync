@@ -1,0 +1,23 @@
+class TestFieldChange:
+    ...
+
+
+class TestUserChangeDetail:
+    ...
+
+
+class TestUserComparer:
+    def test_init(self):
+        ...
+
+    def test__index_users(self):
+        ...
+
+    def test_get_user_change_details(self):
+        ...
+
+    def test_compare_user(self):
+        ...
+
+    def test_get_user_to_create(self):
+        ...

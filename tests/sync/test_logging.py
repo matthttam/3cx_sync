@@ -3,6 +3,7 @@ import logging
 from sync.logging import LogLevel, TextWindowHandler, SyncLogger
 from unittest.mock import MagicMock, patch
 
+
 class TestLogLevel:
     def test_invalid_value(self):
         with pytest.raises(ValueError):
@@ -26,6 +27,7 @@ class TestLogLevel:
         assert LogLevel.INFO.name == 'INFO'
         assert LogLevel.DEBUG.name == 'DEBUG'
 
+
 class TestTextWindowHandler:
     @pytest.fixture
     def mock_text_widget(self):
@@ -36,11 +38,11 @@ class TestTextWindowHandler:
     def text_window_handler(self, mock_text_widget):
         # Create an instance of the handler with the mocked text widget
         return TextWindowHandler(mock_text_widget)
-    
+
     def test_init(self, mock_text_widget):
         text_window_handler = TextWindowHandler(mock_text_widget)
         assert text_window_handler.text_widget == mock_text_widget
-    
+
     def test_emit_success(self, text_window_handler, mock_text_widget):
         test_message = "Test message"
         log_record = logging.LogRecord(
@@ -56,7 +58,8 @@ class TestTextWindowHandler:
     def test_emit_with_exception_handling(self, mock_handle_error, text_window_handler):
         text_window_handler.text_widget.insert.side_effect = Exception("Insert failed")
         log_record = logging.LogRecord(
-            name="test_logger", level=logging.ERROR, pathname="", lineno=0, msg="Error message", args=None, exc_info=None
+            name="test_logger", level=logging.ERROR,
+            pathname="", lineno=0, msg="Error message", args=None, exc_info=None
         )
 
         try:
@@ -73,7 +76,7 @@ class TestSyncLogger:
         sync_logger = SyncLogger()
         sync_logger.logger = MagicMock()
         yield sync_logger
-    
+
     @patch("sync.logging.logging")
     def test_init(self, mock_logging):
         mock_logger = MagicMock()
@@ -118,7 +121,6 @@ class TestSyncLogger:
         mock_logging.Formatter.assert_called_once_with(sync_logger.default_format)
         mock_text_window_handler.setFormatter.assert_called_once_with(mock_file_formatter)
         sync_logger.logger.addHandler.assert_called_once_with(mock_text_window_handler)
-        
 
     @patch("sync.logging.logging")
     def test_log_valid_level(self, mock_logging):
@@ -134,7 +136,6 @@ class TestSyncLogger:
         # Test logging at the 'error' level with arguments
         sync_logger.log('error', 'Test error', 'arg1', key='value')
         mock_logger.error.assert_called_once_with('Test error', 'arg1', key='value')
-
 
     def test_log_invalid_level_blank(self):
         sync_logger = SyncLogger()

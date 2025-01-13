@@ -63,5 +63,5 @@ class SyncLogger:
         try:
             log_method = getattr(self.logger, log_level)
             log_method(message, *args, **kwargs)
-        except AttributeError as e:
+        except AttributeError:
             raise ValueError(f"Invalid logging method: {log_level}")

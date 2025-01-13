@@ -2,7 +2,7 @@ import pytest
 import json
 from app.mapping import CSVMapping
 from collections import UserDict
-from unittest.mock import patch, Mock, MagicMock, PropertyMock, mock_open
+from unittest.mock import patch, MagicMock, mock_open
 
 
 class TestCSVMapping:
@@ -18,7 +18,7 @@ class TestCSVMapping:
         assert issubclass(CSVMapping, UserDict)
         assert csv_mapping.mapping_file_path == self.test_path
         assert csv_mapping.default_config is not None
-        assert csv_mapping.original_config == {}    
+        assert csv_mapping.original_config == {}
 
     @patch.object(CSVMapping, "load_defaults")
     @patch.object(CSVMapping, "load")
@@ -26,7 +26,6 @@ class TestCSVMapping:
         csv_mapping.initialize()
         mock_load_defaults.assert_called_once_with()
         mock_load.assert_called_once_with()
-
 
     def test_is_dirty(self, csv_mapping):
         csv_mapping.load_defaults()
@@ -48,12 +47,12 @@ class TestCSVMapping:
         csv_mapping.load()
         csv_mapping.update.assert_called_once_with({"key": "value"})
         csv_mapping.set_original_config.assert_called_once()
-    
+
     @patch('os.path.getsize', side_effect=FileNotFoundError)
     def test_load_file_not_found(self, mock_getsize, csv_mapping):
         with pytest.raises(FileNotFoundError):
             csv_mapping.load()
-    
+
     @patch('builtins.open', new_callable=mock_open, read_data='')
     @patch('os.path.getsize', return_value=0)
     def test_load_empty_file(self, mock_getsize, mock_open, csv_mapping):
