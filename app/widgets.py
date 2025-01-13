@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import tkinter as tk
 from typing import NamedTuple
 
@@ -27,6 +28,11 @@ class ExtensionMappingFieldSet(NamedTuple):
     update: Checkbox
     key: Checkbox
     delete: tk.Button
+
+
+@dataclass
+class WidgetList:
+    pass
 
 
 def select_all(event):

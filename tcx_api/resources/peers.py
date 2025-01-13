@@ -1,6 +1,5 @@
 import requests
 from typing import List
-from enum import auto
 
 from pydantic import TypeAdapter
 
@@ -12,26 +11,14 @@ from tcx_api.components.parameters import (
 )
 from tcx_api.resources.api_resource import APIResource
 from tcx_api.components.schemas.pbx import Peer
-from tcx_api.resources.peers_exceptions import PeerListError, PeerGetError
-from tcx_api.util import TcxStrEnum
+from tcx_api.resources.exceptions.peers_exceptions import PeerListError, PeerGetError
+from tcx_api.util import create_enum_from_model
 
 
-class PeerProperties(TcxStrEnum):
-    Hidden = auto()
-    Id = auto()
-    MemberOf = auto()
-    Name = auto()
-    Number = auto()
-    Tags = auto()
-    Type = auto()
+PeerProperties = create_enum_from_model(Peer)
 
-
-class ListPeerParameters(
-    ListParameters,
-    OrderbyParameters,
-    SelectParameters[PeerProperties],
-    ExpandParameters,
-): ...
+class ListPeerParameters(ListParameters, OrderbyParameters, SelectParameters[PeerProperties], ExpandParameters):
+    ...
 
 
 class PeersResource(APIResource):

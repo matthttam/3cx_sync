@@ -1,7 +1,6 @@
 import json
 from requests import HTTPError
 from tcx_api.components.schemas.ODataErrors import ErrorDetails, MainError, ODataError
-from tcx_api.components.schemas.pbx import User
 
 
 class APIError(Exception):

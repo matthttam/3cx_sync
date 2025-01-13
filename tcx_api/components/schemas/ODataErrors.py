@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import conlist, BaseModel
+from pydantic import BaseModel
 
 
 class InnerError(BaseModel):
@@ -14,7 +14,7 @@ class ErrorDetails(BaseModel):
 
 class MainError(BaseModel):
     code: str
-    details: Optional[conlist(ErrorDetails)] = None
+    details: Optional[list[ErrorDetails]] = None
     innererror: Optional[InnerError] = None
     message: str
     target: Optional[str] = None

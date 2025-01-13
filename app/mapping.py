@@ -1,55 +1,71 @@
 import os
 import json
 from collections import UserDict
-from typing import Any
+from copy import deepcopy
+import platformdirs
 
 
 class CSVMapping(UserDict):
+    def __init__(self, *args, mapping_file_path: str, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.set_original_config()
+        self.mapping_file_path = mapping_file_path
+        self.default_config = {
+            "Extension": {
+                "Path": platformdirs.user_documents_dir(),
+                "Key": "Number",
+                "New": {
+                    "Number": "Number",
+                    "FirstName": "FirstName",
+                    "LastName": "LastName",
+                    "EmailAddress": "Email",
+                    "VMPIN": "VMPIN",
+                    "VMEmailOptions": "VMEmailOptions",
+                    "OutboundCallerID": "OutboundCallerID",
+                    "SendEmailMissedCalls": "SendEmailMissedCalls",
+                    "Enabled": "Enabled",
+                    "EnableHotdesking": "AllowToUseHotdesking",
+                    "RecordCalls": "RecordCalls",
+                    "RecordExternalCallsOnly": "RecordExternalCallsOnly",
+                    "VMEnabled": "VMEnabled",
+                    "WebMeetingFriendlyName": "WebMeetingFriendlyName",
+                },
+                "Update": ["FirstName", "LastName", "EmailAddress", "Enabled"],
+            }
+        }
+
+    def initialize(self):
+        self.load_defaults()
+        self.load()
 
     @property
-    def mapping_file_path(self):
-        return os.path.join(os.getcwd(), "conf", "csv_mapping.json")
+    def is_dirty(self) -> bool:
+        return self.original_config != self.data
 
-    def __init__(self, *args, suppress_load=False, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        if not suppress_load:
-            self.load()
+    def load_defaults(self) -> None:
+        self.update(self.default_config)
 
-    def __setitem__(self, key: Any, item: Any) -> None:
-        return super().__setitem__(key, item)
-
-    def __getitem__(self, key: Any) -> Any:
-        return super().__getitem__(key)
-
-    def load(self):
-        if not self.load_mapping_config():
-            self.initialize_mapping_file()
-
-    def load_mapping_config(self) -> bool:
-        if not os.path.exists(self.mapping_file_path):
-            return False
-
-        if os.stat(self.mapping_file_path).st_size == 0:
-            return False
-
-        self.load_mapping_file()
-        return True
-
-    def load_mapping_file(self):
-        with open(self.mapping_file_path, "r") as mapping_file:
-            mapping_config = json.load(mapping_file)
-            mapping_file.close()
-            self.update(mapping_config)
-
-    def initialize_mapping_file(self):
-        with open(self.mapping_file_path, "w") as mapping_file:
-            mapping_file.write("{}")
-            mapping_file.close()
+    def load(self) -> None:
+        """Load configuration from the specified file."""
+        try:
+            # Check if the file exists and is not empty
+            if os.path.getsize(self.mapping_file_path) > 0:
+                with open(self.mapping_file_path, "r") as mapping_file:
+                    self.update(json.load(mapping_file))
+                self.set_original_config()
+            else:
+                print(f"Warning: {self.mapping_file_path} is empty.")
+        except FileNotFoundError:
+            print(f"Warning: {self.mapping_file_path} does not exist")
+            raise
+        except (IOError, json.JSONDecodeError) as e:
+            print(f"Error loading mapping file: {e}")
+            raise            
 
     def save(self):
-        self.save_mapping_file()
-
-    def save_mapping_file(self):
         with open(self.mapping_file_path, "w") as mapping_file:
-            json.dump(self.__dict__["data"], mapping_file)
-            mapping_file.close()
+            json.dump(self.data, mapping_file)
+        self.set_original_config()
+
+    def set_original_config(self):
+        self.original_config = deepcopy(self.data)

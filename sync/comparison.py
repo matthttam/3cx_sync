@@ -78,7 +78,8 @@ class UserComparer:
         if not update_fields:
             return None
 
-        return UserChangeDetail(user_to_update=User(**(tcx_user.model_dump() | updated_fields)), field_changes=field_changes)
+        user_to_update = User(**(tcx_user.model_dump() | updated_fields))
+        return UserChangeDetail(user_to_update=user_to_update, field_changes=field_changes)
 
     def get_users_to_create(self) -> list[User]:
         # Determine users to create

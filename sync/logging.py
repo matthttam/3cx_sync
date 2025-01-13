@@ -1,4 +1,14 @@
+from enum import StrEnum
 import logging
+
+
+class LogLevel(StrEnum):
+    CRITICAL = 'critical'
+    FATAL = 'fatal'
+    ERROR = 'error'
+    WARNING = 'warning'
+    INFO = 'info'
+    DEBUG = 'debug'
 
 
 class TextWindowHandler(logging.Handler):
@@ -25,8 +35,8 @@ class SyncLogger:
         self.logger.setLevel(logging.DEBUG)
         self.default_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-    def addFileHandler(self, path="app.log"):
-        file_handler = logging.FileHandler("app.log")
+    def add_file_handler(self, path="app.log"):
+        file_handler = logging.FileHandler(path)
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(self.default_format)
         file_handler.setFormatter(file_formatter)
@@ -34,14 +44,24 @@ class SyncLogger:
         # Add handlers to the logger
         self.logger.addHandler(file_handler)
 
-    def addTextWindowHandler(self, text_widget):
+    def add_text_window_handler(self, text_widget):
         text_window_handler = TextWindowHandler(text_widget)
         text_window_handler.setLevel(logging.DEBUG)
         text_window_formatter = logging.Formatter(self.default_format)
         text_window_handler.setFormatter(text_window_formatter)
         self.logger.addHandler(text_window_handler)
 
-    @staticmethod
-    def get_logger() -> logging.Logger:
-        """Returns the configured logger instance."""
-        return logging.getLogger(SyncLogger.logger_name)
+    def log(self, log_level, message, *args, **kwargs) -> None:
+        """Logs a message using the specified method after checking if sync should pause.
+
+        Args:
+            method (str): The logging method to call (e.g., 'info', 'error').
+            message (str): The message to log.
+            *args: Positional arguments for the logger method.
+            **kwargs: Keyword arguments for the logger method.
+        """
+        try:
+            log_method = getattr(self.logger, log_level)
+            log_method(message, *args, **kwargs)
+        except AttributeError:
+            raise ValueError(f"Invalid logging method: {log_level}")

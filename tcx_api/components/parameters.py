@@ -6,12 +6,6 @@ from enum import Enum
 
 class QueryParameters(BaseModel, ABC, validate_assignment=True):
     ...
-    # def __iter__(self):
-    #    for key in self.__dict__:
-    #        yield '$'+key, getattr(self, key)
-    # def dict(self, *args, **kwargs):
-    #    original_dict = super().dict(*args, **kwargs)
-    #    return {f"${k}": v for k, v in original_dict.items() if v is not None}
 
 
 class ListParameters(QueryParameters):
@@ -28,10 +22,6 @@ class ListParameters(QueryParameters):
     search: Optional[str] = Field(default=None, serialization_alias="$search")
     filter: Optional[str] = Field(default=None, serialization_alias="$filter")
     count: Optional[bool] = Field(default=None, serialization_alias="$count")
-
-
-# class GetParameters(BaseModel, ABC, validate_assignment=True):
-#    expand: str = None
 
 
 class OrderbyParameters(QueryParameters):
