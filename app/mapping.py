@@ -3,6 +3,7 @@ import json
 import copy
 from collections import UserDict
 import platformdirs
+from app.util import initialize_or_get_user_config_file
 
 
 class CSVMapping(UserDict):
@@ -15,10 +16,11 @@ class CSVMapping(UserDict):
 
     @property
     def mapping_file_path(self):
-        app_data_dir = platformdirs.user_config_dir("3cx_sync", "3cx_sync")
-        config_file_path = os.path.join(app_data_dir, "conf")
-        os.makedirs(config_file_path, exist_ok=True)
-        return os.path.join(config_file_path, "csv_mapping.json")
+        return initialize_or_get_user_config_file("3cx_sync", "3cx_sync", "conf", "csv_mapping.json")
+        # app_data_dir = platformdirs.user_config_dir("3cx_sync", "3cx_sync")
+        # config_file_path = os.path.join(app_data_dir, "conf")
+        # os.makedirs(config_file_path, exist_ok=True)
+        # return os.path.join(config_file_path, "csv_mapping.json")
 
     @property
     def is_dirty(self) -> bool:

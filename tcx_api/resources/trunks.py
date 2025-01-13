@@ -3,7 +3,7 @@ from pydantic import TypeAdapter
 from typing import List
 from tcx_api.resources.api_resource import APIResource
 from tcx_api.util import create_enum_from_model
-from tcx_api.components.schemas.pbx import Trunk
+from tcx_api.components.schemas.pbx import Trunk, XTelegramAuth
 from tcx_api.components.parameters import (
     ExpandParameters,
     ListParameters,
@@ -65,7 +65,8 @@ class TrunksResource(APIResource):
         """
 
         try:
-            self.api.post(self.get_endpoint(), trunk)
+            response = self.api.post(self.get_endpoint(), trunk)
+            
         except requests.HTTPError as e:
             raise TrunkCreateError(e, trunk)
 
@@ -239,7 +240,7 @@ class TrunksResource(APIResource):
     def initialize_master_bridge(self):
         try:
             response = self.api.get(
-                endpoint=self.get_endpoint(action=f"Pbx.InitMasterBridge")
+                endpoint=self.get_endpoint(action="Pbx.InitMasterBridge")
             )
             return TypeAdapter(Trunk).validate_python(response.json())
         except requests.HTTPError as e:
@@ -248,8 +249,16 @@ class TrunksResource(APIResource):
     def initialize_slave_brdige(self):
         try:
             response = self.api.get(
-                endpoint=self.get_endpoint(action=f"Pbx.InitSlaveBridge")
+                endpoint=self.get_endpoint(action="Pbx.InitSlaveBridge")
             )
             return TypeAdapter(Trunk).validate_python(response.json())
         except requests.HTTPError as e:
             raise SlaveBridgeInitializeError(e)
+
+    def call_telegram_session(self, x_telegram_auth: XTelegramAuth){
+        try:
+            response = self.api.post(endpoint=self.get_endpoint(action="Pbx.TelegramSession"))
+
+        except requests.HTTPError as e:
+    
+    }

@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from threading import Thread
 from tcx_api.tcx_api_connection import TCX_API_Connection
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
@@ -7,15 +8,7 @@ from app.widgets import Checkbox, ExtensionMappingFieldSet, WidgetList
 from app.config import AppConfig
 from app.mapping import CSVMapping
 from tkinter.scrolledtext import ScrolledText
-import threading
 from sync.logging import SyncLogger, LogLevel
-
-
-def update_nested_dict(d: dict, keys: list, value) -> None:
-    """Update a nested dictionary with the given keys and value."""
-    for key in keys[:-1]:
-        d = d.setdefault(key, {})
-    d[keys[-1]] = value
 
 
 class Window:
@@ -41,14 +34,17 @@ class Window:
         "chk": {"padx": 5, "pady": 5},
     }
 
+    def reset_row_and_column(self) -> None:
+        self.reset_row()
+        self.reset_column()
+
     def increment_row(self, reset_column=True) -> None:
         self._current_row = self._current_row + 1
         if reset_column:
             self.reset_column()
 
-    def reset_row_and_column(self) -> None:
+    def reset_row(self) -> None:
         self._current_row = 0
-        self.reset_column()
 
     def get_current_row(self) -> int:
         return self._current_row
@@ -64,6 +60,9 @@ class Window:
 
     def reset_column(self) -> None:
         self._current_column = 0
+
+    def get_current_column(self) -> int:
+        return self._current_column
 
     def get_next_column(self, increment=True) -> int:
         current_column = self._current_column
@@ -86,7 +85,6 @@ class WindowAppConfig(PopupWindow):
         self.resizable(height=False, width=False)
         self.widgets = WidgetList()
         self.app_config = app_config
-        # self.app_config.load()
         self.initialize_variables()
         self.build_gui()
 
@@ -105,22 +103,19 @@ class WindowAppConfig(PopupWindow):
         # Create StringVars for '3cx' section
         section = "3cx"
         for var in ["scheme", "domain", "port", "username", "password"]:
-            tk_var = tk.StringVar(self, self.app_config.get(section, var))
-            self.vars[section][var] = tk_var
-            trace_tk_variables(tk_var, section, var)
+            self.vars[section][var] = tk.StringVar(self, self.app_config.get(section, var))
+            trace_tk_variables(self.vars[section][var], section, var)
 
         # Create BooleanVars for '3cx' section
         for var in ["store_credential_securely"]:
-            tk_var = tk.BooleanVar(self, self.app_config.getboolean(section, var))
-            self.vars[section][var] = tk_var
-            trace_tk_variables(tk_var, section, var)
+            self.vars[section][var] = tk.BooleanVar(self, self.app_config.getboolean(section, var))
+            trace_tk_variables(self.vars[section][var], section, var)
 
         # Create BooleanVars for 'app' section
         section = "app"
         for var in ["logout_hotdesk_on_disable"]:
-            tk_var = tk.BooleanVar(self, self.app_config.getboolean(section, var))
-            self.vars[section][var] = tk_var
-            trace_tk_variables(tk_var, section, var)
+            self.vars[section][var] = tk.BooleanVar(self, self.app_config.getboolean(section, var))
+            trace_tk_variables(self.vars[section][var], section, var)
 
     def build_gui(self) -> None:
         # Create a window frame
@@ -151,8 +146,12 @@ class WindowAppConfig(PopupWindow):
 
         # Create the 3CX URL widgets
         self.widgets.opt_3cx_scheme = ttk.OptionMenu(
-            self.widgets.frm_3cx_url, self.vars["3cx"]["scheme"], *["https", "http"]
+            self.widgets.frm_3cx_url,
+            self.vars["3cx"]["scheme"],
+            self.vars["3cx"]["scheme"].get(),
+            *["https", "http"]
         )
+  
         self.widgets.lbl_3cx_scheme_ending = ttk.Label(
             self.widgets.frm_3cx_url, text="://"
         )
@@ -356,7 +355,7 @@ class WindowAppConfig(PopupWindow):
             )
             messagebox.showinfo(title="Success", message="Test Successful")
         except Exception as e:
-            messagebox.showinfo(title="Failure", message=f"Test Failed. {str(e)}")
+            messagebox.showinfo(title="Failure", message=f"Test Failed. {e}")
 
     def handle_apply_click(self):
         self.save_config()
@@ -525,6 +524,8 @@ class WindowCSVMapping(PopupWindow):
         self.destroy()
 
     def set_mapping_values(self):
+        # This coudl be replaced with the trace mechanic like in
+        # the app config file.
         """Update the mapping config with values from the form"""
         self.mapping["Extension"] = {
             "Path": self.var_csv_mapping_import_file_path.get(),
@@ -664,18 +665,16 @@ class WindowCSVMapping(PopupWindow):
 class WindowSync(PopupWindow):
     def __init__(self, master, logger: SyncLogger, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
+        
         self.resizable(height=False, width=False)
-
+        self.logger = logger
         self.widgets = WidgetList()
         self.is_paused = False
-        self.sync_running = True
+        self.sync_running = False
 
         self.build_gui()
-        self.logger = logger
-        self.logger.addTextWindowHandler(self.widgets.txt_output)
-        self.sync_thread = threading.Thread(target=self.master.run_sync_in_thread)
-        self.sync_thread.start()
-        self.periodic_update()
+
+        self.logger.add_text_window_handler(self.widgets.txt_output)
 
     def build_gui(self):
         # Frame: Window
@@ -704,11 +703,17 @@ class WindowSync(PopupWindow):
         self.widgets.frm_navigation = ttk.Frame(self)
         self.widgets.frm_navigation.pack(side="bottom", anchor="e", pady=5)
 
+    def start_sync(self):
+        self.sync_running = True
+        sync_thread = Thread(target=self.master.run_sync_in_thread)
+        sync_thread.start()
+        self.periodic_update()
+
     def handle_pause_resume(self):
         if not self.sync_running:
             return
         self.is_paused = not self.is_paused
-        # self.btn_pause_resume.configure(text="Resume" if self.is_paused else "Pause")
+
         if self.is_paused:
             self.logger.log(LogLevel.INFO, "Paused by user")
             self.master.sync.pause_sync()

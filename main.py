@@ -25,7 +25,7 @@ def get_app_args():
 if __name__ == "__main__":
     app_args = get_app_args()
     logger = SyncLogger()
-    logger.addFileHandler()
+    logger.add_file_handler()
 
     if app_args.silent:
         if app_args.mode == "CSV":
