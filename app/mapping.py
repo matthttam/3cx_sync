@@ -1,33 +1,17 @@
 import os
 import json
-import copy
 from collections import UserDict
+from copy import deepcopy
 import platformdirs
 from app.util import initialize_or_get_user_config_file
 
 
 class CSVMapping(UserDict):
-    def __init__(self, *args, supress_load=False, **kwargs) -> None:
+    def __init__(self, *args, mapping_file_path: str, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.original_config = None
-        if not supress_load:
-            self.load_defaults()
-            self.load()
-
-    @property
-    def mapping_file_path(self):
-        return initialize_or_get_user_config_file("3cx_sync", "3cx_sync", "conf", "csv_mapping.json")
-        # app_data_dir = platformdirs.user_config_dir("3cx_sync", "3cx_sync")
-        # config_file_path = os.path.join(app_data_dir, "conf")
-        # os.makedirs(config_file_path, exist_ok=True)
-        # return os.path.join(config_file_path, "csv_mapping.json")
-
-    @property
-    def is_dirty(self) -> bool:
-        return self.original_config != self.data
-
-    def load_defaults(self) -> None:
-        default_config = {
+        self.set_original_config()
+        self.mapping_file_path = mapping_file_path
+        self.default_config = {
             "Extension": {
                 "Path": platformdirs.user_documents_dir(),
                 "Key": "Number",
@@ -50,23 +34,39 @@ class CSVMapping(UserDict):
                 "Update": ["FirstName", "LastName", "EmailAddress", "Enabled"],
             }
         }
-        self.update(default_config)
+
+    def initialize(self):
+        self.load_defaults()
+        self.load()
+
+    @property
+    def is_dirty(self) -> bool:
+        return self.original_config != self.data
+
+    def load_defaults(self) -> None:
+        self.update(self.default_config)
 
     def load(self) -> None:
-        if (
-            not os.path.exists(self.mapping_file_path)
-            or os.stat(self.mapping_file_path).st_size == 0
-        ):
-            return
+        """Load configuration from the specified file."""
         try:
-            with open(self.mapping_file_path, "r") as mapping_file:
-                mapping_config = json.load(mapping_file)
-                self.update(mapping_config)
-            self.original_config = copy.deepcopy(self.data)
+            # Check if the file exists and is not empty
+            if os.path.getsize(self.mapping_file_path) > 0:
+                with open(self.mapping_file_path, "r") as mapping_file:
+                    self.update(json.load(mapping_file))
+                self.set_original_config()
+            else:
+                print(f"Warning: {self.mapping_file_path} is empty.")
+        except FileNotFoundError:
+            print(f"Warning: {self.mapping_file_path} does not exist")
+            raise
         except (IOError, json.JSONDecodeError) as e:
             print(f"Error loading mapping file: {e}")
+            raise            
 
     def save(self):
         with open(self.mapping_file_path, "w") as mapping_file:
             json.dump(self.data, mapping_file)
-        self.original_config = copy.deepcopy(self.data)
+        self.set_original_config()
+
+    def set_original_config(self):
+        self.original_config = deepcopy(self.data)

@@ -60,13 +60,8 @@ class SyncLogger:
             *args: Positional arguments for the logger method.
             **kwargs: Keyword arguments for the logger method.
         """
-        log_method = getattr(self.logger, log_level, None)
-        if callable(log_method):
+        try:
+            log_method = getattr(self.logger, log_level)
             log_method(message, *args, **kwargs)
-        else:
+        except AttributeError as e:
             raise ValueError(f"Invalid logging method: {log_level}")
-
-    @staticmethod
-    def get_logger() -> logging.Logger:
-        """Returns the configured logger instance."""
-        return logging.getLogger(SyncLogger.logger_name)

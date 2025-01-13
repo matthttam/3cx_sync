@@ -7,7 +7,7 @@ from tcx_api.components.schemas.pbx import Group, User
 from sync.schema import CSVUser
 from pydantic import TypeAdapter
 from sync.logging import SyncLogger, LogLevel
-
+from app.util import initialize_or_get_user_config_file
 
 class SyncSourceStrategy(ABC):
     @property
@@ -42,10 +42,10 @@ class SyncCSV(SyncSourceStrategy):
     def initialize(self):
         self.logger.log(LogLevel.INFO, "Initializing CSV Source")
         self.logger.log(LogLevel.INFO, "Loading CSV Mapping")
-        self.mapping = CSVMapping()
-        CSVUser._comparison_properties = self.mapping.get("Extension", {}).get(
-            "Update", []
-        )
+        self.mapping = CSVMapping(mapping_file_path=initialize_or_get_user_config_file("3cx_sync", "3cx_sync", "conf", "csv_mapping.json"))
+        self.mapping.initialize()
+        CSVUser.set_comparison_properties(self.mapping.get("Extension", {}).get("Update", []))
+        
         self.logger.log(LogLevel.INFO, "CSV Mapping Loaded")
 
     def get_source_users(self) -> Optional[List[User]]:

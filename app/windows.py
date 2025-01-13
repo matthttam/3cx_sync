@@ -9,7 +9,7 @@ from app.config import AppConfig
 from app.mapping import CSVMapping
 from tkinter.scrolledtext import ScrolledText
 from sync.logging import SyncLogger, LogLevel
-
+from app.util import initialize_or_get_user_config_file
 
 class Window:
     header_y_padding = (5, 15)
@@ -390,7 +390,9 @@ class WindowCSVMapping(PopupWindow):
     def __init__(self, master, *args, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
         self.widgets = WidgetList()
-        self.mapping = CSVMapping()
+        self.mapping = CSVMapping(
+            mapping_file_path=initialize_or_get_user_config_file("3cx_sync", "3cx_sync", "conf", "csv_mapping.json"))
+        self.mapping.initialize()
         self.title("CSV Mapping Settings")
         self.initialize_variables()
         self.build_gui()

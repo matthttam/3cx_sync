@@ -281,7 +281,7 @@ class TestWindowCSVMapping:
         mock_destroy.assert_called_once_with()
 
     def test_set_mapping_values(self):
-        ...
+        pytest.skip()
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
     @patch.object(WindowCSVMapping, "confirm_discard_changes")
@@ -337,7 +337,7 @@ class TestWindowCSVMapping:
         window_csv_mapping.var_csv_mapping_import_file_path.set.assert_called_once_with(test_filename)
 
     def test_initialize_mapping_field_sets(self):
-        ...
+        pytest.skip()
 
 
 class TestWindowSync:
