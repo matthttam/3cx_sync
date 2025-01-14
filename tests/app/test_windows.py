@@ -254,6 +254,7 @@ class TestWindowAppConfig:
 
 
 class TestWindowCSVMapping:
+
     @patch("app.windows.WidgetList")
     @patch("app.windows.CSVMapping")
     @patch.object(WindowCSVMapping, "initialize_variables")
@@ -271,11 +272,12 @@ class TestWindowCSVMapping:
         mock_build_gui.assert_called_once_with()
 
     @patch("app.windows.messagebox")
-    @patch.object(WindowCSVMapping, "set_mapping_values")
+    @patch.object(WindowCSVMapping, "set_mapping_values", return_value=MagicMock())
     @patch.object(WindowCSVMapping, "destroy")
-    def test_handle_save_click(self, mock_destroy, mock_set_mapping_values, mock_messagebox, window_csv_mapping):
-        window_csv_mapping.mapping = MagicMock()
+    def test_handle_save_click(
+            self, mock_destroy, mock_set_mapping_values, mock_messagebox, window_csv_mapping):
         window_csv_mapping.widgets.btn_save.invoke()
+
         mock_set_mapping_values.assert_called_once_with()
         mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!")
         mock_destroy.assert_called_once_with()
@@ -288,7 +290,6 @@ class TestWindowCSVMapping:
     @patch.object(WindowCSVMapping, "destroy")
     def test_handle_cancel_click_dirty_confirm_discard_changes(
             self, mock_destroy, mock_confirm_discard_changes, mock_set_mapping_values, window_csv_mapping):
-        window_csv_mapping.mapping = MagicMock()
         window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = True
         window_csv_mapping.handle_cancel_click()

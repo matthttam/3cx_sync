@@ -11,6 +11,7 @@ from tkinter.scrolledtext import ScrolledText
 from sync.logging import SyncLogger, LogLevel
 from app.util import initialize_or_get_user_config_file
 
+
 class Window:
     header_y_padding = (5, 15)
     paragraph_x_padding = (15, 0)

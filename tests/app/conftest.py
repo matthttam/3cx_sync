@@ -1,6 +1,6 @@
 import pytest
 import tkinter as tk
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from app.windows import WindowAppConfig, WindowSync, Window, WindowCSVMapping
 from app.config import AppConfig
 from sync.logging import SyncLogger
@@ -48,7 +48,8 @@ def window_app_config(root, mock_app_config):
 
 @pytest.fixture
 def window_csv_mapping(root):
-    yield WindowCSVMapping(master=root)
+    with patch("app.windows.CSVMapping", MagicMock()) as mock_csv_mapping:
+        yield WindowCSVMapping(master=root)
 
 
 @pytest.fixture
