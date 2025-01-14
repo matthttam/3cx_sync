@@ -30,8 +30,10 @@ if __name__ == "__main__":
     if app_args.silent:
         if app_args.mode == "CSV":
             sync_source = SyncCSV
-        run_sync(logger=logger, sync_source=sync_source)
+        run_sync(sync_source=sync_source, logger=logger)
 
     else:
-        app = App(logger=logger, app_config=AppConfig())
+        app_config = AppConfig()
+        app_config.load()
+        app = App(logger=logger, app_config=app_config)
         app.mainloop()

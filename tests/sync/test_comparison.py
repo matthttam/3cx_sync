@@ -86,7 +86,7 @@ class TestUserComparer:
         assert comparer.tcx_user_list == tcx_user_list
         assert comparer.sync_source == custom_sync_source
 
-    def test__index_users(self, custom_sync_source):
+    def test_index_users(self, custom_sync_source):
         users = [User(Id=1, Number="100"), User(Id=2, Number="101")]
         comparer = UserComparer(tcx_user_list=users, sync_source=custom_sync_source)
         indexed_users = comparer._index_users(users)

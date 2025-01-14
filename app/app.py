@@ -129,6 +129,6 @@ class App(tk.Tk, Window):
 
     def run_sync_in_thread(self) -> None:
         try:
-            run_sync(logger=self.logger, sync_source=SyncCSV)
+            run_sync(sync_source=SyncCSV, logger=self.logger)
         finally:
             self.sync_running = False

@@ -15,11 +15,11 @@ class APIError(Exception):
 
     def _parse_http_error(self):
         """Parses the HTTPError and sets the api_error_message."""
-        if not self._http_error.response:
+        if not hasattr(self._http_error, "response") or not self._http_error.response:
             self.api_error_message = f"HTTP Error: {self._http_error}"
             return
 
-        response_text = self._http_error.response.text
+        response_text = self._http_error.response.text or {}
         if response_text:
             try:
                 error_response = json.loads(response_text)
@@ -45,130 +45,6 @@ class APIError(Exception):
     def __str__(self) -> str:
         """Returns a string representation of the error."""
         return f"{self.message} {self.api_error_message}"
-
-
-# class APIError(Exception):
-#    """Base class for API-related errors."""
-#
-#    def __init__(self, e: HTTPError, message: str = ""):
-#        self._http_error = e
-#        self.message = message  # Set custom message if provided
-#
-#        if self._http_error.response.text:
-#            self._parse_response_text(self._http_error.response.text)
-#        else:
-#            self.MainError = MainError(
-#                code=str(self._http_error.response.status_code),
-#                message=self._http_error.response.reason,
-#            )
-#            self.api_error_Message = str(self.MainError)
-#
-#    def _parse_response_text(self, response_text: str):
-#        try:
-#            self.response_error = json.loads(response_text)
-#            error_content = self._get_error_content(self.response_error)
-#            self.MainError = MainError(**error_content)
-#            self.api_error_Message = self.format_main_error(self.MainError)
-#        except (json.JSONDecodeError, KeyError) as ex:
-#            self.api_error_Message = f"Failed to parse error response: {ex}"
-#
-#    def _get_error_content(self, response: dict) -> dict:
-#        return response.get("error", {})
-#
-#    def format_main_error(self, error: MainError):
-#        message = f"{f'[{error.code}] ' if error.code else ''}{error.message or 'Unknown error'}"
-#
-#        # Check if 'details' exists and is iterable
-#        if hasattr(error, "details") and error.details:
-#            for error_details in error.details:
-#                message += "\n" + self.format_error_details(error_details)
-#        return message
-#
-#    def format_error_details(self, error_details: ErrorDetails):
-#        return f"[{error_details.code}] {error_details.message}{f' {error_details.target}' if error_details.target else ''}"
-#
-#    def __str__(self):
-#        return f"{self.message} {self.api_error_Message}"
-
-
-# class ListError(APIError):
-#    """Error raised when there is an issue listing something."""
-#
-#    @property
-#    def message(self):
-#        return f"Unable to retrive {self.object}."
-#
-#
-# class GetError(APIError):
-#    """Error raised when there is an issue getting something."""
-#
-#    @property
-#    def message(self):
-#        return f"Unable to retrive {self.object}."
-#
-#
-# class CreateError(APIError):
-#    """Error raised when there is an issue creating something."""
-#
-#    @property
-#    def message(self):
-#        return f"Unable to create {self.object}."
-#
-#
-# class UpdateError(APIError):
-#    """Error raised when there is an issue updating something."""
-#
-#    @property
-#    def message(self):
-#        return f"Unable to update {self.object}."
-#
-#
-# class GroupListError(ListError):
-#    """Error raised when there is an issue listing groups."""
-#
-#    object = "groups"
-#
-#
-# class GroupGetError(GetError):
-#    """Error raised when there is an issue getting a user."""
-#
-#    object = "group"
-#
-#
-# class GroupCreateError(CreateError):
-#    """Error raised when there is an issue creating a user."""
-#
-#    object = "group"
-#
-#
-# class GroupUpdateError(UpdateError):
-#    """Error raised when there is an issue updating a user."""
-#
-#    object = "group"
-#
-#
-# class UserListError(APIError):
-#    """Error raised when there is an issue listing users."""
-#
-#    message = "Unable to retrieve users."
-#
-#
-# class UserGetError(APIError):
-#    """Error raised when there is an issue getting a user."""
-#
-#    message = "Unable to retrieve user."
-#
-#
-# class UserCreateError(APIError):
-#    """Error raised when there is an issue creating a user."""
-#
-#    message = "Unable to create user."
-#
-#
-# class UserUpdateError(APIError):
-#    """Error raised when there is an issue updating a user."""
-#
-#    message = "Unable to update user."
 
 
 class APIAuthenticationError(Exception):

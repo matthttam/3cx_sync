@@ -5,7 +5,7 @@ from app.util import initialize_or_get_user_config_file
 
 
 class AppConfig(ConfigParser):
-    def __init__(self, *args, supress_load=False, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.original_config = None
         self.default_config = {
@@ -19,9 +19,9 @@ class AppConfig(ConfigParser):
             },
             "app": {"logout_hotdesk_on_disable": True},
         }
-        if not supress_load:
-            self.load_defaults()
-            self.load()
+        #if not supress_load:
+        #    self.load_defaults()
+        #    self.load()
 
     @property
     def server_url(self) -> str:
@@ -47,6 +47,19 @@ class AppConfig(ConfigParser):
         self.read_dict(self.default_config)
 
     def load(self) -> None:
+        """
+        Load the configuration settings.
+
+        This method performs the following steps:
+        1. Loads the default configuration settings.
+        2. Reads the configuration from the specified file path.
+        3. Fetches secure credentials if needed.
+        4. Sets the original configuration for later comparison.
+
+        Returns:
+            None
+        """
+        self.load_defaults()
         self.read(self.config_file_path)
         self.fetch_secure_credential()
         self.set_original_config()
