@@ -28,36 +28,61 @@ class Sync:
         self.logger = logger
         self.sync_source = sync_source
 
-    def sync(self):
-        self.logger.log(LogLevel.INFO, "Initializing Sync")
-        self.logger.log(LogLevel.INFO, "Loading 3CX Config")
+    @staticmethod
+    def pause_if_needed(method):
+        def wrapper(self, *args, **kwargs):
+            self._pause_if_needed()
+            result = method(self, *args, **kwargs)
+            self._pause_if_needed()
+            return result
+        return wrapper
+
+    @pause_if_needed
+    def load_app_config(self):
+        self.logger.log(LogLevel.INFO, "Loading App Config")
         self.config = AppConfig()
-        self.logger.log(LogLevel.INFO, "3CX Config Loaded")
+        self.logger.log(LogLevel.INFO, "App Config Loaded")
+
+    @pause_if_needed
+    def initialize_api_connection(self):
         self.logger.log(LogLevel.INFO, "Initializing API Connection")
-        self._pause_if_needed()
         self.api_connection = TCX_API_Connection(server_url=self.config.server_url)
-        self._pause_if_needed()
         try:
             self.authenticate()
         except APIAuthenticationError:
             raise
-
         self.user_resource = UsersResource(api=self.api_connection)
         self.group_resource = GroupsResource(api=self.api_connection)
+        self.logger.log(LogLevel.INFO, "API Connection Initialized")
 
-        self._pause_if_needed()
+    @pause_if_needed
+    def initialize_sync_source(self):
+        self.logger.log(LogLevel.INFO, "Initializing Sync Source")
         self.sync_source.initialize()
-        self._pause_if_needed()
-        self.source_user_list = self.sync_source.get_source_users()
-        # self.source_group_list = self.sync_source.get_source_groups()
 
-        self._pause_if_needed()
-        self.tcx_user_list = self.get_users()
-        user_comparer = UserComparer(
+    @pause_if_needed
+    def get_users(self) -> list[User]:
+        try:
+            self.logger.log(LogLevel.INFO, "Fetching Users From 3CX")
+            users = self.user_resource.list_user(
+                params=ListUserParameters(
+                    expand="Groups($expand=Rights,GroupRights),ForwardingProfiles,ForwardingExceptions,Phones,Greetings"
+                )
+            )
+        except UserListError as e:
+            self.logger.log(LogLevel.ERROR, f"Failed to Fetch Users: {str(e)}")
+            raise
+        self.logger.log(LogLevel.INFO, f"Fetched {len(users)} Users From 3CX")
+        return users
+
+    @pause_if_needed
+    def initialize_user_comparer(self):
+        return UserComparer(
             tcx_user_list=self.tcx_user_list, sync_source=self.sync_source
         )
-        user_change_details = user_comparer.get_user_change_details()
-        user_change_details.sort(key=lambda x: x.user_to_update.Number)
+
+    @pause_if_needed
+    def handle_users_to_update(self, user_change_details):
         if len(user_change_details) > 0:
             self.logger.log(
                 "info",
@@ -68,7 +93,8 @@ class Sync:
         else:
             self.logger.log(LogLevel.INFO, "No users to update.")
 
-        users_to_create = user_comparer.get_users_to_create()
+    @pause_if_needed
+    def handle_users_to_create(self, users_to_create):
         if len(users_to_create) > 0:
             self.logger.log(
                 "info",
@@ -79,7 +105,22 @@ class Sync:
         else:
             self.logger.log(LogLevel.INFO, "No users to create.")
 
+    def sync(self):
+        self.logger.log(LogLevel.INFO, "Initializing Sync")
+        self.load_app_config()
+        self.initialize_api_connection()
+        self.sync_source.initialize()
+        self.source_user_list = self.sync_source.get_source_users()
+        # self.source_group_list = self.sync_source.get_source_groups()
+        self.tcx_user_list = self.get_users()
+        user_comparer = self.initialize_user_comparer()
+        user_change_details = user_comparer.get_user_change_details()
+        user_change_details.sort(key=lambda x: x.user_to_update.Number)
+        self.handle_users_to_update(user_change_details)
+        users_to_create = user_comparer.get_users_to_create()
+        self.handle_users_to_create(users_to_create)
         self.logger.log(LogLevel.INFO, "Sync Complete")
+
 
     def index_users(self, users: list[User], key: str = "Number") -> dict[str, User]:
         return {
@@ -157,19 +198,7 @@ class Sync:
         except UserUpdateError as e:
             self.logger.log(LogLevel.ERROR, str(e))
 
-    def get_users(self) -> list[User]:
-        try:
-            self.logger.log(LogLevel.INFO, "Fetching Users From 3CX")
-            users = self.user_resource.list_user(
-                params=ListUserParameters(
-                    expand="Groups($expand=Rights,GroupRights),ForwardingProfiles,ForwardingExceptions,Phones,Greetings"
-                )
-            )
-        except UserListError as e:
-            self.logger.log(LogLevel.ERROR, f"Failed to Fetch Users: {str(e)}")
-            raise
-        self.logger.log(LogLevel.INFO, f"Fetched {len(users)} Users From 3CX")
-        return users
+
 
     def authenticate(self) -> None:
         self.logger.log(LogLevel.INFO, f"Authenticating to 3CX at {self.config.server_url}")
