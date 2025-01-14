@@ -18,6 +18,7 @@ def reset_comparison_properties():
 
 
 class TestSourceSchema:
+
     def test_set_comparison_properties(self):
         comparison_class = ComparisonClass(prop_a="a", prop_b="b", prop_c="c")
         assert comparison_class._comparison_properties is None
