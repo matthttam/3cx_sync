@@ -48,7 +48,7 @@ def window_app_config(root, mock_app_config):
 
 @pytest.fixture
 def window_csv_mapping(root):
-    with patch("app.windows.CSVMapping", MagicMock()) as mock_csv_mapping:
+    with patch("app.windows.CSVMapping", MagicMock()):
         yield WindowCSVMapping(master=root)
 
 
