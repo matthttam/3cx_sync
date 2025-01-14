@@ -42,28 +42,45 @@ class SyncCSV(SyncSourceStrategy):
 
     def initialize(self):
         self.logger.log(LogLevel.INFO, "Initializing CSV Source")
+        self._load_csv_mapping()
+        self._set_comparison_properties()
+
+    def _load_csv_mapping(self):
         self.logger.log(LogLevel.INFO, "Loading CSV Mapping")
         self.mapping = CSVMapping(
             mapping_file_path=initialize_or_get_user_config_file("3cx_sync", "3cx_sync", "conf", "csv_mapping.json"))
         self.mapping.initialize()
-        CSVUser.set_comparison_properties(self.mapping.get("Extension", {}).get("Update", []))
-
         self.logger.log(LogLevel.INFO, "CSV Mapping Loaded")
 
+    def _set_comparison_properties(self):
+        CSVUser.set_comparison_properties(self.mapping.get("Extension", {}).get("Update", []))
+        self.logger.log(LogLevel.INFO, "Comparison Properties Set")
+
     def get_source_users(self) -> Optional[List[User]]:
-        user_data = list()
         self.logger.log(LogLevel.INFO, "Loading CSV User Data")
+        csv_data_path = self._get_csv_data_path()
+        user_data = self._parse_csv_file(csv_data_path)
+        csv_user_list = self._validate_csv_users(user_data)
+        self.logger.log(LogLevel.INFO, f"Loaded {len(csv_user_list)} Users from CSV File"       )
+        return csv_user_list
+
+    def _get_csv_data_path(self) -> str:
+        """Retrieve and validate the CSV data file path."""
         csv_data_path = self.mapping.get("Extension", {}).get("Path", "")
         if not os.path.isfile(csv_data_path):
             self.logger.log(
-                LogLevel.INFO, f"Unable to find file at: {csv_data_path}"
-                )
-            raise (FileNotFoundError)
+                LogLevel.ERROR, f"Unable to find file at: {csv_data_path}"
+            )
+            raise FileNotFoundError(f"CSV file not found at: {csv_data_path}")
+        return csv_data_path
 
+    def _parse_csv_file(self, csv_data_path: str) -> List[dict]:
+        """Parse the CSV file and return a list of user dictionaries."""
+        user_data = []
         with open(csv_data_path) as csv_file:
             csv_reader = csv.reader(csv_file)
-            user_mapping = self.mapping.get("Extension").get("New")
             headers = next(csv_reader)
+            user_mapping = self.mapping.get("Extension").get("New", {})
 
             for row in csv_reader:
                 row_dict = dict(zip(headers, row))
@@ -72,14 +89,14 @@ class SyncCSV(SyncSourceStrategy):
                     for key, value in user_mapping.items()
                     if value in row_dict
                 }
-                if user_dict["Enabled"] == "0":
+                if user_dict.get("Enabled") == "0":
                     user_dict["HotdeskingAssignment"] = ""
                 user_data.append(user_dict)
-        csv_user_list = TypeAdapter(List[CSVUser]).validate_python(user_data)
-        self.logger.log(
-            LogLevel.INFO, f"Loaded {len(csv_user_list)} Users from CSV File"
-            )
-        return csv_user_list
+        return user_data
+
+    def _validate_csv_users(self, user_data: List[dict]) -> List[CSVUser]:
+        """Validate and convert raw user data into a list of CSVUser objects."""
+        return TypeAdapter(List[CSVUser]).validate_python(user_data)
 
     def get_user_update_fields(self) -> list:
         return self.mapping["Extension"]["Update"]
