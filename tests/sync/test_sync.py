@@ -4,16 +4,17 @@ from sync.sync import Sync, run_sync
 from sync.logging import SyncLogger, LogLevel
 from sync.sync_strategy import SyncSourceStrategy
 from tcx_api.resources.users import UsersResource
-from tcx_api.resources.groups import GroupsResource
-from sync.comparison import UserChangeDetail
+from sync.comparison import UserChangeDetail, FieldChange
 from tcx_api.components.schemas.pbx import User
 from app.config import AppConfig
 from tcx_api.tcx_api_connection import TCX_API_Connection
+from tcx_api.exceptions import APIAuthenticationError
 from tcx_api.resources.exceptions.users_exceptions import (
     UserCreateError,
     UserUpdateError,
     UserListError,
     UserHotdeskLogoutError,
+    UserHotdeskLookupError,
 )
 
 @pytest.fixture
@@ -242,50 +243,142 @@ class TestSync:
         mock_logger.log.assert_any_call(LogLevel.ERROR, str(error))
         sync.handle_logout_hotdesk_on_disable.assert_not_called()
 
-    def test_handle_logout_hotdesk_on_disable(self, sync, mock_app_config, user_change_detail):
-        # Arrange
-        # Mock the app_config to return True for 'logout_hotdesk_on_disable'
-        mock_app_config["app"].get.return_value = True
+    def test_logout_user_hotdesks_on_disable(self, sync, user_change_detail, user_number):
+        sync.app_config.logout_hotdesk_on_disable = True
+        user_change_detail.field_changes = {"Enabled": FieldChange(old=True, new=False)}
+        sync._logout_user_hotdesks_by_number = MagicMock()
 
-        # Set up a field change where 'Enabled' is changed to False
-        user_change_detail.field_changes = {
-            "Enabled": MagicMock(new=False)
-        }
+        # Run the logout
+        sync.logout_user_hotdesks_on_disable(user_change_detail)
 
-        # Mock the 'log_user_out_of_assigned_hotdesks_by_number' method
-        sync.log_user_out_of_assigned_hotdesks_by_number = MagicMock()
+        sync._logout_user_hotdesks_by_number.assert_called_once_with(user_number)
+        sync.logger.assert_not_called()
+    
+    def test_logout_user_hotdesks_on_disable_logout_error(self, sync, user_change_detail, user_number, user_id):
+        error = UserHotdeskLogoutError("Failed to logout hotdesk of user.", user_id)
+        sync.app_config.logout_hotdesk_on_disable = True
+        user_change_detail.field_changes = {"Enabled": FieldChange(old=True, new=False)}
+        sync._logout_user_hotdesks_by_number = MagicMock(side_effect=error)
+        # Run the logout
+        sync.logout_user_hotdesks_on_disable(user_change_detail)
+        sync._logout_user_hotdesks_by_number.assert_called_once_with(user_number)
+        sync.logger.log.assert_called_once_with(LogLevel.ERROR, (
+            f'Unable to clear hotdesking assignment of hotdesk with ID {user_id}'
+            ' out of assigned hotdesk. HTTP Error: Failed to logout hotdesk of user.'
+            )
+        )
 
-        # Act
-        sync.handle_logout_hotdesk_on_disable(user_change_detail)
+    def test_logout_user_hotdesks_on_disable_lookup_error(self, sync, user_change_detail, user_number):
+        error = UserHotdeskLookupError("Failed to lookup hotdesk of user.", user_number)
+        sync.app_config.logout_hotdesk_on_disable = True
+        user_change_detail.field_changes = {"Enabled": FieldChange(old=True, new=False)}
+        sync._logout_user_hotdesks_by_number = MagicMock(side_effect=error)
+        # Run the logout
+        sync.logout_user_hotdesks_on_disable(user_change_detail)
+        sync._logout_user_hotdesks_by_number.assert_called_once_with(user_number)
+        sync.logger.log.assert_called_once_with(LogLevel.ERROR, (
+            f'Unable to retrieve hotdesks for user with number {user_number}.'
+            ' HTTP Error: Failed to lookup hotdesk of user.'
+            )
+        )
+    
+    def test_logout_user_hotdesks_by_number(self, sync, user_number):
+        # Hotdesks are themselves a type of user
+        mock_hotdesk_users = [MagicMock(spec=User, Number="HD1111"), MagicMock(spec=User, Number="HD2222")]
+        sync.users_resource = MagicMock(spec=UsersResource)
+        sync.users_resource.get_hotdesks_by_assigned_user_number.return_value = mock_hotdesk_users
+        # Run logout by number
+        sync._logout_user_hotdesks_by_number(user_number)
+        sync.users_resource.get_hotdesks_by_assigned_user_number.assert_called_once_with(user_number=user_number)
+        assert sync.users_resource.clear_hotdesk_assignment.call_count == len(mock_hotdesk_users)
+        sync.logger.log.assert_has_calls(
+            [call(LogLevel.INFO, f"Logging user {user_number} out of hotdesk HD1111"),
+             call(LogLevel.INFO, f"Logging user {user_number} out of hotdesk HD2222")]
+             )
 
-        # Assert
-        # Check that 'log_user_out_of_assigned_hotdesks_by_number' was called with the correct user number
-        sync.log_user_out_of_assigned_hotdesks_by_number.assert_called_once_with(user_change_detail.Number)
-        # Ensure the app_config's get method was called correctly
-        mock_app_config["app"].get.assert_called_once_with("logout_hotdesk_on_disable", False)
+    def test_logout_user_hotdesks_by_number_none(self, sync, user_number):
+        # Hotdesks are themselves a type of user
+        sync.users_resource = MagicMock(spec=UsersResource)
+        sync.users_resource.get_hotdesks_by_assigned_user_number.return_value = []
+        # Run logout by number
+        sync._logout_user_hotdesks_by_number(user_number)
+        sync.users_resource.get_hotdesks_by_assigned_user_number.assert_called_once_with(user_number=user_number)
+        assert sync.users_resource.clear_hotdesk_assignment.call_count == 0
+        sync.logger.log.assert_called_once_with(
+            LogLevel.INFO, f"User {user_number} is being disabled. No hotdesk logout required as the user is not signed in to any hotdesk."
+        )
 
-
-    def test_log_user_out_of_assigned_hotdesks_by_number(self, sync, mock_logger):
-        user_number = "123"
-        mock_hotdesk_user = MagicMock()
-        sync.users_resource.get_hotdesks_by_assigned_user_number = MagicMock(return_value=[mock_hotdesk_user])
-        sync.users_resource.clear_hotdesk_assignment = MagicMock()
-        sync.log_user_out_of_assigned_hotdesks_by_number(user_number)
-        mock_logger.log.assert_any_call(LogLevel.INFO, f"Logging user {user_number} out of hotdesk {mock_hotdesk_user.Number}")
-        sync.users_resource.clear_hotdesk_assignment.assert_called_with(mock_hotdesk_user)
-
-    def test_sync(self, sync, mock_logger):
+    def test_sync(self, sync):
+        # Mock the methods
         sync.initialize_sync_source = MagicMock()
         sync.sync_source.get_source_users = MagicMock(return_value=[])
         sync.get_users = MagicMock(return_value=[])
         sync.initialize_user_comparer = MagicMock()
         sync.handle_users_to_update = MagicMock()
         sync.handle_users_to_create = MagicMock()
-        sync.sync()
-        mock_logger.log.assert_any_call(LogLevel.INFO, "Sync Complete")
 
-    def test_run_sync(self, mock_logger, mock_sync_source):
-        with patch('sync.sync.Sync') as mock_sync:
+        # Call the sync method
+        sync.sync()
+
+        # Assert that each method is called once (or multiple times as expected)
+        sync.initialize_sync_source.assert_called_once()
+        sync.sync_source.get_source_users.assert_called_once()
+        sync.get_users.assert_called_once()
+        sync.initialize_user_comparer.assert_called_once()
+        sync.handle_users_to_update.assert_called_once()
+        sync.handle_users_to_create.assert_called_once()
+
+        # Assert that the log is called with the expected message
+        sync.logger.log.assert_any_call(LogLevel.INFO, "Sync Complete")
+
+
+    def test_run_sync(self, mock_sync_source, mock_logger):
+        with patch('sync.sync.get_app_config') as mock_get_app_config, \
+             patch('sync.sync.get_api_connection') as mock_get_api_connection, \
+             patch('sync.sync.Sync') as mock_sync_class:
+            
+            mock_app_config = MagicMock()
+            mock_api_connection = MagicMock()
+            mock_sync_instance = MagicMock()
+
+            mock_get_app_config.return_value = mock_app_config
+            mock_get_api_connection.return_value = mock_api_connection
+            mock_sync_class.return_value = mock_sync_instance
+
             run_sync(mock_sync_source, mock_logger)
-            mock_sync.assert_called_once()
-            mock_sync.return_value.sync.assert_called_once()
+
+            mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
+            mock_get_app_config.assert_called_once_with()
+            mock_get_api_connection.assert_called_once_with(mock_app_config, mock_logger)
+            mock_sync_class.assert_called_once_with(mock_api_connection, mock_app_config, mock_sync_source(mock_logger), mock_logger)
+            mock_sync_instance.sync.assert_called_once()
+
+    def test_run_sync_authentication_error(self, mock_sync_source, mock_logger):
+        with patch('sync.sync.get_app_config') as mock_get_app_config, \
+             patch('sync.sync.get_api_connection') as mock_get_api_connection, \
+             patch('sync.sync.Sync') as mock_sync_class:
+            
+            mock_get_api_connection.side_effect = APIAuthenticationError
+
+            run_sync(mock_sync_source, mock_logger)
+
+            mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
+            mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. Unable to authenticate.")
+            mock_get_app_config.assert_called_once_with()
+            mock_get_api_connection.assert_not_called()
+            mock_sync_class.assert_not_called()
+
+    def test_run_sync_general_exception(self, mock_sync_source, mock_logger):
+        with patch('sync.sync.get_app_config') as mock_get_app_config, \
+             patch('sync.sync.get_api_connection') as mock_get_api_connection, \
+             patch('sync.sync.Sync') as mock_sync_class:
+            
+            mock_get_app_config.side_effect = Exception("General error")
+
+            run_sync(mock_sync_source, mock_logger)
+
+            mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
+            mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. General error")
+            mock_get_app_config.assert_called_once_with()
+            mock_get_api_connection.assert_not_called()
+            mock_sync_class.assert_not_called()

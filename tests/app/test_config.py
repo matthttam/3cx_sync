@@ -4,21 +4,6 @@ from unittest.mock import MagicMock, patch, PropertyMock, mock_open
 
 class TestAppConfig:
 
-    @patch.object(AppConfig, "load_defaults")
-    @patch.object(AppConfig, "load")
-    def test_init_supress_load(self, mock_load, mock_load_defaults):
-        app_config = AppConfig(supress_load=True)
-        assert app_config.original_config is None
-        mock_load.assert_not_called()
-        mock_load_defaults.assert_not_called()
-
-    @patch.object(AppConfig, "load_defaults")
-    @patch.object(AppConfig, "load")
-    def test_init_load(self, mock_load, mock_load_defaults):
-        AppConfig(supress_load=False)
-        mock_load.assert_called_once_with()
-        mock_load_defaults.assert_called_once_with()
-
     def test_server_url(self, app_config):
         app_config["3cx"] = {"scheme": "http", "domain": "example.com", "port": "8080"}
         expected_url = "http://example.com:8080"
@@ -35,6 +20,14 @@ class TestAppConfig:
         app_config.add_section("test")
         app_config.set("test", "test", "test")
         assert app_config.is_dirty is True
+
+    def test_store_credential_security(self, app_config):
+        app_config["3cx"] = {"store_credential_securely": True}
+        assert app_config.store_credential_securely is True
+
+    def test_logout_hotdesk_on_disable(self, app_config):
+        app_config["app"] = {"logout_hotdesk_on_disable": True}
+        assert app_config.logout_hotdesk_on_disable is True
 
     def test_load_defaults(self, app_config):
         app_config.read_dict = MagicMock()

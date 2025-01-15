@@ -5,6 +5,7 @@ from app.util import initialize_or_get_user_config_file
 
 
 class AppConfig(ConfigParser):
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.original_config = None
@@ -19,9 +20,6 @@ class AppConfig(ConfigParser):
             },
             "app": {"logout_hotdesk_on_disable": True},
         }
-        #if not supress_load:
-        #    self.load_defaults()
-        #    self.load()
 
     @property
     def server_url(self) -> str:
@@ -42,6 +40,10 @@ class AppConfig(ConfigParser):
     @property
     def store_credential_securely(self) -> bool:
         return self.getboolean("3cx", "store_credential_securely")
+
+    @property
+    def logout_hotdesk_on_disable(self) -> bool:
+        return self.getboolean("app", "logout_hotdesk_on_disable")
 
     def load_defaults(self) -> None:
         self.read_dict(self.default_config)

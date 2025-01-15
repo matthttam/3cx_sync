@@ -12,6 +12,7 @@ from tcx_api.resources.exceptions.users_exceptions import (
     UserUpdateError,
     UserListError,
     UserHotdeskLogoutError,
+    UserHotdeskLookupError,
 )
 from sync.logging import SyncLogger, LogLevel
 
@@ -136,41 +137,35 @@ class Sync:
             self.logger.log(LogLevel.INFO, f"Updating 3CX user {user_change_detail.Number}")
             self.logger.log(LogLevel.INFO, f"Changing {str(user_change_detail)}")
             self.users_resource.update_user(user_change_detail.user_to_update)
-            self.handle_logout_hotdesk_on_disable(user_change_detail)
+            self.logout_user_hotdesks_on_disable(user_change_detail)
         except UserUpdateError as e:
             self.logger.log(LogLevel.ERROR, str(e))
 
     @pause_if_needed
-    def handle_logout_hotdesk_on_disable(self, user_change_detail: UserChangeDetail) -> None:
-        if not self.app_config["app"].get("logout_hotdesk_on_disable", False):
-            return
-
-        enabled_change = user_change_detail.field_changes.get("Enabled")
-        if enabled_change and enabled_change.new is False:
-            self.log_user_out_of_assigned_hotdesks_by_number(user_change_detail.Number)
+    def logout_user_hotdesks_on_disable(self, user_change_detail: UserChangeDetail) -> None:
+        # If the option to log out hotdesk on disable is enabled, and the user is being disabled
+        # log the user out of any assigned hotdesks
+        if self.app_config.logout_hotdesk_on_disable and user_change_detail.is_disabling:
+            try:
+                self._logout_user_hotdesks_by_number(user_change_detail.Number)
+            except UserHotdeskLogoutError as e:
+                self.logger.log(LogLevel.ERROR, str(e))
+            except UserHotdeskLookupError as e:
+                self.logger.log(LogLevel.ERROR, str(e))
 
     @pause_if_needed
-    def log_user_out_of_assigned_hotdesks_by_number(self, user_number: str) -> None:
-        try:
-            hotdesk_users = self.users_resource.get_hotdesks_by_assigned_user_number(
-                user_number=user_number
-            )
-            if hotdesk_users:
-                for hotdesk_user in hotdesk_users:
-                    self.logger.log(
-                        LogLevel.INFO,
-                        f"Logging user {user_number} out of hotdesk {hotdesk_user.Number}",
-                    )
-                    self.users_resource.clear_hotdesk_assignment(hotdesk_user)
-            else:
-                self.logger.log(
-                    LogLevel.INFO,
-                    f"User {user_number} is being disabled. "
-                    "No action required for hotdesking as the user "
-                    "is not currently signed in to any hotdesk.",
-                )
-        except UserHotdeskLogoutError as e:
-            self.logger.log(LogLevel.ERROR, str(e))
+    def _logout_user_hotdesks_by_number(self, user_number: str) -> None:
+        hotdesk_users = self.users_resource.get_hotdesks_by_assigned_user_number(user_number=user_number)
+        if not hotdesk_users:
+            self.logger.log(LogLevel.INFO,
+                            f"User {user_number} is being disabled. "
+                            "No hotdesk logout required as the user is not signed in to any hotdesk.",
+                            )
+            return
+        
+        for hotdesk_user in hotdesk_users:
+            self.logger.log(LogLevel.INFO, f"Logging user {user_number} out of hotdesk {hotdesk_user.Number}")
+            self.users_resource.clear_hotdesk_assignment(hotdesk_user)
 
     def sync(self):
         self.initialize_sync_source()

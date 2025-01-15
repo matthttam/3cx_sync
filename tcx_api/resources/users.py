@@ -22,6 +22,7 @@ from tcx_api.resources.exceptions.users_exceptions import (
     UserUpdateError,
     UserDeleteError,
     UserHotdeskLogoutError,
+    UserHotdeskLookupError,
 )
 
 UserProperties = create_enum_from_model(User)
@@ -240,10 +241,12 @@ class UsersResource(APIResource):
                 print("No hotdesk assigned to this user.")
         """
         params = ListUserParameters(filter=f"HotdeskingAssignment eq '{user_number}'")
-        users = self.list_user(params=params)
-        if users:
-            return users
-        return None
+
+        try:
+            users = self.list_user(params=params)
+            return users or None
+        except requests.HTTPError as e:
+            raise UserHotdeskLookupError(e, user_number)
 
     def clear_hotdesk_assignment(self, hotdesk_user: User | int):
         """
