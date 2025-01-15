@@ -31,8 +31,8 @@ class Sync:
         self.api_connection = api_connection
 
         # Set up resources
-        self.user_resource = UsersResource(api=self.api_connection)
-        self.group_resource = GroupsResource(api=self.api_connection)
+        self.users_resource = UsersResource(api=self.api_connection)
+        self.groups_resource = GroupsResource(api=self.api_connection)
 
     @staticmethod
     def pause_if_needed(method):
@@ -52,7 +52,7 @@ class Sync:
     def get_users(self) -> list[User]:
         try:
             self.logger.log(LogLevel.INFO, "Fetching Users From 3CX")
-            users = self.user_resource.list_user(
+            users = self.users_resource.list_user(
                 params=ListUserParameters(
                     expand="Groups($expand=Rights,GroupRights),ForwardingProfiles,ForwardingExceptions,Phones,Greetings"
                 )
@@ -100,55 +100,59 @@ class Sync:
         self.running_event.set()  # Reset to True
 
     def get_new_user(self):
-        new_user = self.user_resource.get_new_user()
-        default_group = self.group_resource.get_default_group()
+        new_user = self.users_resource.get_new_user()
+        default_group = self.groups_resource.get_default_group()
         new_user["PrimaryGroupId"] = default_group.Id
         new_user["Groups"].append(
             {"GroupId": default_group.Id, "Rights": {"RoleName": "users"}}
         )
         return new_user
 
+    @pause_if_needed
     def create_users(self, users: list[User]):
         for user in users:
             self.create_user(user)
 
+    @pause_if_needed
     def create_user(self, user: User):
         try:
             self.logger.log(LogLevel.INFO, f"Creating 3CX user {user.Number}")
             new_user_dict = self.get_new_user()
             merged_user_dict = new_user_dict | user.model_dump()
-            self._pause_if_needed()
-            self.user_resource.create_user(merged_user_dict)
+            self.users_resource.create_user(merged_user_dict)
             self.logger.log(LogLevel.INFO, f"Created 3CX user {merged_user_dict['Number']}")
+            
         except UserCreateError as e:
-            self.logger.log(LogLevel.INFO, str(e))
+            self.logger.log(LogLevel.ERROR, str(e))
 
+    @pause_if_needed
     def update_users(self, user_change_details: list[UserChangeDetail]) -> None:
         for user_change_detail in user_change_details:
             self.update_user(user_change_detail)
-            if self.app_config["app"].get("logout_hotdesk_on_disable", False):
-                self.handle_logout_hotdesk_on_disable(user_change_detail)
-
+            
+    @pause_if_needed
     def update_user(self, user_change_detail: UserChangeDetail):
         try:
             self.logger.log(LogLevel.INFO, f"Updating 3CX user {user_change_detail.Number}")
-            self._pause_if_needed()
             self.logger.log(LogLevel.INFO, f"Changing {str(user_change_detail)}")
-            self.user_resource.update_user(user_change_detail.user_to_update)
-
+            self.users_resource.update_user(user_change_detail.user_to_update)
+            self.handle_logout_hotdesk_on_disable(user_change_detail)
         except UserUpdateError as e:
             self.logger.log(LogLevel.ERROR, str(e))
 
-    def handle_logout_hotdesk_on_disable(
-        self, user_change_detail: UserChangeDetail
-    ) -> None:
+    @pause_if_needed
+    def handle_logout_hotdesk_on_disable(self, user_change_detail: UserChangeDetail) -> None:
+        if not self.app_config["app"].get("logout_hotdesk_on_disable", False):
+            return
+
         enabled_change = user_change_detail.field_changes.get("Enabled")
         if enabled_change and enabled_change.new is False:
             self.log_user_out_of_assigned_hotdesks_by_number(user_change_detail.Number)
 
+    @pause_if_needed
     def log_user_out_of_assigned_hotdesks_by_number(self, user_number: str) -> None:
         try:
-            hotdesk_users = self.user_resource.get_hotdesks_by_assigned_user_number(
+            hotdesk_users = self.users_resource.get_hotdesks_by_assigned_user_number(
                 user_number=user_number
             )
             if hotdesk_users:
@@ -157,7 +161,7 @@ class Sync:
                         LogLevel.INFO,
                         f"Logging user {user_number} out of hotdesk {hotdesk_user.Number}",
                     )
-                    self.user_resource.clear_hotdesk_assignment(hotdesk_user)
+                    self.users_resource.clear_hotdesk_assignment(hotdesk_user)
             else:
                 self.logger.log(
                     LogLevel.INFO,
@@ -179,7 +183,6 @@ class Sync:
         users_to_create = user_comparer.get_users_to_create()
         self.handle_users_to_create(users_to_create)
         self.logger.log(LogLevel.INFO, "Sync Complete")
-
 
     def _pause_if_needed(self):
         self.running_event.wait()  # Block thread if False
