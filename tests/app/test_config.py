@@ -66,6 +66,7 @@ class TestAppConfig:
 
     @patch("app.config.deepcopy")
     def test_set_original_config(self, mock_deepcopy, app_config):
+        app_config.load_defaults()
         mock_copy = MagicMock(spec=app_config)
         mock_deepcopy.return_value = mock_copy
         app_config.set_original_config()

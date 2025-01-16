@@ -204,7 +204,7 @@ def get_app_config(logger: SyncLogger):
     return app_config
 
 
-def get_api_connection(self, app_config, logger):
+def get_api_connection(app_config, logger):
     logger.log(LogLevel.INFO, "Initializing API Connection")
     api_connection = TCX_API_Connection(server_url=app_config.server_url)
     logger.log(LogLevel.INFO, "API Connection Initialized")

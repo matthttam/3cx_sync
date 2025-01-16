@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch, call
-from sync.sync import Sync, run_sync
+from sync.sync import Sync, run_sync, get_api_connection
 from sync.logging import SyncLogger, LogLevel
 from sync.sync_strategy import SyncSourceStrategy
 from tcx_api.resources.users import UsersResource
@@ -215,7 +215,7 @@ class TestSync:
         assert sync.update_user.call_count == len(mock_user_change_details)
 
     def test_update_user(self, sync, mock_logger, user_change_detail):
-        sync.handle_logout_hotdesk_on_disable = MagicMock()
+        sync.logout_user_hotdesks_on_disable = MagicMock()
         sync.users_resource = MagicMock(spec=UsersResource)
 
         # Attempt to udpate user
@@ -225,10 +225,10 @@ class TestSync:
         mock_logger.log.assert_any_call(LogLevel.INFO, "Updating 3CX user 123")
         mock_logger.log.assert_any_call(LogLevel.INFO, f"Changing {str(user_change_detail)}")
         sync.users_resource.update_user.assert_called_once_with(user_change_detail.user_to_update)
-        sync.handle_logout_hotdesk_on_disable.assert_called_once_with(user_change_detail)
+        sync.logout_user_hotdesks_on_disable.assert_called_once_with(user_change_detail)
 
     def test_update_user_with_error(self, sync, mock_logger, user_change_detail):
-        sync.handle_logout_hotdesk_on_disable = MagicMock()
+        sync.logout_user_hotdesks_on_disable = MagicMock()
         sync.users_resource = MagicMock(spec=UsersResource)
 
         # Setup UserUpdateError
@@ -241,7 +241,7 @@ class TestSync:
         # Confirm appropriate logs were made
         sync.users_resource.update_user.assert_called_once_with(user_change_detail.user_to_update)
         mock_logger.log.assert_any_call(LogLevel.ERROR, str(error))
-        sync.handle_logout_hotdesk_on_disable.assert_not_called()
+        sync.logout_user_hotdesks_on_disable.assert_not_called()
 
     def test_logout_user_hotdesks_on_disable(self, sync, user_change_detail, user_number):
         sync.app_config.logout_hotdesk_on_disable = True
@@ -331,12 +331,11 @@ class TestSync:
         # Assert that the log is called with the expected message
         sync.logger.log.assert_any_call(LogLevel.INFO, "Sync Complete")
 
-
     def test_run_sync(self, mock_sync_source, mock_logger):
         with patch('sync.sync.get_app_config') as mock_get_app_config, \
              patch('sync.sync.get_api_connection') as mock_get_api_connection, \
              patch('sync.sync.Sync') as mock_sync_class:
-            
+
             mock_app_config = MagicMock()
             mock_api_connection = MagicMock()
             mock_sync_instance = MagicMock()
@@ -353,32 +352,112 @@ class TestSync:
             mock_sync_class.assert_called_once_with(mock_api_connection, mock_app_config, mock_sync_source(mock_logger), mock_logger)
             mock_sync_instance.sync.assert_called_once()
 
-    def test_run_sync_authentication_error(self, mock_sync_source, mock_logger):
-        with patch('sync.sync.get_app_config') as mock_get_app_config, \
-             patch('sync.sync.get_api_connection') as mock_get_api_connection, \
-             patch('sync.sync.Sync') as mock_sync_class:
-            
-            mock_get_api_connection.side_effect = APIAuthenticationError
 
-            run_sync(mock_sync_source, mock_logger)
+def test_run_sync_authentication_error(mock_sync_source, mock_logger):
+    with patch('sync.sync.get_app_config') as mock_get_app_config, \
+            patch('sync.sync.get_api_connection') as mock_get_api_connection, \
+            patch('sync.sync.Sync') as mock_sync_class:
+        error = APIAuthenticationError(MagicMock())
+        mock_get_app_config = MagicMock()
+        mock_get_api_connection.side_effect = error
 
-            mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
-            mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. Unable to authenticate.")
-            mock_get_app_config.assert_called_once_with()
-            mock_get_api_connection.assert_not_called()
-            mock_sync_class.assert_not_called()
+        run_sync(mock_sync_source, mock_logger)
 
-    def test_run_sync_general_exception(self, mock_sync_source, mock_logger):
-        with patch('sync.sync.get_app_config') as mock_get_app_config, \
-             patch('sync.sync.get_api_connection') as mock_get_api_connection, \
-             patch('sync.sync.Sync') as mock_sync_class:
-            
-            mock_get_app_config.side_effect = Exception("General error")
+        mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
+        mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. Unable to authenticate.")
 
-            run_sync(mock_sync_source, mock_logger)
+        # Sync is not created and sync method is not called
+        mock_sync_class.assert_not_called()
+        mock_sync_class.sync.assert_not_called()
 
-            mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
-            mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. General error")
-            mock_get_app_config.assert_called_once_with()
-            mock_get_api_connection.assert_not_called()
-            mock_sync_class.assert_not_called()
+
+def test_run_sync_any_error(mock_sync_source, mock_logger):
+    with patch('sync.sync.get_app_config') as mock_get_app_config, \
+            patch('sync.sync.get_api_connection') as mock_get_api_connection, \
+            patch('sync.sync.Sync') as mock_sync_class:
+        error = Exception(MagicMock())
+        mock_get_app_config.side_effect = MagicMock()
+        mock_get_api_connection.side_effect = error
+
+        run_sync(mock_sync_source, mock_logger)
+
+        mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
+        mock_logger.log.assert_any_call(LogLevel.ERROR, f"Failed to sync. {error}")
+
+        # Sync is not created and sync method is not called
+        mock_sync_class.assert_not_called()
+        mock_sync_class.sync.assert_not_called()
+
+
+def test_run_sync_general_exception(mock_sync_source, mock_logger):
+    with patch('sync.sync.get_app_config') as mock_get_app_config, \
+            patch('sync.sync.get_api_connection') as mock_get_api_connection, \
+            patch('sync.sync.Sync') as mock_sync_class:
+
+        mock_get_app_config.side_effect = Exception("General error")
+
+        run_sync(mock_sync_source, mock_logger)
+
+        mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
+        mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. General error")
+        mock_get_app_config.assert_called_once_with()
+        mock_get_api_connection.assert_not_called()
+        mock_sync_class.assert_not_called()
+
+# def test_get_api_connection(mock_app_config, mock_logger):
+#     with patch('sync.sync.TCX_API_Connection') as mock_tcx_api_connection_class, \
+#             patch('sync.sync.get_app_config') as mock_get_app_config:
+#         mock_app_config = MagicMock()
+#         mock_get_app_config.return_value = mock_app_config
+# 
+#         get_api_connection(mock_app_config, mock_logger)
+# 
+#         mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing API Connection")
+#         mock_get_app_config.assert_called_once_with()
+#         mock_tcx_api_connection_class.assert_called_once_with(mock_app_config)
+# 
+
+
+def test_get_api_connection(mock_app_config, mock_logger):
+    with patch('sync.sync.TCX_API_Connection') as mock_tcx_api_connection_class:
+        mock_api_connection_instance = MagicMock()
+        mock_tcx_api_connection_class.return_value = mock_api_connection_instance
+
+        mock_app_config.server_url = "http://example.com"
+        mock_app_config["3cx"].get.side_effect = lambda key: {"username": "user", "password": "pass"}[key]
+
+        api_connection = get_api_connection(mock_app_config, mock_logger)
+
+        mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing API Connection")
+        mock_logger.log.assert_any_call(LogLevel.INFO, "API Connection Initialized")
+        mock_logger.log.assert_any_call(LogLevel.INFO, "Authenticating to 3CX at http://example.com")
+        mock_logger.log.assert_any_call(LogLevel.INFO, "Authentication Successful")
+
+        mock_tcx_api_connection_class.assert_called_once_with(server_url="http://example.com")
+        mock_api_connection_instance.authenticate.assert_called_once_with(username="user", password="pass")
+        assert api_connection == mock_api_connection_instance
+
+
+def test_get_api_connection_authentication_error(mock_app_config, mock_logger):
+    with patch('sync.sync.TCX_API_Connection') as mock_tcx_api_connection_class:
+        mock_api_connection = MagicMock()
+        mock_tcx_api_connection_class.return_value = mock_api_connection
+
+        mock_app_config.server_url = "http://example.com"
+        mock_app_config["3cx"].get.side_effect = lambda key: {"username": "user", "password": "pass"}[key]
+
+        error = APIAuthenticationError(MagicMock())
+        mock_api_connection.authenticate.side_effect = error
+
+        with pytest.raises(APIAuthenticationError):
+            get_api_connection(mock_app_config, mock_logger)
+
+        mock_logger.log.assert_has_calls([
+            call(LogLevel.INFO, "Initializing API Connection"),
+            call(LogLevel.INFO, "API Connection Initialized"),
+            call(LogLevel.INFO, "Authenticating to 3CX at http://example.com"),
+            call(LogLevel.ERROR, f"Failed to authenticate: {error}")
+        ])
+
+        mock_tcx_api_connection_class.assert_called_once_with(server_url="http://example.com")
+        mock_api_connection.authenticate.assert_called_once_with(username="user", password="pass")
