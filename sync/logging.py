@@ -35,7 +35,7 @@ class SyncLogger:
         self.logger.setLevel(logging.DEBUG)
         self.default_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-    def addFileHandler(self, path="app.log"):
+    def add_file_handler(self, path="app.log"):
         file_handler = logging.FileHandler(path)
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(self.default_format)
@@ -44,7 +44,7 @@ class SyncLogger:
         # Add handlers to the logger
         self.logger.addHandler(file_handler)
 
-    def addTextWindowHandler(self, text_widget):
+    def add_text_window_handler(self, text_widget):
         text_window_handler = TextWindowHandler(text_widget)
         text_window_handler.setLevel(logging.DEBUG)
         text_window_formatter = logging.Formatter(self.default_format)
@@ -60,13 +60,8 @@ class SyncLogger:
             *args: Positional arguments for the logger method.
             **kwargs: Keyword arguments for the logger method.
         """
-        log_method = getattr(self.logger, log_level, None)
-        if callable(log_method):
+        try:
+            log_method = getattr(self.logger, log_level)
             log_method(message, *args, **kwargs)
-        else:
+        except AttributeError:
             raise ValueError(f"Invalid logging method: {log_level}")
-
-    @staticmethod
-    def get_logger() -> logging.Logger:
-        """Returns the configured logger instance."""
-        return logging.getLogger(SyncLogger.logger_name)

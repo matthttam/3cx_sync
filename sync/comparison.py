@@ -23,6 +23,16 @@ class UserChangeDetail():
         return self.user_to_update.Id
 
     @property
+    def is_disabling(self) -> bool:
+        enabled_change = self.field_changes.get("Enabled")
+        return enabled_change is not None and enabled_change.new is False
+
+    @property
+    def is_enabling(self) -> bool:
+        enabled_change = self.field_changes.get("Enabled")
+        return enabled_change is not None and enabled_change.new is True
+    
+    @property
     def Number(self):
         return self.user_to_update.Number
 

@@ -4,9 +4,8 @@ from pydantic import TypeAdapter
 import requests
 
 from typing import List
-from enum import auto
 from tcx_api.resources.api_resource import APIResource
-from tcx_api.util import TcxStrEnum
+from tcx_api.util import create_enum_from_model
 
 from tcx_api.components.responses.other import HasDuplicatedEmailResponse
 from tcx_api.components.schemas.pbx import User
@@ -16,85 +15,17 @@ from tcx_api.components.parameters import (
     OrderbyParameters,
     SelectParameters,
 )
-from tcx_api.resources.users_exceptions import (
+from tcx_api.resources.exceptions.users_exceptions import (
     UserCreateError,
     UserListError,
     UserGetError,
     UserUpdateError,
     UserDeleteError,
     UserHotdeskLogoutError,
+    UserHotdeskLookupError,
 )
 
-
-class UserProperties(TcxStrEnum):
-    AccessPassword = auto()
-    AllowLanOnly = auto()
-    AllowOwnRecordings = auto()
-    AuthID = auto()
-    AuthPassword = auto()
-    Blfs = auto()
-    BreakTime = auto()
-    CallScreening = auto()
-    CallUsEnableChat = auto()
-    CallUsEnablePhone = auto()
-    CallUsEnableVideo = auto()
-    CallUsRequirement = auto()
-    ClickToCallId = auto()
-    ContactImage = auto()
-    CurrentProfileName = auto()
-    DeskphonePassword = auto()
-    DisplayName = auto()
-    EmailAddress = auto()
-    Enable2FA = auto()
-    Enabled = auto()
-    EnableHotdesking = auto()
-    FirstName = auto()
-    ForwardingExceptions = auto()
-    ForwardingProfiles = auto()
-    GoogleSignInEnabled = auto()
-    Greetings = auto()
-    Groups = auto()
-    HideInPhonebook = auto()
-    HotdeskingAssignment = auto()
-    Hours = auto()
-    Id = auto()
-    Internal = auto()
-    IsRegistered = auto()
-    Language = auto()
-    LastName = auto()
-    Mobile = auto()
-    MS365CalendarEnabled = auto()
-    MS365ContactsEnabled = auto()
-    MS365SignInEnabled = auto()
-    MS365TeamsEnabled = auto()
-    MyPhoneAllowDeleteRecordings = auto()
-    MyPhoneHideForwardings = auto()
-    MyPhonePush = auto()
-    MyPhoneShowRecordings = auto()
-    Number = auto()
-    OfficeHoursProps = auto()
-    OutboundCallerID = auto()
-    Phones = auto()
-    PinProtected = auto()
-    PinProtectTimeout = auto()
-    PrimaryGroupId = auto()
-    PromptSet = auto()
-    ProvFile = auto()
-    ProvLink = auto()
-    RecordCalls = auto()
-    RecordExternalCallsOnly = auto()
-    Require2FA = auto()
-    SendEmailMissedCalls = auto()
-    SIPID = auto()
-    Tags = auto()
-    VMDisablePinAuth = auto()
-    VMEmailOptions = auto()
-    VMEnabled = auto()
-    VMPIN = auto()
-    VMPlayCallerID = auto()
-    VMPlayMsgDateTime = auto()
-    WebMeetingApproveParticipants = auto()
-    WebMeetingFriendlyName = auto()
+UserProperties = create_enum_from_model(User)
 
 
 class ListUserParameters(ListParameters, OrderbyParameters, SelectParameters[UserProperties], ExpandParameters):
@@ -310,10 +241,12 @@ class UsersResource(APIResource):
                 print("No hotdesk assigned to this user.")
         """
         params = ListUserParameters(filter=f"HotdeskingAssignment eq '{user_number}'")
-        users = self.list_user(params=params)
-        if users:
-            return users
-        return None
+
+        try:
+            users = self.list_user(params=params)
+            return users or None
+        except requests.HTTPError as e:
+            raise UserHotdeskLookupError(e, user_number)
 
     def clear_hotdesk_assignment(self, hotdesk_user: User | int):
         """

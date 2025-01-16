@@ -24,12 +24,11 @@ class App(tk.Tk, Window):
         self.is_paused = False
         self.sync_running = False
         self.app_config = app_config
-
-        # Load teh theme and apply styles
-        self.load_theme()
-
-        self.build_gui()
         self.logger = logger
+
+        # Load the theme and apply styles
+        self.load_theme()
+        self.build_gui()
 
     def load_theme(self):
         """Load and apply the custom theme."""
@@ -116,7 +115,7 @@ class App(tk.Tk, Window):
         self.widgets.btn_sync_csv.pack(**self.pack_defaults["btn"])
 
     def show_WindowAppConfig(self):
-        WindowAppConfig(self, app_config=self.app_config)
+        WindowAppConfig(self, self.app_config)
 
     def show_WindowCSVMapping(self):
         WindowCSVMapping(self)
@@ -125,10 +124,11 @@ class App(tk.Tk, Window):
         self.destroy()
 
     def handle_csv_sync_click(self) -> None:
-        WindowSync(self, self.logger)
+        window_sync = WindowSync(self, self.logger)
+        window_sync.start_sync()
 
     def run_sync_in_thread(self) -> None:
         try:
-            run_sync(logger=self.logger, sync_source=SyncCSV)
+            run_sync(sync_source=SyncCSV, logger=self.logger)
         finally:
             self.sync_running = False
