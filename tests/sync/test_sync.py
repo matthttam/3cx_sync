@@ -347,7 +347,7 @@ class TestSync:
             run_sync(mock_sync_source, mock_logger)
 
             mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
-            mock_get_app_config.assert_called_once_with()
+            mock_get_app_config.assert_called_once_with(mock_logger)
             mock_get_api_connection.assert_called_once_with(mock_app_config, mock_logger)
             mock_sync_class.assert_called_once_with(mock_api_connection, mock_app_config, mock_sync_source(mock_logger), mock_logger)
             mock_sync_instance.sync.assert_called_once()
