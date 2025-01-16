@@ -186,7 +186,7 @@ class Sync:
 def run_sync(sync_source: SyncSourceStrategy, logger: SyncLogger):
     try:
         logger.log(LogLevel.INFO, "Initializing Sync")
-        app_config = get_app_config()
+        app_config = get_app_config(logger)
         api_connection = get_api_connection(app_config, logger)
         sync = Sync(api_connection, app_config, sync_source(logger), logger)
         sync.sync()

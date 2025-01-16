@@ -18,12 +18,6 @@ class AuthenticationToken(NamedTuple):
 class TCX_API_Connection(API):
     default_headers = {"Content-type": "application/json", "Accept": "application/json"}
 
-    def __init__(self, *args, server_url, api_path="/xapi/v1", **kwargs):
-        self.server_url = server_url
-        self.api_path = api_path
-        self.session = requests.Session()
-        self.token_expiry_time = 0
-
     @property
     def api_url(self):
         return self.server_url + self.api_path
@@ -36,6 +30,13 @@ class TCX_API_Connection(API):
     def token(self, token):
         self._token = AuthenticationToken(**token)
         self._update_token_expiry_time(self.token.expires_in)
+
+    def __init__(self, *args, server_url, api_path="/xapi/v1", **kwargs):
+        self.server_url = server_url
+        self.api_path = api_path
+        self.session = requests.Session()
+        self.token_expiry_time = 0
+        self._token = None
 
     def get_api_endpoint_url(self, endpoint):
         return self.api_url + "/" + endpoint
@@ -146,7 +147,7 @@ class TCX_API_Connection(API):
             dict: A dictionary containing the HTTP headers.
         """
         headers = self.default_headers.copy()
-        if self.token.access_token:
+        if self.token and self.token.access_token:
             headers["Authorization"] = f"Bearer {self.token.access_token}"
         return headers
 

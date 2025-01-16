@@ -400,22 +400,9 @@ def test_run_sync_general_exception(mock_sync_source, mock_logger):
 
         mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
         mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. General error")
-        mock_get_app_config.assert_called_once_with()
+        mock_get_app_config.assert_called_once_with(mock_logger)
         mock_get_api_connection.assert_not_called()
         mock_sync_class.assert_not_called()
-
-# def test_get_api_connection(mock_app_config, mock_logger):
-#     with patch('sync.sync.TCX_API_Connection') as mock_tcx_api_connection_class, \
-#             patch('sync.sync.get_app_config') as mock_get_app_config:
-#         mock_app_config = MagicMock()
-#         mock_get_app_config.return_value = mock_app_config
-# 
-#         get_api_connection(mock_app_config, mock_logger)
-# 
-#         mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing API Connection")
-#         mock_get_app_config.assert_called_once_with()
-#         mock_tcx_api_connection_class.assert_called_once_with(mock_app_config)
-# 
 
 
 def test_get_api_connection(mock_app_config, mock_logger):

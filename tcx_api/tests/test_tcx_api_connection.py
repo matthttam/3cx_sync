@@ -7,7 +7,6 @@ from tcx_api.tcx_api_connection import (
     TCX_API_Connection,
 )
 from unittest.mock import MagicMock
-from tcx_api.components.parameters import ListParameters
 
 
 class TestTCX_API_Connection:
