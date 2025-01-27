@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from threading import Thread
-from tcx_api.tcx_api_connection import TCX_API_Connection
+from threecxapi.tcx_api_connection import TCX_API_Connection
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
 from app.widgets import Checkbox, ExtensionMappingFieldSet, WidgetList

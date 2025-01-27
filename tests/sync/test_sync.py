@@ -3,13 +3,13 @@ from unittest.mock import MagicMock, patch, call
 from sync.sync import Sync, run_sync, get_api_connection
 from sync.logging import SyncLogger, LogLevel
 from sync.sync_strategy import SyncSourceStrategy
-from tcx_api.resources.users import UsersResource
+from threecxapi.resources.users import UsersResource
 from sync.comparison import UserChangeDetail, FieldChange
-from tcx_api.components.schemas.pbx import User
+from threecxapi.components.schemas.pbx import User
 from app.config import AppConfig
-from tcx_api.tcx_api_connection import TCX_API_Connection
-from tcx_api.exceptions import APIAuthenticationError
-from tcx_api.resources.exceptions.users_exceptions import (
+from threecxapi.tcx_api_connection import TCX_API_Connection
+from threecxapi.exceptions import APIAuthenticationError
+from threecxapi.resources.exceptions.users_exceptions import (
     UserCreateError,
     UserUpdateError,
     UserListError,

@@ -3,7 +3,7 @@ import csv
 from abc import ABC, abstractmethod
 from app.mapping import CSVMapping
 from typing import Optional, List
-from tcx_api.components.schemas.pbx import Group, User
+from threecxapi.components.schemas.pbx import Group, User
 from sync.schema import CSVUser
 from pydantic import TypeAdapter
 from sync.logging import SyncLogger, LogLevel

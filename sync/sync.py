@@ -1,13 +1,13 @@
 import threading
 from app.config import AppConfig
 from sync.sync_strategy import SyncSourceStrategy
-from tcx_api.tcx_api_connection import TCX_API_Connection, API
-from tcx_api.resources.users import UsersResource, ListUserParameters
-from tcx_api.components.schemas.pbx import User
-from tcx_api.exceptions import APIAuthenticationError
+from threecxapi.tcx_api_connection import TCX_API_Connection, API
+from threecxapi.resources.users import UsersResource, ListUserParameters
+from threecxapi.components.schemas.pbx import User
+from threecxapi.exceptions import APIAuthenticationError
 from sync.comparison import UserChangeDetail, UserComparer
-from tcx_api.resources.groups import GroupsResource
-from tcx_api.resources.exceptions.users_exceptions import (
+from threecxapi.resources.groups import GroupsResource
+from threecxapi.resources.exceptions.users_exceptions import (
     UserCreateError,
     UserUpdateError,
     UserListError,

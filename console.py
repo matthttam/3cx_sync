@@ -1,12 +1,12 @@
 import code
 
 from app.config import AppConfig
-from tcx_api.tcx_api_connection import TCX_API_Connection
+from threecxapi.tcx_api_connection import TCX_API_Connection
 
-from tcx_api.resources.users import *
-from tcx_api.resources.groups import *
-from tcx_api.resources.peers import *
-from tcx_api.resources.trunks import *
+from threecxapi.resources.users import *
+from threecxapi.resources.groups import *
+from threecxapi.resources.peers import *
+from threecxapi.resources.trunks import *
 
 
 def load_config():
