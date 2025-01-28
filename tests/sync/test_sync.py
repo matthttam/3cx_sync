@@ -20,30 +20,6 @@ from threecxapi.resources.exceptions.users_exceptions import (
 )
 
 
-<<<<<<< HEAD
-=======
-@pytest.fixture
-def http_error() -> HTTPError:
-    mock_response = MagicMock()
-    mock_response.status_code = 401
-    error_response = {
-            "error": {
-                "code": "",
-                "message": "Number:\nWARNINGS.XAPI.SAMPLE_ERROR",
-                "details": [
-                    {
-                        "code": "",
-                        "message": "WARNINGS.XAPI.SAMPLE_ERROR",
-                        "target": "SAMPLE_FIELD",
-                    }
-                ],
-            }
-        }
-    mock_response.json.return_value = error_response
-    mock_response.text = json.dumps(error_response)
-    return HTTPError("An error occured.", response=mock_response)
-
->>>>>>> 3ea3c6ac4c74d17999ef0e9f811647cbf52a2cc0
 @pytest.fixture
 def mock_app_config():
     return MagicMock(spec=AppConfig)
@@ -435,15 +411,9 @@ def test_run_sync_general_exception(mock_sync_source, mock_logger):
 
 
 def test_get_api_connection(mock_app_config, mock_logger):
-<<<<<<< HEAD
-    with patch('sync.sync.ThreeCXApiConnection') as mock_connection_class:
-        mock_api_connection_instance = MagicMock()
-        mock_connection_class.return_value = mock_api_connection_instance
-=======
     with patch('sync.sync.ThreeCXApiConnection') as mock_ThreeCXApiConnection_class:
         mock_api_connection_instance = MagicMock()
         mock_ThreeCXApiConnection_class.return_value = mock_api_connection_instance
->>>>>>> 3ea3c6ac4c74d17999ef0e9f811647cbf52a2cc0
 
         mock_app_config.server_url = "http://example.com"
         mock_app_config["3cx"].get.side_effect = lambda key: {"username": "user", "password": "pass"}[key]
@@ -455,25 +425,15 @@ def test_get_api_connection(mock_app_config, mock_logger):
         mock_logger.log.assert_any_call(LogLevel.INFO, "Authenticating to 3CX at http://example.com")
         mock_logger.log.assert_any_call(LogLevel.INFO, "Authentication Successful")
 
-<<<<<<< HEAD
-        mock_connection_class.assert_called_once_with(server_url="http://example.com")
-=======
         mock_ThreeCXApiConnection_class.assert_called_once_with(server_url="http://example.com")
->>>>>>> 3ea3c6ac4c74d17999ef0e9f811647cbf52a2cc0
         mock_api_connection_instance.authenticate.assert_called_once_with(username="user", password="pass")
         assert api_connection == mock_api_connection_instance
 
 
 def test_get_api_connection_authentication_error(mock_app_config, mock_logger):
-<<<<<<< HEAD
-    with patch('sync.sync.ThreeCXApiConnection') as mock_connection_class:
-        mock_api_connection = MagicMock()
-        mock_connection_class.return_value = mock_api_connection
-=======
     with patch('sync.sync.ThreeCXApiConnection') as mock_ThreeCXApiConnection_class:
         mock_api_connection = MagicMock()
         mock_ThreeCXApiConnection_class.return_value = mock_api_connection
->>>>>>> 3ea3c6ac4c74d17999ef0e9f811647cbf52a2cc0
 
         mock_app_config.server_url = "http://example.com"
         mock_app_config["3cx"].get.side_effect = lambda key: {"username": "user", "password": "pass"}[key]
@@ -491,9 +451,5 @@ def test_get_api_connection_authentication_error(mock_app_config, mock_logger):
             call(LogLevel.ERROR, f"Failed to authenticate: {error}")
         ])
 
-<<<<<<< HEAD
-        mock_connection_class.assert_called_once_with(server_url="http://example.com")
-=======
         mock_ThreeCXApiConnection_class.assert_called_once_with(server_url="http://example.com")
->>>>>>> 3ea3c6ac4c74d17999ef0e9f811647cbf52a2cc0
         mock_api_connection.authenticate.assert_called_once_with(username="user", password="pass")
