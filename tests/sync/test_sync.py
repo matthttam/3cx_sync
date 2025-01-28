@@ -17,6 +17,7 @@ from tcx_api.resources.exceptions.users_exceptions import (
     UserHotdeskLookupError,
 )
 
+
 @pytest.fixture
 def mock_app_config():
     return MagicMock(spec=AppConfig)
@@ -46,9 +47,11 @@ def sync(mock_app_config, mock_api_connection, mock_logger, mock_sync_source):
 def user_id():
     return 123
 
+
 @pytest.fixture
 def user_number():
     return "123"
+
 
 @pytest.fixture
 def user(user_id, user_number):
