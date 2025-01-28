@@ -1,4 +1,4 @@
-from tcx_api.components.schemas.pbx import User
+from threecxapi.components.schemas.pbx import User
 from typing import Optional
 
 

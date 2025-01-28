@@ -3,13 +3,13 @@ from unittest.mock import MagicMock, patch, call
 from sync.sync import Sync, run_sync, get_api_connection
 from sync.logging import SyncLogger, LogLevel
 from sync.sync_strategy import SyncSourceStrategy
-from tcx_api.resources.users import UsersResource
+from threecxapi.resources.users import UsersResource
 from sync.comparison import UserChangeDetail, FieldChange
-from tcx_api.components.schemas.pbx import User
+from threecxapi.components.schemas.pbx import User
 from app.config import AppConfig
-from tcx_api.tcx_api_connection import TCX_API_Connection
-from tcx_api.exceptions import APIAuthenticationError
-from tcx_api.resources.exceptions.users_exceptions import (
+from threecxapi.connection import ThreeCXApiConnection
+from threecxapi.exceptions import APIAuthenticationError
+from threecxapi.resources.exceptions.users_exceptions import (
     UserCreateError,
     UserUpdateError,
     UserListError,
@@ -25,7 +25,7 @@ def mock_app_config():
 
 @pytest.fixture
 def mock_api_connection():
-    return MagicMock(spec=TCX_API_Connection)
+    return MagicMock(spec=ThreeCXApiConnection)
 
 
 @pytest.fixture
@@ -409,9 +409,9 @@ def test_run_sync_general_exception(mock_sync_source, mock_logger):
 
 
 def test_get_api_connection(mock_app_config, mock_logger):
-    with patch('sync.sync.TCX_API_Connection') as mock_tcx_api_connection_class:
+    with patch('sync.sync.ThreeCXApiConnection') as mock_connection_class:
         mock_api_connection_instance = MagicMock()
-        mock_tcx_api_connection_class.return_value = mock_api_connection_instance
+        mock_connection_class.return_value = mock_api_connection_instance
 
         mock_app_config.server_url = "http://example.com"
         mock_app_config["3cx"].get.side_effect = lambda key: {"username": "user", "password": "pass"}[key]
@@ -423,15 +423,15 @@ def test_get_api_connection(mock_app_config, mock_logger):
         mock_logger.log.assert_any_call(LogLevel.INFO, "Authenticating to 3CX at http://example.com")
         mock_logger.log.assert_any_call(LogLevel.INFO, "Authentication Successful")
 
-        mock_tcx_api_connection_class.assert_called_once_with(server_url="http://example.com")
+        mock_connection_class.assert_called_once_with(server_url="http://example.com")
         mock_api_connection_instance.authenticate.assert_called_once_with(username="user", password="pass")
         assert api_connection == mock_api_connection_instance
 
 
 def test_get_api_connection_authentication_error(mock_app_config, mock_logger):
-    with patch('sync.sync.TCX_API_Connection') as mock_tcx_api_connection_class:
+    with patch('sync.sync.ThreeCXApiConnection') as mock_connection_class:
         mock_api_connection = MagicMock()
-        mock_tcx_api_connection_class.return_value = mock_api_connection
+        mock_connection_class.return_value = mock_api_connection
 
         mock_app_config.server_url = "http://example.com"
         mock_app_config["3cx"].get.side_effect = lambda key: {"username": "user", "password": "pass"}[key]
@@ -449,5 +449,5 @@ def test_get_api_connection_authentication_error(mock_app_config, mock_logger):
             call(LogLevel.ERROR, f"Failed to authenticate: {error}")
         ])
 
-        mock_tcx_api_connection_class.assert_called_once_with(server_url="http://example.com")
+        mock_connection_class.assert_called_once_with(server_url="http://example.com")
         mock_api_connection.authenticate.assert_called_once_with(username="user", password="pass")

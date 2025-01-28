@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Dict, Any, Optional
 from sync.sync_strategy import SyncSourceStrategy
-from tcx_api.components.schemas.pbx import User
+from threecxapi.components.schemas.pbx import User
 
 
 @dataclass

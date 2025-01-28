@@ -2,7 +2,7 @@ import pytest
 from sync.schema import CSVUser, SourceSchema
 from pydantic import BaseModel
 from typing import Optional
-from tcx_api.components.schemas.pbx import User
+from threecxapi.components.schemas.pbx import User
 
 
 class ComparisonClass(SourceSchema, BaseModel):

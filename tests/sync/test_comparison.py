@@ -1,6 +1,6 @@
 import pytest
 from sync.comparison import FieldChange, UserChangeDetail, UserComparer
-from tcx_api.components.schemas.pbx import User, Group
+from threecxapi.components.schemas.pbx import User, Group
 from sync.sync_strategy import SyncSourceStrategy
 from sync.logging import SyncLogger
 from unittest.mock import MagicMock
