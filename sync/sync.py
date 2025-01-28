@@ -1,7 +1,7 @@
 import threading
 from app.config import AppConfig
 from sync.sync_strategy import SyncSourceStrategy
-from threecxapi.connection import ThreeCXApiConnection, API
+from threecxapi.connection import ThreeCXApiConnection
 from threecxapi.resources.users import UsersResource, ListUserParameters
 from threecxapi.components.schemas.pbx import User
 from threecxapi.exceptions import APIAuthenticationError
@@ -21,7 +21,7 @@ class Sync:
     user_data = list()
 
     def __init__(
-        self, api_connection: API, app_config: AppConfig, sync_source: SyncSourceStrategy, logger: SyncLogger
+        self, api_connection, app_config: AppConfig, sync_source: SyncSourceStrategy, logger: SyncLogger
     ) -> None:
         self.running_event = threading.Event()
         self.running_event.set()  # Allow sync to run initially
