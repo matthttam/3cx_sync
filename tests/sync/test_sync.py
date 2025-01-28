@@ -1,4 +1,6 @@
 import pytest
+import json
+from requests.exceptions import HTTPError
 from unittest.mock import MagicMock, patch, call
 from sync.sync import Sync, run_sync, get_api_connection
 from sync.logging import SyncLogger, LogLevel
@@ -7,7 +9,7 @@ from threecxapi.resources.users import UsersResource
 from sync.comparison import UserChangeDetail, FieldChange
 from threecxapi.components.schemas.pbx import User
 from app.config import AppConfig
-from threecxapi.tcx_api_connection import TCX_API_Connection
+from threecxapi.tcx_api_connection import ThreeCXApiConnection
 from threecxapi.exceptions import APIAuthenticationError
 from threecxapi.resources.exceptions.users_exceptions import (
     UserCreateError,
@@ -17,6 +19,28 @@ from threecxapi.resources.exceptions.users_exceptions import (
     UserHotdeskLookupError,
 )
 
+
+@pytest.fixture
+def http_error() -> HTTPError:
+    mock_response = MagicMock()
+    mock_response.status_code = 401
+    error_response = {
+            "error": {
+                "code": "",
+                "message": "Number:\nWARNINGS.XAPI.SAMPLE_ERROR",
+                "details": [
+                    {
+                        "code": "",
+                        "message": "WARNINGS.XAPI.SAMPLE_ERROR",
+                        "target": "SAMPLE_FIELD",
+                    }
+                ],
+            }
+        }
+    mock_response.json.return_value = error_response
+    mock_response.text = json.dumps(error_response)
+    return HTTPError("An error occured.", response=mock_response)
+
 @pytest.fixture
 def mock_app_config():
     return MagicMock(spec=AppConfig)
@@ -24,7 +48,7 @@ def mock_app_config():
 
 @pytest.fixture
 def mock_api_connection():
-    return MagicMock(spec=TCX_API_Connection)
+    return MagicMock(spec=ThreeCXApiConnection)
 
 
 @pytest.fixture
@@ -86,9 +110,9 @@ class TestSync:
         mock_logger.log.assert_any_call(LogLevel.INFO, f"Fetched {len(users)} Users From 3CX")
         assert users == mock_users
 
-    def test_get_users_error(self, sync, mock_logger):
+    def test_get_users_error(self, sync, mock_logger, http_error):
         sync.users_resource = MagicMock()
-        error = UserListError("Unable to retrieve users.")
+        error = UserListError(http_error)
         sync.users_resource.list_user.side_effect = error
         with pytest.raises(UserListError):
             sync.get_users()
@@ -186,7 +210,7 @@ class TestSync:
         mock_logger.log.assert_any_call(LogLevel.INFO, f"Creating 3CX user {user_number}")
         mock_logger.log.assert_any_call(LogLevel.INFO, f"Created 3CX user {user_number}")
 
-    def test_create_user_with_error(self, sync, mock_logger, user_number, new_user_dict, user):
+    def test_create_user_with_error(self, sync, mock_logger, user_number, new_user_dict, user, http_error):
         """Test create_user method with UserCreateError logs error but doesn't raise exception."""
 
         # Setup Expected User
@@ -197,7 +221,7 @@ class TestSync:
         sync.get_new_user = MagicMock(return_value=new_user_dict)
 
         # Setup UserCreateError
-        error = UserCreateError("Failed to create user.", expected_user_dict)
+        error = UserCreateError(http_error, expected_user_dict)
         sync.users_resource.create_user.side_effect = error
 
         # Create User
@@ -227,12 +251,12 @@ class TestSync:
         sync.users_resource.update_user.assert_called_once_with(user_change_detail.user_to_update)
         sync.logout_user_hotdesks_on_disable.assert_called_once_with(user_change_detail)
 
-    def test_update_user_with_error(self, sync, mock_logger, user_change_detail):
+    def test_update_user_with_error(self, sync, mock_logger, user_change_detail, http_error):
         sync.logout_user_hotdesks_on_disable = MagicMock()
         sync.users_resource = MagicMock(spec=UsersResource)
 
         # Setup UserUpdateError
-        error = UserUpdateError("Failed to update user.", user_change_detail.user_to_update)
+        error = UserUpdateError(http_error, user_change_detail.user_to_update)
         sync.users_resource.update_user.side_effect = error
 
         # Attempt to udpate user
@@ -254,8 +278,8 @@ class TestSync:
         sync._logout_user_hotdesks_by_number.assert_called_once_with(user_number)
         sync.logger.assert_not_called()
     
-    def test_logout_user_hotdesks_on_disable_logout_error(self, sync, user_change_detail, user_number, user_id):
-        error = UserHotdeskLogoutError("Failed to logout hotdesk of user.", user_id)
+    def test_logout_user_hotdesks_on_disable_logout_error(self, sync, user_change_detail, user_number, user_id, http_error):
+        error = UserHotdeskLogoutError(http_error, user_id)
         sync.app_config.logout_hotdesk_on_disable = True
         user_change_detail.field_changes = {"Enabled": FieldChange(old=True, new=False)}
         sync._logout_user_hotdesks_by_number = MagicMock(side_effect=error)
@@ -264,12 +288,12 @@ class TestSync:
         sync._logout_user_hotdesks_by_number.assert_called_once_with(user_number)
         sync.logger.log.assert_called_once_with(LogLevel.ERROR, (
             f'Unable to clear hotdesking assignment of hotdesk with ID {user_id}'
-            ' out of assigned hotdesk. HTTP Error: Failed to logout hotdesk of user.'
+            ' out of assigned hotdesk. OData Error: Number:\nWARNINGS.XAPI.SAMPLE_ERROR'
             )
         )
 
-    def test_logout_user_hotdesks_on_disable_lookup_error(self, sync, user_change_detail, user_number):
-        error = UserHotdeskLookupError("Failed to lookup hotdesk of user.", user_number)
+    def test_logout_user_hotdesks_on_disable_lookup_error(self, sync, user_change_detail, user_number, http_error):
+        error = UserHotdeskLookupError(http_error, user_number)
         sync.app_config.logout_hotdesk_on_disable = True
         user_change_detail.field_changes = {"Enabled": FieldChange(old=True, new=False)}
         sync._logout_user_hotdesks_by_number = MagicMock(side_effect=error)
@@ -278,7 +302,7 @@ class TestSync:
         sync._logout_user_hotdesks_by_number.assert_called_once_with(user_number)
         sync.logger.log.assert_called_once_with(LogLevel.ERROR, (
             f'Unable to retrieve hotdesks for user with number {user_number}.'
-            ' HTTP Error: Failed to lookup hotdesk of user.'
+            ' OData Error: Number:\nWARNINGS.XAPI.SAMPLE_ERROR'
             )
         )
     
@@ -406,9 +430,9 @@ def test_run_sync_general_exception(mock_sync_source, mock_logger):
 
 
 def test_get_api_connection(mock_app_config, mock_logger):
-    with patch('sync.sync.TCX_API_Connection') as mock_tcx_api_connection_class:
+    with patch('sync.sync.ThreeCXApiConnection') as mock_ThreeCXApiConnection_class:
         mock_api_connection_instance = MagicMock()
-        mock_tcx_api_connection_class.return_value = mock_api_connection_instance
+        mock_ThreeCXApiConnection_class.return_value = mock_api_connection_instance
 
         mock_app_config.server_url = "http://example.com"
         mock_app_config["3cx"].get.side_effect = lambda key: {"username": "user", "password": "pass"}[key]
@@ -420,15 +444,15 @@ def test_get_api_connection(mock_app_config, mock_logger):
         mock_logger.log.assert_any_call(LogLevel.INFO, "Authenticating to 3CX at http://example.com")
         mock_logger.log.assert_any_call(LogLevel.INFO, "Authentication Successful")
 
-        mock_tcx_api_connection_class.assert_called_once_with(server_url="http://example.com")
+        mock_ThreeCXApiConnection_class.assert_called_once_with(server_url="http://example.com")
         mock_api_connection_instance.authenticate.assert_called_once_with(username="user", password="pass")
         assert api_connection == mock_api_connection_instance
 
 
 def test_get_api_connection_authentication_error(mock_app_config, mock_logger):
-    with patch('sync.sync.TCX_API_Connection') as mock_tcx_api_connection_class:
+    with patch('sync.sync.ThreeCXApiConnection') as mock_ThreeCXApiConnection_class:
         mock_api_connection = MagicMock()
-        mock_tcx_api_connection_class.return_value = mock_api_connection
+        mock_ThreeCXApiConnection_class.return_value = mock_api_connection
 
         mock_app_config.server_url = "http://example.com"
         mock_app_config["3cx"].get.side_effect = lambda key: {"username": "user", "password": "pass"}[key]
@@ -446,5 +470,5 @@ def test_get_api_connection_authentication_error(mock_app_config, mock_logger):
             call(LogLevel.ERROR, f"Failed to authenticate: {error}")
         ])
 
-        mock_tcx_api_connection_class.assert_called_once_with(server_url="http://example.com")
+        mock_ThreeCXApiConnection_class.assert_called_once_with(server_url="http://example.com")
         mock_api_connection.authenticate.assert_called_once_with(username="user", password="pass")

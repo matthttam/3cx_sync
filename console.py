@@ -1,7 +1,7 @@
 import code
 
 from app.config import AppConfig
-from threecxapi.tcx_api_connection import TCX_API_Connection
+from threecxapi.tcx_api_connection import ThreeCXApiConnection
 
 from threecxapi.resources.users import *
 from threecxapi.resources.groups import *
@@ -17,7 +17,7 @@ def load_config():
 
 
 def authenticate_to_api(config):
-    api_connection = TCX_API_Connection(server_url=config.server_url)
+    api_connection = ThreeCXApiConnection(server_url=config.server_url)
     api_connection.authenticate(
         username=config["3cx"].get("username"),
         password=config["3cx"].get("password"),

@@ -170,7 +170,7 @@ class TestWindowAppConfig:
         assert window.vars['app']['logout_hotdesk_on_disable'].get() is True
 
     @patch("app.windows.messagebox.showinfo")
-    @patch("app.windows.TCX_API_Connection")
+    @patch("app.windows.ThreeCXApiConnection")
     def test_handle_test_connection_success(self, mock_api, mock_messagebox_showinfo, window_app_config):
         mock_api.return_value = mock_api
         window_app_config.widgets.btn_test.invoke()
@@ -181,7 +181,7 @@ class TestWindowAppConfig:
         mock_messagebox_showinfo.assert_called_once_with(title="Success", message="Test Successful")
 
     @patch("app.windows.messagebox.showinfo")
-    @patch("app.windows.TCX_API_Connection")
+    @patch("app.windows.ThreeCXApiConnection")
     def test_handle_test_connection_failure(self, mock_api, mock_messagebox_showinfo, window_app_config):
         mock_api.return_value = mock_api
         e = Exception("Authentication Failed")

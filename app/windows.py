@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from threading import Thread
-from threecxapi.tcx_api_connection import TCX_API_Connection
+from threecxapi.tcx_api_connection import ThreeCXApiConnection
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
 from app.widgets import Checkbox, ExtensionMappingFieldSet, WidgetList
@@ -347,7 +347,7 @@ class WindowAppConfig(PopupWindow):
         )
 
     def handle_test_connection(self):
-        api = TCX_API_Connection(server_url=self.app_config.server_url)
+        api = ThreeCXApiConnection(server_url=self.app_config.server_url)
 
         try:
             api.authenticate(

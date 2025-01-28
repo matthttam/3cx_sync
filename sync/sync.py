@@ -1,7 +1,7 @@
 import threading
 from app.config import AppConfig
 from sync.sync_strategy import SyncSourceStrategy
-from threecxapi.tcx_api_connection import TCX_API_Connection, API
+from threecxapi.tcx_api_connection import ThreeCXApiConnection, API
 from threecxapi.resources.users import UsersResource, ListUserParameters
 from threecxapi.components.schemas.pbx import User
 from threecxapi.exceptions import APIAuthenticationError
@@ -206,7 +206,7 @@ def get_app_config(logger: SyncLogger):
 
 def get_api_connection(app_config, logger):
     logger.log(LogLevel.INFO, "Initializing API Connection")
-    api_connection = TCX_API_Connection(server_url=app_config.server_url)
+    api_connection = ThreeCXApiConnection(server_url=app_config.server_url)
     logger.log(LogLevel.INFO, "API Connection Initialized")
     logger.log(LogLevel.INFO, f"Authenticating to 3CX at {app_config.server_url}")
     try:
