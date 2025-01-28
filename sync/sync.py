@@ -53,7 +53,7 @@ class Sync:
     def get_users(self) -> list[User]:
         try:
             self.logger.log(LogLevel.INFO, "Fetching Users From 3CX")
-            users = self.users_resource.list_user(
+            user_collection_response = self.users_resource.list_user(
                 params=ListUserParameters(
                     expand="Groups($expand=Rights,GroupRights),ForwardingProfiles,ForwardingExceptions,Phones,Greetings"
                 )
@@ -61,8 +61,8 @@ class Sync:
         except UserListError as e:
             self.logger.log(LogLevel.ERROR, f"Failed to Fetch Users: {e}")
             raise
-        self.logger.log(LogLevel.INFO, f"Fetched {len(users)} Users From 3CX")
-        return users
+        self.logger.log(LogLevel.INFO, f"Fetched {len(user_collection_response.value)} Users From 3CX")
+        return user_collection_response.value
 
     @pause_if_needed
     def handle_users_to_update(self, user_change_details):

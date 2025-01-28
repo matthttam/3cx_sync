@@ -8,6 +8,7 @@ from sync.sync_strategy import SyncSourceStrategy
 from threecxapi.resources.users import UsersResource
 from sync.comparison import UserChangeDetail, FieldChange
 from threecxapi.components.schemas.pbx import User
+from threecxapi.components.responses.pbx import UserCollectionResponse
 from app.config import AppConfig
 from threecxapi.connection import ThreeCXApiConnection
 from threecxapi.exceptions import APIAuthenticationError
@@ -77,19 +78,43 @@ def user_change_detail(user):
 
 class TestSync:
 
+    @pytest.fixture
+    def http_error(self) -> HTTPError:
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+        error_response = {
+                "error": {
+                    "code": "",
+                    "message": "Number:\nWARNINGS.XAPI.SAMPLE_ERROR",
+                    "details": [
+                        {
+                            "code": "",
+                            "message": "WARNINGS.XAPI.SAMPLE_ERROR",
+                            "target": "SAMPLE_FIELD",
+                        }
+                    ],
+                }
+            }
+        mock_response.json.return_value = error_response
+        mock_response.text = json.dumps(error_response)
+        return HTTPError("An error occured.", response=mock_response)
+
     def test_initialize_sync_source(self, sync, mock_logger):
         sync.initialize_sync_source()
         mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync Source")
         sync.sync_source.initialize.assert_called_once()
 
     def test_get_users(self, sync, mock_logger):
-        mock_users = [MagicMock(spec=User) for _ in range(3)]
+        expected_users = [MagicMock(spec=User) for _ in range(3)]
+        mock_user_collection_response = UserCollectionResponse(
+            **{"@odata.context":"fake_context","@odata.count":2, "value": expected_users})
         sync.users_resource = MagicMock()
-        sync.users_resource.list_user.return_value = mock_users
+        sync.users_resource.list_user.return_value = mock_user_collection_response
         users = sync.get_users()
         mock_logger.log.assert_any_call(LogLevel.INFO, "Fetching Users From 3CX")
         mock_logger.log.assert_any_call(LogLevel.INFO, f"Fetched {len(users)} Users From 3CX")
-        assert users == mock_users
+        #sync.users_resource.list_user.assert_called_once()
+        assert users == mock_user_collection_response.value
 
     def test_get_users_error(self, sync, mock_logger, http_error):
         sync.users_resource = MagicMock()
