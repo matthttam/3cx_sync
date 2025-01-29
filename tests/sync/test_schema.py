@@ -27,12 +27,16 @@ class TestSourceSchema:
 
     def test_set_comparison_properties_invalid(self):
         with pytest.raises(TypeError):
-            ComparisonClass.set_comparison_properties(('tuple', 'instead', 'of', 'list'))
+            ComparisonClass.set_comparison_properties(
+                ("tuple", "instead", "of", "list")
+            )
 
     def test_comparison_with_different_types(self):
         instance_a = ComparisonClass(prop_a="a", prop_b="b", prop_c="c")
         instance_b = {"prop_a": "a", "prop_b": "b", "prop_c": "c"}
-        assert instance_a != instance_b, "Instances of different types should not be equal"
+        assert (
+            instance_a != instance_b
+        ), "Instances of different types should not be equal"
 
     def test_source_schema_default_comparison_behavior(self):
         comparison_class_a = ComparisonClass(prop_a="a", prop_b="b", prop_c="c")
@@ -49,7 +53,9 @@ class TestSourceSchema:
         instance_a = DefaultComparisonClass(prop_a=None, prop_b=None)
         instance_b = DefaultComparisonClass(prop_a=None, prop_b=None)
 
-        assert instance_a == instance_b, "Instances with None properties should be equal"
+        assert (
+            instance_a == instance_b
+        ), "Instances with None properties should be equal"
 
     def test_source_schema_comparison_properties_behavior(self):
         ComparisonClass.set_comparison_properties(["prop_b", "prop_c"])
@@ -61,12 +67,8 @@ class TestSourceSchema:
 
     def test_dynamic_comparison_properties_update(self):
         ComparisonClass.set_comparison_properties(["prop_b", "prop_c"])
-        modified_comparison_a = ComparisonClass(
-            prop_a="a", prop_b="b", prop_c="c"
-        )
-        modified_comparison_b = ComparisonClass(
-            prop_a="x", prop_b="b", prop_c="c"
-        )
+        modified_comparison_a = ComparisonClass(prop_a="a", prop_b="b", prop_c="c")
+        modified_comparison_b = ComparisonClass(prop_a="x", prop_b="b", prop_c="c")
         assert modified_comparison_a == modified_comparison_b
 
         # Update _comparison_properties and retest

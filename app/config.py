@@ -31,7 +31,9 @@ class AppConfig(ConfigParser):
 
     @property
     def config_file_path(self) -> str:
-        return initialize_or_get_user_config_file("3cx_sync", "3cx_sync", "conf", "app_conf.ini")
+        return initialize_or_get_user_config_file(
+            "3cx_sync", "3cx_sync", "conf", "app_conf.ini"
+        )
 
     @property
     def is_dirty(self) -> bool:

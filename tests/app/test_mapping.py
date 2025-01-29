@@ -39,8 +39,8 @@ class TestCSVMapping:
         csv_mapping.load_defaults()
         assert csv_mapping.data == csv_mapping.default_config
 
-    @patch('builtins.open', new_callable=mock_open, read_data='{"key": "value"}')
-    @patch('os.path.getsize', return_value=10)
+    @patch("builtins.open", new_callable=mock_open, read_data='{"key": "value"}')
+    @patch("os.path.getsize", return_value=10)
     def test_load_successful(self, mock_getsize, mock_open, csv_mapping):
         csv_mapping.update = MagicMock()
         csv_mapping.set_original_config = MagicMock()
@@ -48,20 +48,20 @@ class TestCSVMapping:
         csv_mapping.update.assert_called_once_with({"key": "value"})
         csv_mapping.set_original_config.assert_called_once()
 
-    @patch('os.path.getsize', side_effect=FileNotFoundError)
+    @patch("os.path.getsize", side_effect=FileNotFoundError)
     def test_load_file_not_found(self, mock_getsize, csv_mapping):
         with pytest.raises(FileNotFoundError):
             csv_mapping.load()
 
-    @patch('builtins.open', new_callable=mock_open, read_data='')
-    @patch('os.path.getsize', return_value=0)
+    @patch("builtins.open", new_callable=mock_open, read_data="")
+    @patch("os.path.getsize", return_value=0)
     def test_load_empty_file(self, mock_getsize, mock_open, csv_mapping):
-        with patch('builtins.print') as mocked_print:
+        with patch("builtins.print") as mocked_print:
             csv_mapping.load()
             mocked_print.assert_called_once_with(f"Warning: {self.test_path} is empty.")
 
-    @patch('builtins.open', new_callable=mock_open, read_data='invalid json')
-    @patch('os.path.getsize', return_value=10)
+    @patch("builtins.open", new_callable=mock_open, read_data="invalid json")
+    @patch("os.path.getsize", return_value=10)
     def test_load_invalid_json(self, mock_getsize, mock_open, csv_mapping):
         with pytest.raises(json.JSONDecodeError):
             csv_mapping.load()

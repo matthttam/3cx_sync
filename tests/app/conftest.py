@@ -23,7 +23,7 @@ def mock_app():
 @pytest.fixture
 def mock_app_config(request):
     mock_app_config = MagicMock(spec=AppConfig)
-    if not hasattr(request, 'param'):
+    if not hasattr(request, "param"):
         mock_app_config.get.return_value = ""
         mock_app_config.getboolean.return_value = False
     else:
@@ -31,6 +31,7 @@ def mock_app_config(request):
 
         def get_side_effect(section, var):
             return conf.get(section, {}).get(var)
+
         mock_app_config.get.side_effect = get_side_effect
         mock_app_config.getboolean.side_effect = get_side_effect
     yield mock_app_config

@@ -11,7 +11,14 @@ class TestApp:
     @patch("app.app.WidgetList")
     @patch.object(App, "load_theme")
     @patch.object(App, "build_gui")
-    def test_init(self, mock_build_gui, mock_load_theme, mock_widget_list_class, mock_logger, mock_app_config):
+    def test_init(
+        self,
+        mock_build_gui,
+        mock_load_theme,
+        mock_widget_list_class,
+        mock_logger,
+        mock_app_config,
+    ):
         mock_widget_list = MagicMock()
         mock_widget_list_class.return_value = mock_widget_list
         app = App(logger=mock_logger, app_config=mock_app_config)
@@ -44,7 +51,10 @@ class TestApp:
         try:
             theme_path = app.get_theme_path()
             expected_path = os.path.join(
-                "/mock/pyinstaller/path", "themes", "Forest-ttk-theme-1.0", "forest-light.tcl"
+                "/mock/pyinstaller/path",
+                "themes",
+                "Forest-ttk-theme-1.0",
+                "forest-light.tcl",
             )
             assert theme_path == expected_path
         finally:
@@ -56,7 +66,10 @@ class TestApp:
         with patch("os.path.dirname", return_value="/mock/script/path"):
             theme_path = app.get_theme_path()
             expected_path = os.path.join(
-                "/mock/script/path", "themes", "Forest-ttk-theme-1.0", "forest-light.tcl"
+                "/mock/script/path",
+                "themes",
+                "Forest-ttk-theme-1.0",
+                "forest-light.tcl",
             )
             assert theme_path == expected_path
 

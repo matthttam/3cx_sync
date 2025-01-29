@@ -1,7 +1,14 @@
 import pytest
 import tkinter as tk
 from unittest.mock import patch, MagicMock
-from app.windows import WindowAppConfig, WidgetList, PopupWindow, WindowSync, Window, WindowCSVMapping
+from app.windows import (
+    WindowAppConfig,
+    WidgetList,
+    PopupWindow,
+    WindowSync,
+    Window,
+    WindowCSVMapping,
+)
 from sync.logging import LogLevel
 from tkinter.scrolledtext import ScrolledText
 
@@ -91,7 +98,9 @@ class TestPopupWindow:
 class TestWindowAppConfig:
     @patch.object(WindowAppConfig, "build_gui")
     @patch.object(WindowAppConfig, "initialize_variables")
-    def test_init(self, mock_initialize_variables, mock_build_gui, mock_app_config, root):
+    def test_init(
+        self, mock_initialize_variables, mock_build_gui, mock_app_config, root
+    ):
         window = WindowAppConfig(master=root, app_config=mock_app_config)
         assert isinstance(window, PopupWindow)
         assert isinstance(window.widgets, WidgetList)
@@ -100,8 +109,9 @@ class TestWindowAppConfig:
         mock_build_gui.assert_called_once_with()
 
     @pytest.mark.parametrize(
-            'mock_app_config',
-            [{
+        "mock_app_config",
+        [
+            {
                 "3cx": {
                     "scheme": None,
                     "domain": None,
@@ -112,31 +122,37 @@ class TestWindowAppConfig:
                 },
                 "app": {
                     "logout_hotdesk_on_disable": None,
-                }
-            }],
-            indirect=True
+                },
+            }
+        ],
+        indirect=True,
     )
     def test_initialize_variables_blank(self, mock_app_config, root):
         window = WindowAppConfig(master=root, app_config=mock_app_config)
         assert isinstance(window.vars, dict)
-        assert isinstance(window.vars['3cx']['scheme'], tk.StringVar)
-        assert window.vars['3cx']['scheme'].get() == ""
-        assert isinstance(window.vars['3cx']['domain'], tk.StringVar)
-        assert window.vars['3cx']['domain'].get() == ""
-        assert isinstance(window.vars['3cx']['port'], tk.StringVar)
-        assert window.vars['3cx']['port'].get() == ""
-        assert isinstance(window.vars['3cx']['username'], tk.StringVar)
-        assert window.vars['3cx']['username'].get() == ""
-        assert isinstance(window.vars['3cx']['password'], tk.StringVar)
-        assert window.vars['3cx']['password'].get() == ""
-        assert isinstance(window.vars['3cx']['store_credential_securely'], tk.BooleanVar)
-        assert window.vars['3cx']['store_credential_securely'].get() is False
-        assert isinstance(window.vars['app']['logout_hotdesk_on_disable'], tk.BooleanVar)
-        assert window.vars['app']['logout_hotdesk_on_disable'].get() is False
+        assert isinstance(window.vars["3cx"]["scheme"], tk.StringVar)
+        assert window.vars["3cx"]["scheme"].get() == ""
+        assert isinstance(window.vars["3cx"]["domain"], tk.StringVar)
+        assert window.vars["3cx"]["domain"].get() == ""
+        assert isinstance(window.vars["3cx"]["port"], tk.StringVar)
+        assert window.vars["3cx"]["port"].get() == ""
+        assert isinstance(window.vars["3cx"]["username"], tk.StringVar)
+        assert window.vars["3cx"]["username"].get() == ""
+        assert isinstance(window.vars["3cx"]["password"], tk.StringVar)
+        assert window.vars["3cx"]["password"].get() == ""
+        assert isinstance(
+            window.vars["3cx"]["store_credential_securely"], tk.BooleanVar
+        )
+        assert window.vars["3cx"]["store_credential_securely"].get() is False
+        assert isinstance(
+            window.vars["app"]["logout_hotdesk_on_disable"], tk.BooleanVar
+        )
+        assert window.vars["app"]["logout_hotdesk_on_disable"].get() is False
 
     @pytest.mark.parametrize(
-            'mock_app_config',
-            [{
+        "mock_app_config",
+        [
+            {
                 "3cx": {
                     "scheme": "test_scheme",
                     "domain": "test_domain",
@@ -147,51 +163,64 @@ class TestWindowAppConfig:
                 },
                 "app": {
                     "logout_hotdesk_on_disable": True,
-                }
-            }],
-            indirect=True
+                },
+            }
+        ],
+        indirect=True,
     )
     def test_initialize_variables_with_values(self, mock_app_config, root):
         window = WindowAppConfig(master=root, app_config=mock_app_config)
         assert isinstance(window.vars, dict)
-        assert isinstance(window.vars['3cx']['scheme'], tk.StringVar)
-        assert window.vars['3cx']['scheme'].get() == "test_scheme"
-        assert isinstance(window.vars['3cx']['domain'], tk.StringVar)
-        assert window.vars['3cx']['domain'].get() == "test_domain"
-        assert isinstance(window.vars['3cx']['port'], tk.StringVar)
-        assert window.vars['3cx']['port'].get() == "test_port"
-        assert isinstance(window.vars['3cx']['username'], tk.StringVar)
-        assert window.vars['3cx']['username'].get() == "username"
-        assert isinstance(window.vars['3cx']['password'], tk.StringVar)
-        assert window.vars['3cx']['password'].get() == "password"
-        assert isinstance(window.vars['3cx']['store_credential_securely'], tk.BooleanVar)
-        assert window.vars['3cx']['store_credential_securely'].get() is True
-        assert isinstance(window.vars['app']['logout_hotdesk_on_disable'], tk.BooleanVar)
-        assert window.vars['app']['logout_hotdesk_on_disable'].get() is True
+        assert isinstance(window.vars["3cx"]["scheme"], tk.StringVar)
+        assert window.vars["3cx"]["scheme"].get() == "test_scheme"
+        assert isinstance(window.vars["3cx"]["domain"], tk.StringVar)
+        assert window.vars["3cx"]["domain"].get() == "test_domain"
+        assert isinstance(window.vars["3cx"]["port"], tk.StringVar)
+        assert window.vars["3cx"]["port"].get() == "test_port"
+        assert isinstance(window.vars["3cx"]["username"], tk.StringVar)
+        assert window.vars["3cx"]["username"].get() == "username"
+        assert isinstance(window.vars["3cx"]["password"], tk.StringVar)
+        assert window.vars["3cx"]["password"].get() == "password"
+        assert isinstance(
+            window.vars["3cx"]["store_credential_securely"], tk.BooleanVar
+        )
+        assert window.vars["3cx"]["store_credential_securely"].get() is True
+        assert isinstance(
+            window.vars["app"]["logout_hotdesk_on_disable"], tk.BooleanVar
+        )
+        assert window.vars["app"]["logout_hotdesk_on_disable"].get() is True
 
     @patch("app.windows.messagebox.showinfo")
     @patch("app.windows.ThreeCXApiConnection")
-    def test_handle_test_connection_success(self, mock_api, mock_messagebox_showinfo, window_app_config):
+    def test_handle_test_connection_success(
+        self, mock_api, mock_messagebox_showinfo, window_app_config
+    ):
         mock_api.return_value = mock_api
         window_app_config.widgets.btn_test.invoke()
         mock_api.authenticate.assert_called_once_with(
             username=window_app_config.app_config["3cx"]["username"],
-            password=window_app_config.app_config["3cx"]["password"]
+            password=window_app_config.app_config["3cx"]["password"],
         )
-        mock_messagebox_showinfo.assert_called_once_with(title="Success", message="Test Successful")
+        mock_messagebox_showinfo.assert_called_once_with(
+            title="Success", message="Test Successful"
+        )
 
     @patch("app.windows.messagebox.showinfo")
     @patch("app.windows.ThreeCXApiConnection")
-    def test_handle_test_connection_failure(self, mock_api, mock_messagebox_showinfo, window_app_config):
+    def test_handle_test_connection_failure(
+        self, mock_api, mock_messagebox_showinfo, window_app_config
+    ):
         mock_api.return_value = mock_api
         e = Exception("Authentication Failed")
         mock_api.authenticate.side_effect = e
         window_app_config.widgets.btn_test.invoke()
         mock_api.authenticate.assert_called_once_with(
             username=window_app_config.app_config["3cx"]["username"],
-            password=window_app_config.app_config["3cx"]["password"]
+            password=window_app_config.app_config["3cx"]["password"],
         )
-        mock_messagebox_showinfo.assert_called_once_with(title="Failure", message=f"Test Failed. {e}")
+        mock_messagebox_showinfo.assert_called_once_with(
+            title="Failure", message=f"Test Failed. {e}"
+        )
 
     def test_btn_cancel_click_is_dirty_confirm_discard(self, window_app_config):
         with patch.object(window_app_config, "destroy") as mock_destroy:
@@ -222,9 +251,13 @@ class TestWindowAppConfig:
             mock_destroy.assert_called_once_with()
 
     @patch("app.windows.messagebox")
-    def test_confirm_discard_changes_messagebox(self, mock_messagebox, window_app_config):
+    def test_confirm_discard_changes_messagebox(
+        self, mock_messagebox, window_app_config
+    ):
         window_app_config.confirm_discard_changes()
-        mock_messagebox.askyesno.assert_called_once_with("Unsaved Changes", "Discard unsaved changes?")
+        mock_messagebox.askyesno.assert_called_once_with(
+            "Unsaved Changes", "Discard unsaved changes?"
+        )
 
     def test_btn_apply_click(self, window_app_config):
         window_app_config.save_config = MagicMock()
@@ -242,7 +275,9 @@ class TestWindowAppConfig:
     def test_save_config_success(self, mock_messagebox, window_app_config):
         window_app_config.save_config()
         window_app_config.app_config.save.assert_called_once_with()
-        mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!")
+        mock_messagebox.showinfo.assert_called_once_with(
+            title="Saved!", message="Config saved!"
+        )
 
     @patch("app.windows.messagebox")
     def test_save_config_failure(self, mock_messagebox, window_app_config):
@@ -250,7 +285,9 @@ class TestWindowAppConfig:
         window_app_config.app_config.save.side_effect = e
         window_app_config.save_config()
         window_app_config.app_config.save.assert_called_once_with()
-        mock_messagebox.showerror.assert_called_once_with(title="Error!", message=f"{e}")
+        mock_messagebox.showerror.assert_called_once_with(
+            title="Error!", message=f"{e}"
+        )
 
 
 class TestWindowCSVMapping:
@@ -259,8 +296,14 @@ class TestWindowCSVMapping:
     @patch("app.windows.CSVMapping")
     @patch.object(WindowCSVMapping, "initialize_variables")
     @patch.object(WindowCSVMapping, "build_gui")
-    def test_init(self, mock_build_gui, mock_initialize_variables,
-                  mock_csv_mapping_class, mock_widget_list_class, root):
+    def test_init(
+        self,
+        mock_build_gui,
+        mock_initialize_variables,
+        mock_csv_mapping_class,
+        mock_widget_list_class,
+        root,
+    ):
         mock_widget_list = MagicMock()
         mock_widget_list_class.return_value = mock_widget_list
         mock_csv_mapping = MagicMock()
@@ -275,11 +318,14 @@ class TestWindowCSVMapping:
     @patch.object(WindowCSVMapping, "set_mapping_values", return_value=MagicMock())
     @patch.object(WindowCSVMapping, "destroy")
     def test_handle_save_click(
-            self, mock_destroy, mock_set_mapping_values, mock_messagebox, window_csv_mapping):
+        self, mock_destroy, mock_set_mapping_values, mock_messagebox, window_csv_mapping
+    ):
         window_csv_mapping.widgets.btn_save.invoke()
 
         mock_set_mapping_values.assert_called_once_with()
-        mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!")
+        mock_messagebox.showinfo.assert_called_once_with(
+            title="Saved!", message="Config saved!"
+        )
         mock_destroy.assert_called_once_with()
 
     def test_set_mapping_values(self):
@@ -289,7 +335,12 @@ class TestWindowCSVMapping:
     @patch.object(WindowCSVMapping, "confirm_discard_changes")
     @patch.object(WindowCSVMapping, "destroy")
     def test_handle_cancel_click_dirty_confirm_discard_changes(
-            self, mock_destroy, mock_confirm_discard_changes, mock_set_mapping_values, window_csv_mapping):
+        self,
+        mock_destroy,
+        mock_confirm_discard_changes,
+        mock_set_mapping_values,
+        window_csv_mapping,
+    ):
         window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = True
         window_csv_mapping.handle_cancel_click()
@@ -301,7 +352,12 @@ class TestWindowCSVMapping:
     @patch.object(WindowCSVMapping, "confirm_discard_changes")
     @patch.object(WindowCSVMapping, "destroy")
     def test_handle_cancel_click_dirty_dont_discard_changes(
-            self, mock_destroy, mock_confirm_discard_changes, mock_set_mapping_values, window_csv_mapping):
+        self,
+        mock_destroy,
+        mock_confirm_discard_changes,
+        mock_set_mapping_values,
+        window_csv_mapping,
+    ):
         window_csv_mapping.mapping = MagicMock()
         window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = False
@@ -314,7 +370,12 @@ class TestWindowCSVMapping:
     @patch.object(WindowCSVMapping, "confirm_discard_changes")
     @patch.object(WindowCSVMapping, "destroy")
     def test_handle_cancel_click_not_dirty(
-            self, mock_destroy, mock_confirm_discard_changes, mock_set_mapping_values, window_csv_mapping):
+        self,
+        mock_destroy,
+        mock_confirm_discard_changes,
+        mock_set_mapping_values,
+        window_csv_mapping,
+    ):
         window_csv_mapping.mapping = MagicMock()
         window_csv_mapping.mapping.is_dirty = False
         window_csv_mapping.handle_cancel_click()
@@ -326,16 +387,22 @@ class TestWindowCSVMapping:
     @patch("app.windows.messagebox")
     def test_confirm_discard_changes(self, mock_messagebox, window_csv_mapping):
         window_csv_mapping.confirm_discard_changes()
-        mock_messagebox.askyesno.assert_called_once_with("Unsaved Changes", "Discard unsaved changes?")
+        mock_messagebox.askyesno.assert_called_once_with(
+            "Unsaved Changes", "Discard unsaved changes?"
+        )
 
     @patch("app.windows.askopenfilename")
     def test_browse_file_csv(self, mock_askopenfilename, window_csv_mapping):
         window_csv_mapping.var_csv_mapping_import_file_path = MagicMock()
-        test_filename = 'test_filename.csv'
+        test_filename = "test_filename.csv"
         mock_askopenfilename.return_value = test_filename
         window_csv_mapping.browse_file_csv()
-        mock_askopenfilename.assert_called_once_with(filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
-        window_csv_mapping.var_csv_mapping_import_file_path.set.assert_called_once_with(test_filename)
+        mock_askopenfilename.assert_called_once_with(
+            filetypes=(("CSV", "*.csv"), ("All files", "*.*"))
+        )
+        window_csv_mapping.var_csv_mapping_import_file_path.set.assert_called_once_with(
+            test_filename
+        )
 
     def test_initialize_mapping_field_sets(self):
         pytest.skip()
@@ -356,14 +423,18 @@ class TestWindowSync:
         assert window.sync_running is False
 
         mock_build_gui.assert_called_once_with()
-        mock_logger.add_text_window_handler.assert_called_once_with(mock_widget_list.txt_output)
+        mock_logger.add_text_window_handler.assert_called_once_with(
+            mock_widget_list.txt_output
+        )
 
     @patch("app.windows.Thread")
     @patch.object(WindowSync, "periodic_update")
     def test_start_sync(self, mock_periodic_update, mock_thread_class, window_sync):
         mock_sync_thread = MagicMock()
         mock_thread_class.return_value = mock_sync_thread
-        mock_master_run_sync_in_thread = window_sync.master.run_sync_in_thread = MagicMock()
+        mock_master_run_sync_in_thread = window_sync.master.run_sync_in_thread = (
+            MagicMock()
+        )
         window_sync.start_sync()
 
         mock_thread_class.assert_called_once_with(target=mock_master_run_sync_in_thread)
@@ -381,7 +452,9 @@ class TestWindowSync:
         assert window_sync.is_paused is True
         window_sync.logger.log.assert_called_once_with(LogLevel.INFO, "Paused by user")
         window_sync.master.sync.pause_sync.assert_called_once_with()
-        window_sync.widgets.btn_pause_resume.configure.assert_called_once_with(text="Resume")
+        window_sync.widgets.btn_pause_resume.configure.assert_called_once_with(
+            text="Resume"
+        )
 
     def test_resume_sync(self, window_sync):
         window_sync.widgets.btn_pause_resume = MagicMock()
@@ -393,7 +466,9 @@ class TestWindowSync:
         assert window_sync.is_paused is False
         window_sync.logger.log.assert_called_once_with(LogLevel.INFO, "Resumed by user")
         window_sync.master.sync.resume_sync.assert_called_once_with()
-        window_sync.widgets.btn_pause_resume.configure.assert_called_once_with(text="Pause")
+        window_sync.widgets.btn_pause_resume.configure.assert_called_once_with(
+            text="Pause"
+        )
 
     def test_pause_sync_not_running(self, window_sync):
         # If the sync isn't running then is_paused shouldn't change
@@ -426,5 +501,7 @@ class TestWindowSync:
         window_sync.destroy = MagicMock()
         window_sync.on_destroy()
 
-        window_sync.logger.remove_text_window_handler.assert_called_once_with(window_sync.widgets.txt_output)
+        window_sync.logger.remove_text_window_handler.assert_called_once_with(
+            window_sync.widgets.txt_output
+        )
         window_sync.destroy.assert_called_once_with()

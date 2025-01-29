@@ -104,18 +104,24 @@ class WindowAppConfig(PopupWindow):
         # Create StringVars for '3cx' section
         section = "3cx"
         for var in ["scheme", "domain", "port", "username", "password"]:
-            self.vars[section][var] = tk.StringVar(self, self.app_config.get(section, var))
+            self.vars[section][var] = tk.StringVar(
+                self, self.app_config.get(section, var)
+            )
             trace_tk_variables(self.vars[section][var], section, var)
 
         # Create BooleanVars for '3cx' section
         for var in ["store_credential_securely"]:
-            self.vars[section][var] = tk.BooleanVar(self, self.app_config.getboolean(section, var))
+            self.vars[section][var] = tk.BooleanVar(
+                self, self.app_config.getboolean(section, var)
+            )
             trace_tk_variables(self.vars[section][var], section, var)
 
         # Create BooleanVars for 'app' section
         section = "app"
         for var in ["logout_hotdesk_on_disable"]:
-            self.vars[section][var] = tk.BooleanVar(self, self.app_config.getboolean(section, var))
+            self.vars[section][var] = tk.BooleanVar(
+                self, self.app_config.getboolean(section, var)
+            )
             trace_tk_variables(self.vars[section][var], section, var)
 
     def build_gui(self) -> None:
@@ -150,9 +156,9 @@ class WindowAppConfig(PopupWindow):
             self.widgets.frm_3cx_url,
             self.vars["3cx"]["scheme"],
             self.vars["3cx"]["scheme"].get(),
-            *["https", "http"]
+            *["https", "http"],
         )
-  
+
         self.widgets.lbl_3cx_scheme_ending = ttk.Label(
             self.widgets.frm_3cx_url, text="://"
         )
@@ -392,7 +398,10 @@ class WindowCSVMapping(PopupWindow):
         super().__init__(master, *args, **kwargs)
         self.widgets = WidgetList()
         self.mapping = CSVMapping(
-            mapping_file_path=initialize_or_get_user_config_file("3cx_sync", "3cx_sync", "conf", "csv_mapping.json"))
+            mapping_file_path=initialize_or_get_user_config_file(
+                "3cx_sync", "3cx_sync", "conf", "csv_mapping.json"
+            )
+        )
         self.mapping.initialize()
         self.title("CSV Mapping Settings")
         self.initialize_variables()
@@ -668,7 +677,7 @@ class WindowCSVMapping(PopupWindow):
 class WindowSync(PopupWindow):
     def __init__(self, master, logger: SyncLogger, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
-        
+
         # Set up a protocol to handle the window close event
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
 

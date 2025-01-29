@@ -48,12 +48,17 @@ class SyncCSV(SyncSourceStrategy):
     def _load_csv_mapping(self):
         self.logger.log(LogLevel.INFO, "Loading CSV Mapping")
         self.mapping = CSVMapping(
-            mapping_file_path=initialize_or_get_user_config_file("3cx_sync", "3cx_sync", "conf", "csv_mapping.json"))
+            mapping_file_path=initialize_or_get_user_config_file(
+                "3cx_sync", "3cx_sync", "conf", "csv_mapping.json"
+            )
+        )
         self.mapping.initialize()
         self.logger.log(LogLevel.INFO, "CSV Mapping Loaded")
 
     def _set_comparison_properties(self):
-        CSVUser.set_comparison_properties(self.mapping.get("Extension", {}).get("Update", []))
+        CSVUser.set_comparison_properties(
+            self.mapping.get("Extension", {}).get("Update", [])
+        )
         self.logger.log(LogLevel.INFO, "Comparison Properties Set")
 
     def get_source_users(self) -> Optional[List[User]]:
@@ -61,16 +66,16 @@ class SyncCSV(SyncSourceStrategy):
         csv_data_path = self._get_csv_data_path()
         user_data = self._parse_csv_file(csv_data_path)
         csv_user_list = self._validate_csv_users(user_data)
-        self.logger.log(LogLevel.INFO, f"Loaded {len(csv_user_list)} Users from CSV File"       )
+        self.logger.log(
+            LogLevel.INFO, f"Loaded {len(csv_user_list)} Users from CSV File"
+        )
         return csv_user_list
 
     def _get_csv_data_path(self) -> str:
         """Retrieve and validate the CSV data file path."""
         csv_data_path = self.mapping.get("Extension", {}).get("Path", "")
         if not os.path.isfile(csv_data_path):
-            self.logger.log(
-                LogLevel.ERROR, f"Unable to find file at: {csv_data_path}"
-            )
+            self.logger.log(LogLevel.ERROR, f"Unable to find file at: {csv_data_path}")
             raise FileNotFoundError(f"CSV file not found at: {csv_data_path}")
         return csv_data_path
 

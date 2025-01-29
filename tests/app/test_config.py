@@ -12,7 +12,9 @@ class TestAppConfig:
     @patch("app.config.initialize_or_get_user_config_file")
     def test_config_file_path(self, mock_helper, app_config):
         app_config.config_file_path
-        mock_helper.assert_called_once_with("3cx_sync", "3cx_sync", "conf", "app_conf.ini")
+        mock_helper.assert_called_once_with(
+            "3cx_sync", "3cx_sync", "conf", "app_conf.ini"
+        )
 
     def test_is_dirty(self, app_config):
         app_config.set_original_config()
@@ -35,12 +37,14 @@ class TestAppConfig:
         app_config.read_dict.assert_called_once_with(app_config.default_config)
 
     def test_load(self, app_config):
-        with \
-                patch("app.config.AppConfig.read") as mock_read, \
-                patch("app.config.AppConfig.config_file_path", new_callable=PropertyMock) as mock_config_file_path, \
-                patch("app.config.AppConfig.fetch_secure_credential") as mock_fetch_secure_credential, \
-                patch("app.config.AppConfig.set_original_config") as mock_set_original_config:
-            config_file_path = '/test/path'
+        with patch("app.config.AppConfig.read") as mock_read, patch(
+            "app.config.AppConfig.config_file_path", new_callable=PropertyMock
+        ) as mock_config_file_path, patch(
+            "app.config.AppConfig.fetch_secure_credential"
+        ) as mock_fetch_secure_credential, patch(
+            "app.config.AppConfig.set_original_config"
+        ) as mock_set_original_config:
+            config_file_path = "/test/path"
             mock_config_file_path.return_value = config_file_path
             app_config.load()
             mock_read.assert_called_once_with(config_file_path)
@@ -49,12 +53,14 @@ class TestAppConfig:
 
     @patch("builtins.open", new_callable=mock_open)
     def test_save(self, mock_open, app_config):
-        with \
-                patch("app.config.AppConfig.write") as mock_write, \
-                patch("app.config.AppConfig.config_file_path", new_callable=PropertyMock) as mock_config_file_path, \
-                patch("app.config.AppConfig.store_secure_credential") as mock_store_secure_credential, \
-                patch("app.config.AppConfig.set_original_config") as mock_set_original_config:
-            config_file_path = '/test/path'
+        with patch("app.config.AppConfig.write") as mock_write, patch(
+            "app.config.AppConfig.config_file_path", new_callable=PropertyMock
+        ) as mock_config_file_path, patch(
+            "app.config.AppConfig.store_secure_credential"
+        ) as mock_store_secure_credential, patch(
+            "app.config.AppConfig.set_original_config"
+        ) as mock_set_original_config:
+            config_file_path = "/test/path"
             mock_config_file_path.return_value = config_file_path
             mock_file = MagicMock()
             mock_open.return_value = mock_file
@@ -73,51 +79,83 @@ class TestAppConfig:
         assert app_config.original_config == mock_copy
 
     def test_set_value_existing_section(self, app_config):
-        app_config.add_section('test')
-        app_config.set_value('test', 'test', 'test')
-        assert app_config['test']['test'] == 'test'
+        app_config.add_section("test")
+        app_config.set_value("test", "test", "test")
+        assert app_config["test"]["test"] == "test"
 
     def test_set_value_new_section(self, app_config):
-        app_config.set_value('test', 'test', 'test')
-        assert app_config['test']['test'] == 'test'
+        app_config.set_value("test", "test", "test")
+        assert app_config["test"]["test"] == "test"
 
     @patch("app.config.keyring")
-    @patch.object(AppConfig, "store_credential_securely", new_callable=PropertyMock(return_value=False))
+    @patch.object(
+        AppConfig,
+        "store_credential_securely",
+        new_callable=PropertyMock(return_value=False),
+    )
     @patch.object(AppConfig, "set")
-    def test_fetch_secure_credential_not_used(self, mock_set, mock_store_credential_securely, mock_keyring, app_config):
+    def test_fetch_secure_credential_not_used(
+        self, mock_set, mock_store_credential_securely, mock_keyring, app_config
+    ):
         app_config.fetch_secure_credential()
         mock_keyring.get_password.assert_not_called()
         mock_set.assert_not_called()
 
     @patch("app.config.keyring")
-    @patch.object(AppConfig, "store_credential_securely", new_callable=PropertyMock(return_value=True))
+    @patch.object(
+        AppConfig,
+        "store_credential_securely",
+        new_callable=PropertyMock(return_value=True),
+    )
     @patch.object(AppConfig, "get")
     @patch.object(AppConfig, "set")
-    def test_fetch_secure_credential_is_used(self, mock_set, mock_get,
-                                             mock_store_credential_securely, mock_keyring, app_config):
+    def test_fetch_secure_credential_is_used(
+        self,
+        mock_set,
+        mock_get,
+        mock_store_credential_securely,
+        mock_keyring,
+        app_config,
+    ):
         username = "test_username"
         password = "test_password"
         mock_get.return_value = username
         mock_keyring.get_password.return_value = password
         app_config.fetch_secure_credential()
-        mock_get.assert_called_once_with('3cx', 'username')
+        mock_get.assert_called_once_with("3cx", "username")
         mock_keyring.get_password.assert_called_once_with("3CX_Sync", username)
         mock_set.assert_called_once_with("3cx", "password", password)
 
     @patch("app.config.keyring")
-    @patch.object(AppConfig, "store_credential_securely", new_callable=PropertyMock(return_value=False))
+    @patch.object(
+        AppConfig,
+        "store_credential_securely",
+        new_callable=PropertyMock(return_value=False),
+    )
     @patch.object(AppConfig, "set")
-    def test_store_secure_credential_not_used(self, mock_set, mock_store_credential_securely, mock_keyring, app_config):
+    def test_store_secure_credential_not_used(
+        self, mock_set, mock_store_credential_securely, mock_keyring, app_config
+    ):
         app_config.fetch_secure_credential()
         mock_keyring.set_password.assert_not_called()
         mock_set.assert_not_called()
 
     @patch("app.config.keyring")
-    @patch.object(AppConfig, "store_credential_securely", new_callable=PropertyMock(return_value=True))
+    @patch.object(
+        AppConfig,
+        "store_credential_securely",
+        new_callable=PropertyMock(return_value=True),
+    )
     @patch.object(AppConfig, "get")
     @patch.object(AppConfig, "set")
-    def test_store_secure_credential_is_used(self, mock_set, mock_get,
-                                             mock_store_credential_securely, mock_keyring, app_config):
+    def test_store_secure_credential_is_used(
+        self,
+        mock_set,
+        mock_get,
+        mock_store_credential_securely,
+        mock_keyring,
+        app_config,
+    ):
         username = "test_username"
         password = "test_password"
         mock_get.side_effect = lambda section, key: {
@@ -127,5 +165,7 @@ class TestAppConfig:
 
         mock_keyring.get_password.return_value = password
         app_config.store_secure_credential()
-        mock_keyring.set_password.assert_called_once_with("3CX_Sync", username, password)
+        mock_keyring.set_password.assert_called_once_with(
+            "3CX_Sync", username, password
+        )
         mock_set.assert_called_once_with("3cx", "password", None)

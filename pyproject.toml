@@ -7,3 +7,6 @@ addopts = [
     "-r a",
     "--doctest-glob=",
 ]
+
+[tool.black]
+line-length = 120

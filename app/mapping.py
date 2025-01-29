@@ -60,7 +60,7 @@ class CSVMapping(UserDict):
             raise
         except (IOError, json.JSONDecodeError) as e:
             print(f"Error loading mapping file: {e}")
-            raise            
+            raise
 
     def save(self):
         with open(self.mapping_file_path, "w") as mapping_file:

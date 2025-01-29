@@ -22,7 +22,11 @@ class Sync:
     user_data = list()
 
     def __init__(
-        self, api_connection, app_config: AppConfig, sync_source: SyncSourceStrategy, logger: SyncLogger
+        self,
+        api_connection,
+        app_config: AppConfig,
+        sync_source: SyncSourceStrategy,
+        logger: SyncLogger,
     ) -> None:
         self.running_event = threading.Event()
         self.running_event.set()  # Allow sync to run initially
@@ -43,6 +47,7 @@ class Sync:
             result = method(self, *args, **kwargs)
             self._pause_if_needed()
             return result
+
         return wrapper
 
     @pause_if_needed
@@ -62,7 +67,10 @@ class Sync:
         except UserListError as e:
             self.logger.log(LogLevel.ERROR, f"Failed to Fetch Users: {e}")
             raise
-        self.logger.log(LogLevel.INFO, f"Fetched {len(user_collection_response.value)} Users From 3CX")
+        self.logger.log(
+            LogLevel.INFO,
+            f"Fetched {len(user_collection_response.value)} Users From 3CX",
+        )
         return user_collection_response.value
 
     @pause_if_needed
@@ -122,8 +130,10 @@ class Sync:
             new_user_dict = self.get_new_user()
             merged_user_dict = new_user_dict | user.model_dump()
             self.users_resource.create_user(merged_user_dict)
-            self.logger.log(LogLevel.INFO, f"Created 3CX user {merged_user_dict['Number']}")
-            
+            self.logger.log(
+                LogLevel.INFO, f"Created 3CX user {merged_user_dict['Number']}"
+            )
+
         except UserCreateError as e:
             self.logger.log(LogLevel.ERROR, str(e))
 
@@ -131,11 +141,13 @@ class Sync:
     def update_users(self, user_change_details: list[UserChangeDetail]) -> None:
         for user_change_detail in user_change_details:
             self.update_user(user_change_detail)
-            
+
     @pause_if_needed
     def update_user(self, user_change_detail: UserChangeDetail):
         try:
-            self.logger.log(LogLevel.INFO, f"Updating 3CX user {user_change_detail.Number}")
+            self.logger.log(
+                LogLevel.INFO, f"Updating 3CX user {user_change_detail.Number}"
+            )
             self.logger.log(LogLevel.INFO, f"Changing {str(user_change_detail)}")
             self.users_resource.update_user(user_change_detail.user_to_update)
             self.logout_user_hotdesks_on_disable(user_change_detail)
@@ -143,10 +155,15 @@ class Sync:
             self.logger.log(LogLevel.ERROR, str(e))
 
     @pause_if_needed
-    def logout_user_hotdesks_on_disable(self, user_change_detail: UserChangeDetail) -> None:
+    def logout_user_hotdesks_on_disable(
+        self, user_change_detail: UserChangeDetail
+    ) -> None:
         # If the option to log out hotdesk on disable is enabled, and the user is being disabled
         # log the user out of any assigned hotdesks
-        if self.app_config.logout_hotdesk_on_disable and user_change_detail.is_disabling:
+        if (
+            self.app_config.logout_hotdesk_on_disable
+            and user_change_detail.is_disabling
+        ):
             try:
                 self._logout_user_hotdesks_by_number(user_change_detail.Number)
             except UserHotdeskLogoutError as e:
@@ -156,16 +173,24 @@ class Sync:
 
     @pause_if_needed
     def _logout_user_hotdesks_by_number(self, user_number: str) -> None:
-        hotdesk_user_collection_response = self.users_resource.get_hotdesks_by_assigned_user_number(user_number=user_number)
+        hotdesk_user_collection_response = (
+            self.users_resource.get_hotdesks_by_assigned_user_number(
+                user_number=user_number
+            )
+        )
         if not hotdesk_user_collection_response.value:
-            self.logger.log(LogLevel.INFO,
-                            f"User {user_number} is being disabled. "
-                            "No hotdesk logout required as the user is not signed in to any hotdesk.",
-                            )
+            self.logger.log(
+                LogLevel.INFO,
+                f"User {user_number} is being disabled. "
+                "No hotdesk logout required as the user is not signed in to any hotdesk.",
+            )
             return
-        
+
         for hotdesk_user in hotdesk_user_collection_response.value:
-            self.logger.log(LogLevel.INFO, f"Logging user {user_number} out of hotdesk {hotdesk_user.Number}")
+            self.logger.log(
+                LogLevel.INFO,
+                f"Logging user {user_number} out of hotdesk {hotdesk_user.Number}",
+            )
             self.users_resource.clear_hotdesk_assignment(hotdesk_user)
 
     def sync(self):
