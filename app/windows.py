@@ -669,6 +669,9 @@ class WindowSync(PopupWindow):
     def __init__(self, master, logger: SyncLogger, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         
+        # Set up a protocol to handle the window close event
+        self.protocol("WM_DELETE_WINDOW", self.on_destroy)
+
         self.resizable(height=False, width=False)
         self.logger = logger
         self.widgets = WidgetList()
@@ -731,3 +734,8 @@ class WindowSync(PopupWindow):
             return
         self.update()
         self.after(100, self.periodic_update)
+
+    def on_destroy(self):
+        self.sync_running = False
+        self.logger.remove_text_window_handler(self.widgets.txt_output)
+        self.destroy()

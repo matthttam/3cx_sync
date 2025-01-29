@@ -51,6 +51,11 @@ class SyncLogger:
         text_window_handler.setFormatter(text_window_formatter)
         self.logger.addHandler(text_window_handler)
 
+    def remove_text_window_handler(self, text_widget):
+        for handler in self.logger.handlers:
+            if isinstance(handler, TextWindowHandler) and handler.text_widget == text_widget:
+                self.logger.removeHandler(handler)
+
     def log(self, log_level, message, *args, **kwargs) -> None:
         """Logs a message using the specified method after checking if sync should pause.
 

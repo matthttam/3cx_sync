@@ -417,3 +417,14 @@ class TestWindowSync:
         window_sync.periodic_update()
         mock_update.assert_not_called()
         mock_after.assert_not_called()
+
+    def test_on_destroy_is_registered(self, window_sync):
+        assert window_sync.protocol("WM_DELETE_WINDOW").endswith("on_destroy")
+
+    def test_on_destroy(self, window_sync):
+        window_sync.sync_running = True
+        window_sync.destroy = MagicMock()
+        window_sync.on_destroy()
+
+        window_sync.logger.remove_text_window_handler.assert_called_once_with(window_sync.widgets.txt_output)
+        window_sync.destroy.assert_called_once_with()
