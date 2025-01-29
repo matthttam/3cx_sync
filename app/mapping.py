@@ -74,7 +74,7 @@ class CSVMapping(UserDict):
         self.set_original_config()
 
     def save_to(self, path):
-        with open(path, "w") as mapping_file:
+        with open(os.path.join(path, self.DEFAULT_FILENAME), "w") as mapping_file:
             json.dump(self.data, mapping_file)
 
     def set_original_config(self):

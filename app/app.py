@@ -144,8 +144,6 @@ class App(tk.Tk, Window):
         self.app_config.save_to(export_directory)
 
     def _export_csv_mapping(self, export_directory: str) -> None:
-        # csv_mapping_path = SyncCSV.config_file_path()
-        # csv_mapping = CSVMapping(mapping_file_path=csv_mapping_path)
         csv_mapping = CSVMapping()
         csv_mapping.load()
-        csv_mapping.save_to(os.path.join(export_directory, CSVMapping.DEFAULT_FILENAME))
+        csv_mapping.save_to(export_directory)
