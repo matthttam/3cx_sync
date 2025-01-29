@@ -315,8 +315,9 @@ class TestSync:
     def test_logout_user_hotdesks_by_number(self, sync, user_number):
         # Hotdesks are themselves a type of user
         mock_hotdesk_users = [MagicMock(spec=User, Number="HD1111"), MagicMock(spec=User, Number="HD2222")]
+        user_collection_response = UserCollectionResponse(value=mock_hotdesk_users)
         sync.users_resource = MagicMock(spec=UsersResource)
-        sync.users_resource.get_hotdesks_by_assigned_user_number.return_value = mock_hotdesk_users
+        sync.users_resource.get_hotdesks_by_assigned_user_number.return_value = user_collection_response
         # Run logout by number
         sync._logout_user_hotdesks_by_number(user_number)
         sync.users_resource.get_hotdesks_by_assigned_user_number.assert_called_once_with(user_number=user_number)
@@ -328,8 +329,9 @@ class TestSync:
 
     def test_logout_user_hotdesks_by_number_none(self, sync, user_number):
         # Hotdesks are themselves a type of user
+        user_collection_response = UserCollectionResponse(value=[])
         sync.users_resource = MagicMock(spec=UsersResource)
-        sync.users_resource.get_hotdesks_by_assigned_user_number.return_value = []
+        sync.users_resource.get_hotdesks_by_assigned_user_number.return_value = user_collection_response
         # Run logout by number
         sync._logout_user_hotdesks_by_number(user_number)
         sync.users_resource.get_hotdesks_by_assigned_user_number.assert_called_once_with(user_number=user_number)

@@ -4,6 +4,7 @@ from sync.sync_strategy import SyncSourceStrategy
 from threecxapi.connection import ThreeCXApiConnection
 from threecxapi.resources.users import UsersResource, ListUserParameters
 from threecxapi.components.schemas.pbx import User
+from threecxapi.components.responses.pbx import UserCollectionResponse
 from threecxapi.exceptions import APIAuthenticationError
 from sync.comparison import UserChangeDetail, UserComparer
 from threecxapi.resources.groups import GroupsResource
@@ -155,15 +156,15 @@ class Sync:
 
     @pause_if_needed
     def _logout_user_hotdesks_by_number(self, user_number: str) -> None:
-        hotdesk_users = self.users_resource.get_hotdesks_by_assigned_user_number(user_number=user_number)
-        if not hotdesk_users:
+        hotdesk_user_collection_response = self.users_resource.get_hotdesks_by_assigned_user_number(user_number=user_number)
+        if not hotdesk_user_collection_response.value:
             self.logger.log(LogLevel.INFO,
                             f"User {user_number} is being disabled. "
                             "No hotdesk logout required as the user is not signed in to any hotdesk.",
                             )
             return
         
-        for hotdesk_user in hotdesk_users:
+        for hotdesk_user in hotdesk_user_collection_response.value:
             self.logger.log(LogLevel.INFO, f"Logging user {user_number} out of hotdesk {hotdesk_user.Number}")
             self.users_resource.clear_hotdesk_assignment(hotdesk_user)
 
