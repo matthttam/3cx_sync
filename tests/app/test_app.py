@@ -93,7 +93,7 @@ class TestApp:
         mock_window_sync = MagicMock()
         mock_window_sync_class.return_value = mock_window_sync
         app.handle_csv_sync_click()
-        mock_window_sync_class.assert_called_once_with(app, app.logger)
+        mock_window_sync_class.assert_called_once_with(app)
         mock_window_sync.start_sync.assert_called_once_with()
 
     # @patch("app.app.App.CSVMapping")

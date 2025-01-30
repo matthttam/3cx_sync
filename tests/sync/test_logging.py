@@ -57,7 +57,7 @@ class TestTextWindowHandler:
         text_window_handler.emit(log_record)
 
         # Check that the insert method was called with the formatted message
-        mock_text_widget.insert.assert_called_once_with("end", f"{test_message}\n")
+        mock_text_widget.insert.assert_called_once_with("end", f"{test_message}\n", LogLevel.INFO)
         mock_text_widget.yview.assert_called_once_with("end")
 
     @patch.object(TextWindowHandler, "handleError")
@@ -117,9 +117,7 @@ class TestSyncLogger:
 
     @patch("sync.logging.logging")
     @patch("sync.logging.TextWindowHandler")
-    def test_add_text_window_handler(
-        self, mock_text_window_handler_class, mock_logging, sync_logger
-    ):
+    def test_add_text_window_handler(self, mock_text_window_handler_class, mock_logging, sync_logger):
         mock_text_widget = MagicMock()
 
         mock_text_window_handler = MagicMock()
@@ -132,9 +130,7 @@ class TestSyncLogger:
         mock_text_window_handler_class.assert_called_once_with(mock_text_widget)
         mock_text_window_handler.setLevel.assert_called_once_with(mock_logging.DEBUG)
         mock_logging.Formatter.assert_called_once_with(sync_logger.default_format)
-        mock_text_window_handler.setFormatter.assert_called_once_with(
-            mock_file_formatter
-        )
+        mock_text_window_handler.setFormatter.assert_called_once_with(mock_file_formatter)
         sync_logger.logger.addHandler.assert_called_once_with(mock_text_window_handler)
 
     @patch("sync.logging.logging")

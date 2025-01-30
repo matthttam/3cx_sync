@@ -357,7 +357,7 @@ class TestSync:
             f"User {user_number} is being disabled. No hotdesk logout required as the user is not signed in to any hotdesk.",
         )
 
-    def test_sync(self, sync):
+    def test_run(self, sync):
         # Mock the methods
         sync.initialize_sync_source = MagicMock()
         sync.sync_source.get_source_users = MagicMock(return_value=[])
@@ -367,7 +367,7 @@ class TestSync:
         sync.handle_users_to_create = MagicMock()
 
         # Call the sync method
-        sync.sync()
+        sync.run()
 
         # Assert that each method is called once (or multiple times as expected)
         sync.initialize_sync_source.assert_called_once()
@@ -380,83 +380,90 @@ class TestSync:
         # Assert that the log is called with the expected message
         sync.logger.log.assert_any_call(LogLevel.INFO, "Sync Complete")
 
-    def test_run_sync(self, mock_sync_source, mock_logger):
-        with patch("sync.sync.get_app_config") as mock_get_app_config, patch(
-            "sync.sync.get_api_connection"
-        ) as mock_get_api_connection, patch("sync.sync.Sync") as mock_sync_class:
+    @patch("sync.sync.initialize_app_config")
+    @patch("sync.sync.initialize_api_connection")
+    @patch("sync.sync.Sync")
+    def test_run_sync(
+        self, mock_sync_class, mock_initialize_api_connection, mock_initialize_app_config, mock_sync_source, mock_logger
+    ):
 
-            mock_app_config = MagicMock()
-            mock_api_connection = MagicMock()
-            mock_sync_instance = MagicMock()
+        mock_app_config = MagicMock()
+        mock_api_connection = MagicMock()
+        mock_sync_instance = MagicMock()
 
-            mock_get_app_config.return_value = mock_app_config
-            mock_get_api_connection.return_value = mock_api_connection
-            mock_sync_class.return_value = mock_sync_instance
-
-            run_sync(mock_sync_source, mock_logger)
-
-            mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
-            mock_get_app_config.assert_called_once_with(mock_logger)
-            mock_get_api_connection.assert_called_once_with(mock_app_config, mock_logger)
-            mock_sync_class.assert_called_once_with(
-                mock_api_connection,
-                mock_app_config,
-                mock_sync_source(mock_logger),
-                mock_logger,
-            )
-            mock_sync_instance.sync.assert_called_once()
-
-
-def test_run_sync_authentication_error(mock_sync_source, mock_logger):
-    with patch("sync.sync.get_app_config") as mock_get_app_config, patch(
-        "sync.sync.get_api_connection"
-    ) as mock_get_api_connection, patch("sync.sync.Sync") as mock_sync_class:
-        error = APIAuthenticationError(MagicMock())
-        mock_get_app_config = MagicMock()
-        mock_get_api_connection.side_effect = error
+        mock_initialize_app_config.return_value = mock_app_config
+        mock_initialize_api_connection.return_value = mock_api_connection
+        mock_sync_class.return_value = mock_sync_instance
 
         run_sync(mock_sync_source, mock_logger)
 
         mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
-        mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. Unable to authenticate.")
-
-        # Sync is not created and sync method is not called
-        mock_sync_class.assert_not_called()
-        mock_sync_class.sync.assert_not_called()
-
-
-def test_run_sync_any_error(mock_sync_source, mock_logger):
-    with patch("sync.sync.get_app_config") as mock_get_app_config, patch(
-        "sync.sync.get_api_connection"
-    ) as mock_get_api_connection, patch("sync.sync.Sync") as mock_sync_class:
-        error = Exception(MagicMock())
-        mock_get_app_config.side_effect = MagicMock()
-        mock_get_api_connection.side_effect = error
-
-        run_sync(mock_sync_source, mock_logger)
-
-        mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
-        mock_logger.log.assert_any_call(LogLevel.ERROR, f"Failed to sync. {error}")
-
-        # Sync is not created and sync method is not called
-        mock_sync_class.assert_not_called()
-        mock_sync_class.sync.assert_not_called()
+        mock_initialize_app_config.assert_called_once_with(mock_logger)
+        mock_initialize_api_connection.assert_called_once_with(mock_app_config, mock_logger)
+        mock_sync_class.assert_called_once_with(
+            mock_api_connection,
+            mock_app_config,
+            mock_sync_source(mock_logger),
+            mock_logger,
+        )
+        mock_sync_instance.run.assert_called_once()
 
 
-def test_run_sync_general_exception(mock_sync_source, mock_logger):
-    with patch("sync.sync.get_app_config") as mock_get_app_config, patch(
-        "sync.sync.get_api_connection"
-    ) as mock_get_api_connection, patch("sync.sync.Sync") as mock_sync_class:
+@patch("sync.sync.initialize_app_config")
+@patch("sync.sync.initialize_api_connection")
+@patch("sync.sync.Sync")
+def test_run_sync_authentication_error(
+    mock_sync_class, mock_initialize_api_connection, mock_initialize_app_config, mock_sync_source, mock_logger
+):
+    error = APIAuthenticationError(MagicMock())
 
-        mock_get_app_config.side_effect = Exception("General error")
+    mock_initialize_api_connection.side_effect = error
 
-        run_sync(mock_sync_source, mock_logger)
+    run_sync(mock_sync_source, mock_logger)
 
-        mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
-        mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. General error")
-        mock_get_app_config.assert_called_once_with(mock_logger)
-        mock_get_api_connection.assert_not_called()
-        mock_sync_class.assert_not_called()
+    mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
+    mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. Unable to authenticate.")
+
+    # Sync is not created and sync method is not called
+    mock_sync_class.assert_not_called()
+    mock_sync_class.sync.assert_not_called()
+
+
+@patch("sync.sync.initialize_app_config")
+@patch("sync.sync.initialize_api_connection")
+@patch("sync.sync.Sync")
+def test_run_sync_any_error(
+    mock_sync_class, mock_initialize_api_connection, mock_initialize_app_config, mock_sync_source, mock_logger
+):
+    error = Exception(MagicMock())
+    mock_initialize_app_config.side_effect = MagicMock()
+    mock_initialize_api_connection.side_effect = error
+
+    run_sync(mock_sync_source, mock_logger)
+
+    mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
+    mock_logger.log.assert_any_call(LogLevel.ERROR, f"Failed to sync. {error}")
+
+    # Sync is not created and sync method is not called
+    mock_sync_class.assert_not_called()
+    mock_sync_class.sync.assert_not_called()
+
+
+@patch("sync.sync.initialize_app_config")
+@patch("sync.sync.initialize_api_connection")
+@patch("sync.sync.Sync")
+def test_run_sync_general_exception(
+    mock_sync_class, mock_initialize_api_connection, mock_initialize_app_config, mock_sync_source, mock_logger
+):
+    mock_initialize_app_config.side_effect = Exception("General error")
+
+    run_sync(mock_sync_source, mock_logger)
+
+    mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
+    mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. General error")
+    mock_initialize_app_config.assert_called_once_with(mock_logger)
+    mock_initialize_api_connection.assert_not_called()
+    mock_sync_class.assert_not_called()
 
 
 def test_get_api_connection(mock_app_config, mock_logger):

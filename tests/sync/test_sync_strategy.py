@@ -21,9 +21,7 @@ class TestSyncCSV:
         return SyncCSV(logger=mock_logger)
 
     def test_initialize(self, sync_csv, mock_logger):
-        with patch.object(
-            sync_csv, "_load_csv_mapping"
-        ) as mock_load_csv_mapping, patch.object(
+        with patch.object(sync_csv, "_load_csv_mapping") as mock_load_csv_mapping, patch.object(
             sync_csv, "_set_comparison_properties"
         ) as mock_set_comparison_properties:
             sync_csv.initialize()
@@ -32,22 +30,15 @@ class TestSyncCSV:
             mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing CSV Source")
 
     def test_load_csv_mapping(self, sync_csv, mock_logger):
-        with patch(
-            "sync.sync_strategy.initialize_or_get_user_config_file",
-            return_value="path/to/mapping.json",
-        ), patch("sync.sync_strategy.CSVMapping") as mock_csv_mapping:
+        with patch("sync.sync_strategy.CSVMapping") as mock_csv_mapping:
             sync_csv._load_csv_mapping()
-            mock_csv_mapping.assert_called_once_with(
-                mapping_file_path="path/to/mapping.json"
-            )
+            mock_csv_mapping.assert_called_once_with()
             mock_csv_mapping.return_value.initialize.assert_called_once()
             mock_logger.log.assert_any_call(LogLevel.INFO, "Loading CSV Mapping")
             mock_logger.log.assert_any_call(LogLevel.INFO, "CSV Mapping Loaded")
 
     def test_set_comparison_properties(self, sync_csv, mock_logger):
-        with patch(
-            "sync.sync_strategy.CSVUser.set_comparison_properties"
-        ) as mock_set_comparison_properties:
+        with patch("sync.sync_strategy.CSVUser.set_comparison_properties") as mock_set_comparison_properties:
             sync_csv.mapping = {"Extension": {"Update": ["field1", "field2"]}}
             sync_csv._set_comparison_properties()
             mock_set_comparison_properties.assert_called_once_with(["field1", "field2"])
@@ -66,13 +57,9 @@ class TestSyncCSV:
             result = sync_csv.get_source_users()
             mock_get_csv_data_path.assert_called_once()
             mock_parse_csv_file.assert_called_once_with("path/to/csv_file.csv")
-            mock_validate_csv_users.assert_called_once_with(
-                [{"field1": "value1", "field2": "value2"}]
-            )
+            mock_validate_csv_users.assert_called_once_with([{"field1": "value1", "field2": "value2"}])
             mock_logger.log.assert_any_call(LogLevel.INFO, "Loading CSV User Data")
-            mock_logger.log.assert_any_call(
-                LogLevel.INFO, "Loaded 1 Users from CSV File"
-            )
+            mock_logger.log.assert_any_call(LogLevel.INFO, "Loaded 1 Users from CSV File")
             assert result == ["validated_user"]
 
     def test_get_source_users_file_not_found(self, sync_csv, mock_logger):
@@ -80,9 +67,7 @@ class TestSyncCSV:
         with pytest.raises(FileNotFoundError):
             sync_csv.get_source_users()
         mock_logger.log.assert_any_call(LogLevel.INFO, "Loading CSV User Data")
-        mock_logger.log.assert_any_call(
-            LogLevel.ERROR, "Unable to find file at: non_existent_file.csv"
-        )
+        mock_logger.log.assert_any_call(LogLevel.ERROR, "Unable to find file at: non_existent_file.csv")
 
     def test_get_csv_data_path(self, sync_csv):
         with patch("os.path.isfile", return_value=True):
@@ -94,16 +79,12 @@ class TestSyncCSV:
             sync_csv.mapping = {"Extension": {"Path": "non_existent_file.csv"}}
             with pytest.raises(FileNotFoundError):
                 sync_csv._get_csv_data_path()
-            mock_logger.log.assert_any_call(
-                LogLevel.ERROR, "Unable to find file at: non_existent_file.csv"
-            )
+            mock_logger.log.assert_any_call(LogLevel.ERROR, "Unable to find file at: non_existent_file.csv")
 
     def test_parse_csv_file(self, sync_csv):
         csv_content = "header1,header2\nvalue1,value2\nvalue3,value4"
         with patch("builtins.open", new_callable=mock_open, read_data=csv_content):
-            sync_csv.mapping = {
-                "Extension": {"New": {"field1": "header1", "field2": "header2"}}
-            }
+            sync_csv.mapping = {"Extension": {"New": {"field1": "header1", "field2": "header2"}}}
             result = sync_csv._parse_csv_file("path/to/csv_file.csv")
             expected = [
                 {"field1": "value1", "field2": "value2"},

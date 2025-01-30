@@ -54,8 +54,8 @@ def window_csv_mapping(root):
 
 
 @pytest.fixture
-def window_sync(root, mock_logger):
-    yield WindowSync(master=root, logger=mock_logger)
+def window_sync(app):
+    yield WindowSync(master=app)
 
 
 @pytest.fixture
@@ -65,7 +65,10 @@ def window():
 
 @pytest.fixture
 def app(mock_logger, mock_app_config):
-    yield App(logger=mock_logger, app_config=mock_app_config)
+    app = App(logger=mock_logger, app_config=mock_app_config)
+    yield app
+    app.quit()
+    app.destroy()
 
 
 @pytest.fixture()
