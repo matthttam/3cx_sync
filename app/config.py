@@ -1,3 +1,4 @@
+import os
 import keyring
 from copy import deepcopy
 from configparser import ConfigParser
@@ -20,6 +21,7 @@ class AppConfig(ConfigParser):
             },
             "app": {"logout_hotdesk_on_disable": True},
         }
+        self.filename = "app_conf.ini"
 
     @property
     def server_url(self) -> str:
@@ -32,7 +34,7 @@ class AppConfig(ConfigParser):
     @property
     def config_file_path(self) -> str:
         return initialize_or_get_user_config_file(
-            "3cx_sync", "3cx_sync", "conf", "app_conf.ini"
+            "3cx_sync", "3cx_sync", "conf", self.filename
         )
 
     @property
@@ -73,6 +75,10 @@ class AppConfig(ConfigParser):
         with open(self.config_file_path, "w") as config_file:
             self.write(config_file)
         self.set_original_config()
+
+    def save_to(self, path) -> None:
+        with open(os.path.join(path, self.filename), "w") as config_file:
+            self.write(config_file)
 
     def set_original_config(self):
         self.original_config = deepcopy(self)

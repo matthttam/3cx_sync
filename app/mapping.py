@@ -3,13 +3,19 @@ import json
 from collections import UserDict
 from copy import deepcopy
 import platformdirs
+from app.util import initialize_or_get_user_config_file
 
 
 class CSVMapping(UserDict):
-    def __init__(self, *args, mapping_file_path: str, **kwargs) -> None:
+    DEFAULT_FILENAME = "csv_mapping.json"
+
+    def __init__(self, *args, mapping_file_path: str = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.set_original_config()
-        self.mapping_file_path = mapping_file_path
+        self.mapping_file_path = mapping_file_path or initialize_or_get_user_config_file(
+            "3cx_sync", "3cx_sync", "conf", self.DEFAULT_FILENAME
+        )
+        # self.mapping_file_path = mapping_file_path
         self.default_config = {
             "Extension": {
                 "Path": platformdirs.user_documents_dir(),
@@ -66,6 +72,10 @@ class CSVMapping(UserDict):
         with open(self.mapping_file_path, "w") as mapping_file:
             json.dump(self.data, mapping_file)
         self.set_original_config()
+
+    def save_to(self, path):
+        with open(os.path.join(path, self.DEFAULT_FILENAME), "w") as mapping_file:
+            json.dump(self.data, mapping_file)
 
     def set_original_config(self):
         self.original_config = deepcopy(self.data)

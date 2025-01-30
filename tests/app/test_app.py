@@ -95,3 +95,16 @@ class TestApp:
         app.handle_csv_sync_click()
         mock_window_sync_class.assert_called_once_with(app, app.logger)
         mock_window_sync.start_sync.assert_called_once_with()
+
+    # @patch("app.app.App.CSVMapping")
+    def test_export_app_config(self, app):
+        app._export_app_config("fake_dir")
+        app.app_config.save_to.assert_called_once_with("fake_dir")
+
+    @patch("app.app.CSVMapping")
+    def test_export_csv_mapping(self, mock_csv_mapping_class, app):
+        mock_csv_mapping = MagicMock()
+        mock_csv_mapping_class.return_value = mock_csv_mapping
+        app._export_csv_mapping("fake_dir")
+        mock_csv_mapping.load.assert_called_once_with()
+        mock_csv_mapping.save_to.assert_called_once_with("fake_dir")

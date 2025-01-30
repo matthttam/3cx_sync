@@ -1,5 +1,6 @@
-import pytest
+import os
 import json
+import pytest
 from app.mapping import CSVMapping
 from collections import UserDict
 from unittest.mock import patch, MagicMock, mock_open
@@ -65,3 +66,36 @@ class TestCSVMapping:
     def test_load_invalid_json(self, mock_getsize, mock_open, csv_mapping):
         with pytest.raises(json.JSONDecodeError):
             csv_mapping.load()
+
+    @patch("app.mapping.json")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_save(self, mock_open, mock_json, csv_mapping):
+        fake_data = {"key": "value"}
+        csv_mapping.data = fake_data
+        mock_json.dump.return_value = json.dumps(fake_data)
+        csv_mapping.set_original_config = MagicMock()
+        csv_mapping.save()
+        mock_open.assert_called_once_with(self.test_path, "w")
+        mock_json.dump.assert_called_once_with(fake_data, mock_open())
+        csv_mapping.set_original_config.assert_called_once()
+
+    @patch("app.mapping.json")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_save_to(self, mock_open, mock_json, csv_mapping):
+        path = "/another/test/path"
+
+        fake_data = {"key": "value"}
+        csv_mapping.data = fake_data
+        mock_json.dump.return_value = json.dumps(fake_data)
+        csv_mapping.set_original_config = MagicMock()
+
+        csv_mapping.save_to(path)
+
+        mock_open.assert_called_once_with(os.path.join(path, CSVMapping.DEFAULT_FILENAME), "w")
+        mock_json.dump.assert_called_once_with(fake_data, mock_open())
+
+    def test_set_original_config(self, csv_mapping):
+        csv_mapping.data = {"key": "value"}
+        csv_mapping.original_config = {"blah": "blah"}
+        csv_mapping.set_original_config()
+        assert csv_mapping.original_config == {"key": "value"}

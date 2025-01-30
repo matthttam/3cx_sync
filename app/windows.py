@@ -96,32 +96,24 @@ class WindowAppConfig(PopupWindow):
         def trace_tk_variables(tk_var: tk.Variable, section, var):
             tk_var.trace_add(
                 "write",
-                lambda *args: self.app_config.set_value(
-                    section, var, str(tk_var.get())
-                ),
+                lambda *args: self.app_config.set_value(section, var, str(tk_var.get())),
             )
 
         # Create StringVars for '3cx' section
         section = "3cx"
         for var in ["scheme", "domain", "port", "username", "password"]:
-            self.vars[section][var] = tk.StringVar(
-                self, self.app_config.get(section, var)
-            )
+            self.vars[section][var] = tk.StringVar(self, self.app_config.get(section, var))
             trace_tk_variables(self.vars[section][var], section, var)
 
         # Create BooleanVars for '3cx' section
         for var in ["store_credential_securely"]:
-            self.vars[section][var] = tk.BooleanVar(
-                self, self.app_config.getboolean(section, var)
-            )
+            self.vars[section][var] = tk.BooleanVar(self, self.app_config.getboolean(section, var))
             trace_tk_variables(self.vars[section][var], section, var)
 
         # Create BooleanVars for 'app' section
         section = "app"
         for var in ["logout_hotdesk_on_disable"]:
-            self.vars[section][var] = tk.BooleanVar(
-                self, self.app_config.getboolean(section, var)
-            )
+            self.vars[section][var] = tk.BooleanVar(self, self.app_config.getboolean(section, var))
             trace_tk_variables(self.vars[section][var], section, var)
 
     def build_gui(self) -> None:
@@ -129,15 +121,11 @@ class WindowAppConfig(PopupWindow):
         self.widgets.frm_window = ttk.Frame(self)
         self.widgets.frm_window.pack(fill="both", expand=True)
 
-        self.widgets.frm_3cx_options = ttk.LabelFrame(
-            self.widgets.frm_window, text="3CX Settings", padding=(20, 10)
-        )
+        self.widgets.frm_3cx_options = ttk.LabelFrame(self.widgets.frm_window, text="3CX Settings", padding=(20, 10))
         self.widgets.frm_3cx_options.pack(**self.pack_defaults["lblfrm"])
 
         # Create the 3cx URL
-        self.widgets.lbl_3cx_url = ttk.Label(
-            self.widgets.frm_3cx_options, text="3CX URL:"
-        )
+        self.widgets.lbl_3cx_url = ttk.Label(self.widgets.frm_3cx_options, text="3CX URL:")
         self.widgets.lbl_3cx_url.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
@@ -147,9 +135,7 @@ class WindowAppConfig(PopupWindow):
         # Create a 3cx URL frame in that window
         self.widgets.frm_3cx_url = ttk.Frame(self.widgets.frm_3cx_options)
         self.widgets.frm_3cx_url.grid_columnconfigure(2, weight=1)
-        self.widgets.frm_3cx_url.grid(
-            row=self.get_current_row(), column=self.get_next_column(), pady=(0, 5)
-        )
+        self.widgets.frm_3cx_url.grid(row=self.get_current_row(), column=self.get_next_column(), pady=(0, 5))
 
         # Create the 3CX URL widgets
         self.widgets.opt_3cx_scheme = ttk.OptionMenu(
@@ -159,16 +145,12 @@ class WindowAppConfig(PopupWindow):
             *["https", "http"],
         )
 
-        self.widgets.lbl_3cx_scheme_ending = ttk.Label(
-            self.widgets.frm_3cx_url, text="://"
-        )
+        self.widgets.lbl_3cx_scheme_ending = ttk.Label(self.widgets.frm_3cx_url, text="://")
         self.widgets.ent_3cx_domain = ttk.Entry(
             self.widgets.frm_3cx_url,
             textvariable=self.vars["3cx"]["domain"],
         )
-        self.widgets.lbl_3cx_server_ending = ttk.Label(
-            self.widgets.frm_3cx_url, text=":"
-        )
+        self.widgets.lbl_3cx_server_ending = ttk.Label(self.widgets.frm_3cx_url, text=":")
         self.widgets.ent_3cx_port = ttk.Entry(
             self.widgets.frm_3cx_url,
             textvariable=self.vars["3cx"]["port"],
@@ -224,9 +206,7 @@ class WindowAppConfig(PopupWindow):
         )
 
         # Create the 3CX password widgets
-        self.widgets.lbl_3cx_password = ttk.Label(
-            self.widgets.frm_3cx_options, text="Password:"
-        )
+        self.widgets.lbl_3cx_password = ttk.Label(self.widgets.frm_3cx_options, text="Password:")
         self.widgets.ent_3cx_password = ttk.Entry(
             self.widgets.frm_3cx_options,
             textvariable=self.vars["3cx"]["password"],
@@ -397,11 +377,7 @@ class WindowCSVMapping(PopupWindow):
     def __init__(self, master, *args, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
         self.widgets = WidgetList()
-        self.mapping = CSVMapping(
-            mapping_file_path=initialize_or_get_user_config_file(
-                "3cx_sync", "3cx_sync", "conf", "csv_mapping.json"
-            )
-        )
+        self.mapping = CSVMapping()
         self.mapping.initialize()
         self.title("CSV Mapping Settings")
         self.initialize_variables()
@@ -411,9 +387,7 @@ class WindowCSVMapping(PopupWindow):
         self.mapping_fields = []
         self.ceckbox_key_state = tk.StringVar(self, "normal")
         extension = self.mapping.get("Extension", {})
-        self.var_csv_mapping_import_file_path = tk.StringVar(
-            self, value=extension.get("Path", "")
-        )
+        self.var_csv_mapping_import_file_path = tk.StringVar(self, value=extension.get("Path", ""))
         self.key_checked = False
 
     def build_gui(self) -> None:
@@ -422,14 +396,10 @@ class WindowCSVMapping(PopupWindow):
         self.widgets.frm_window.pack(**self.pack_defaults["frm"])
 
         # Field: Extension Path
-        self.widgets.lblfrm_import_file_path = ttk.LabelFrame(
-            self.widgets.frm_window, text="Import File Path"
-        )
+        self.widgets.lblfrm_import_file_path = ttk.LabelFrame(self.widgets.frm_window, text="Import File Path")
         self.widgets.lblfrm_import_file_path.pack(**self.pack_defaults["lblfrm"])
 
-        self.widgets.lbl_import_file_path = ttk.Label(
-            self.widgets.lblfrm_import_file_path, text="Path:"
-        )
+        self.widgets.lbl_import_file_path = ttk.Label(self.widgets.lblfrm_import_file_path, text="Path:")
         self.widgets.lbl_import_file_path.pack(**self.pack_defaults["lbl"])
 
         self.widgets.ent_import_file_path = ttk.Entry(
@@ -453,9 +423,7 @@ class WindowCSVMapping(PopupWindow):
         self.widgets.lblfrm_csv_mapping = ttk.Frame(
             self.widgets.frm_window, relief="ridge", borderwidth=2, name="csv_mapping"
         )
-        self.widgets.lblfrm_csv_mapping.pack(
-            side="top", fill="both", ipady=self.frame_iy_padding, expand=True
-        )
+        self.widgets.lblfrm_csv_mapping.pack(side="top", fill="both", ipady=self.frame_iy_padding, expand=True)
 
         # Frame: CSV Mapping Fields
         self.widgets.lblfrm_csv_mapping_fields = ttk.LabelFrame(
@@ -465,9 +433,7 @@ class WindowCSVMapping(PopupWindow):
             relief="sunken",
             borderwidth=2,
         )
-        self.widgets.lblfrm_csv_mapping_fields.pack(
-            side="top", fill="both", ipady=self.frame_iy_padding, expand=True
-        )
+        self.widgets.lblfrm_csv_mapping_fields.pack(side="top", fill="both", ipady=self.frame_iy_padding, expand=True)
 
         # CSV Mapping Headers
         self.widgets.lbl_csv_mapping_3cx_field = ttk.Label(
@@ -476,15 +442,9 @@ class WindowCSVMapping(PopupWindow):
         self.widgets.lbl_csv_mapping_header = ttk.Label(
             self.widgets.lblfrm_csv_mapping_fields, text="CSV Header", width=20
         )
-        self.widgets.lbl_csv_mapping_static = ttk.Label(
-            self.widgets.lblfrm_csv_mapping_fields, text="Static", width=5
-        )
-        self.widgets.lbl_csv_mapping_update = ttk.Label(
-            self.widgets.lblfrm_csv_mapping_fields, text="Update", width=5
-        )
-        self.widgets.lbl_csv_mapping_key = ttk.Label(
-            self.widgets.lblfrm_csv_mapping_fields, text="Key", width=5
-        )
+        self.widgets.lbl_csv_mapping_static = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="Static", width=5)
+        self.widgets.lbl_csv_mapping_update = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="Update", width=5)
+        self.widgets.lbl_csv_mapping_key = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="Key", width=5)
         self.widgets.lbl_csv_mapping_3cx_field.grid(row=1, column=1, sticky="w")
         self.widgets.lbl_csv_mapping_header.grid(row=1, column=2, sticky="w")
         self.widgets.lbl_csv_mapping_static.grid(row=1, column=3, sticky="w")
@@ -507,9 +467,7 @@ class WindowCSVMapping(PopupWindow):
             command=self.delete_mapping_field_set,
         )
 
-        self.widgets.frm_add_delete_fields.pack(
-            side="top", anchor="center", expand=True, fill="both"
-        )
+        self.widgets.frm_add_delete_fields.pack(side="top", anchor="center", expand=True, fill="both")
         self.widgets.btn_add_field.grid(row=1, column=1)
         self.widgets.btn_delete_field.grid(row=1, column=2)
 
@@ -584,13 +542,9 @@ class WindowCSVMapping(PopupWindow):
             key = header == key_header
             update = field in extension_mapping.get("Update", {})
             static = field in extension_mapping.get("Static", {})
-            self.add_mapping_field_set(
-                header=header, field=field, static=static, key=key, update=update
-            )
+            self.add_mapping_field_set(header=header, field=field, static=static, key=key, update=update)
 
-    def add_mapping_field_set(
-        self, header="", field="", static=False, update=False, key=False
-    ):
+    def add_mapping_field_set(self, header="", field="", static=False, update=False, key=False):
         current_row = len(self.mapping_fields) + 2
         lblfrm_csv_mapping_fields = self.nametowidget("csv_mapping.csv_mapping_fields")
 
@@ -605,15 +559,11 @@ class WindowCSVMapping(PopupWindow):
         ent_csv_mapping_header.grid(row=current_row, column=2, sticky="w")
 
         # Static Value Checkbox
-        chk_csv_mapping_static_value = Checkbox(
-            self.widgets.lblfrm_csv_mapping_fields, value=static
-        )
+        chk_csv_mapping_static_value = Checkbox(self.widgets.lblfrm_csv_mapping_fields, value=static)
         chk_csv_mapping_static_value.grid(row=current_row, column=3, sticky="w")
 
         # Update Checkbox
-        chk_csv_mapping_update = Checkbox(
-            self.widgets.lblfrm_csv_mapping_fields, value=update
-        )
+        chk_csv_mapping_update = Checkbox(self.widgets.lblfrm_csv_mapping_fields, value=update)
         chk_csv_mapping_update.grid(row=current_row, column=4, sticky="w")
 
         # Key Checkbox
@@ -629,9 +579,7 @@ class WindowCSVMapping(PopupWindow):
         btn_csv_mapping_remove = ttk.Button(
             self.widgets.lblfrm_csv_mapping_fields,
             text="-",
-            command=lambda row_index=len(
-                self.mapping_fields
-            ): self.delete_mapping_field_set(row_index),
+            command=lambda row_index=len(self.mapping_fields): self.delete_mapping_field_set(row_index),
         )
         btn_csv_mapping_remove.grid(row=current_row, column=6)
 
@@ -697,9 +645,7 @@ class WindowSync(PopupWindow):
         self.widgets.frm_window.pack(fill="both", anchor="nw", expand=True)
 
         # Text:  Output
-        self.widgets.txt_output = ScrolledText(
-            self.widgets.frm_window, relief="sunken", name="output"
-        )
+        self.widgets.txt_output = ScrolledText(self.widgets.frm_window, relief="sunken", name="output")
         self.widgets.txt_output.pack(fill="both", expand=True)
 
         # Form: Sync Buttons
