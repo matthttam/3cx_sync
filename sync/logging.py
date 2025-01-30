@@ -16,10 +16,19 @@ class TextWindowHandler(logging.Handler):
         super().__init__()
         self.text_widget = text_widget
 
+        # Configure tags for different log levels
+        self.text_widget.tag_configure(LogLevel.CRITICAL, foreground="red")
+        self.text_widget.tag_configure(LogLevel.FATAL, foreground="red")
+        self.text_widget.tag_configure(LogLevel.ERROR, foreground="orange")
+        self.text_widget.tag_configure(LogLevel.WARNING, foreground="darkorange")
+        self.text_widget.tag_configure(LogLevel.INFO, foreground="green")
+        self.text_widget.tag_configure(LogLevel.DEBUG, foreground="blue")
+
     def emit(self, record):
         try:
             msg = self.format(record)
-            self.text_widget.insert("end", msg + "\n")
+            # tag = self.get_log_level_tag()
+            self.text_widget.insert("end", msg + "\n", LogLevel[record.levelname])
             self.text_widget.yview("end")
         except Exception:
             self.handleError(record)
@@ -53,10 +62,7 @@ class SyncLogger:
 
     def remove_text_window_handler(self, text_widget):
         for handler in self.logger.handlers:
-            if (
-                isinstance(handler, TextWindowHandler)
-                and handler.text_widget == text_widget
-            ):
+            if isinstance(handler, TextWindowHandler) and handler.text_widget == text_widget:
                 self.logger.removeHandler(handler)
 
     def log(self, log_level, message, *args, **kwargs) -> None:

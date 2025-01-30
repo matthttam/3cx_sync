@@ -2,7 +2,7 @@ import pytest
 import json
 from requests.exceptions import HTTPError
 from unittest.mock import MagicMock, patch, call
-from sync.sync import Sync, run_sync, get_api_connection
+from sync.sync import Sync, run_sync, initialize_api_connection
 from sync.logging import SyncLogger, LogLevel
 from sync.sync_strategy import SyncSourceStrategy
 from threecxapi.resources.users import UsersResource
@@ -58,9 +58,7 @@ def user_number():
 
 @pytest.fixture
 def user(user_id, user_number):
-    return User.model_construct(
-        Id=user_id, Number=user_number, PrimaryGroupId=None, Groups=[]
-    )
+    return User.model_construct(Id=user_id, Number=user_number, PrimaryGroupId=None, Groups=[])
 
 
 @pytest.fixture
@@ -119,9 +117,7 @@ class TestSync:
         sync.users_resource.list_user.return_value = mock_user_collection_response
         users = sync.get_users()
         mock_logger.log.assert_any_call(LogLevel.INFO, "Fetching Users From 3CX")
-        mock_logger.log.assert_any_call(
-            LogLevel.INFO, f"Fetched {len(users)} Users From 3CX"
-        )
+        mock_logger.log.assert_any_call(LogLevel.INFO, f"Fetched {len(users)} Users From 3CX")
         # sync.users_resource.list_user.assert_called_once()
         assert users == mock_user_collection_response.value
 
@@ -132,30 +128,20 @@ class TestSync:
         with pytest.raises(UserListError):
             sync.get_users()
         mock_logger.log.assert_any_call(LogLevel.INFO, "Fetching Users From 3CX")
-        mock_logger.log.assert_any_call(
-            LogLevel.ERROR, f"Failed to Fetch Users: {error}"
-        )
+        mock_logger.log.assert_any_call(LogLevel.ERROR, f"Failed to Fetch Users: {error}")
 
     def test_handle_users_to_update(self, sync, mock_logger):
-        mock_user_change_details = [
-            MagicMock(spec=UserChangeDetail, field_changes={}) for _ in range(2)
-        ]
+        mock_user_change_details = [MagicMock(spec=UserChangeDetail, field_changes={}) for _ in range(2)]
         sync.update_users = MagicMock()
         sync.handle_users_to_update(mock_user_change_details)
-        mock_logger.log.assert_any_call(
-            LogLevel.INFO, f"Count of users to update: {len(mock_user_change_details)}"
-        )
-        sync.update_users.assert_called_once_with(
-            user_change_details=mock_user_change_details
-        )
+        mock_logger.log.assert_any_call(LogLevel.INFO, f"Count of users to update: {len(mock_user_change_details)}")
+        sync.update_users.assert_called_once_with(user_change_details=mock_user_change_details)
 
     def test_handle_users_to_update_no_users(self, sync, mock_logger):
         mock_user_change_details = []
         sync.update_users = MagicMock()
         sync.handle_users_to_update(mock_user_change_details)
-        unexpected_call = call(
-            LogLevel.INFO, f"Count of users to update: {len(mock_user_change_details)}"
-        )
+        unexpected_call = call(LogLevel.INFO, f"Count of users to update: {len(mock_user_change_details)}")
         assert unexpected_call not in mock_logger.log.call_args_list
         sync.update_users.assert_not_called()
         mock_logger.log.assert_any_call(LogLevel.INFO, "No users to update.")
@@ -164,18 +150,14 @@ class TestSync:
         mock_users_to_create = [MagicMock(spec=User) for _ in range(2)]
         sync.create_users = MagicMock()
         sync.handle_users_to_create(mock_users_to_create)
-        mock_logger.log.assert_any_call(
-            LogLevel.INFO, f"Count of users to create: {len(mock_users_to_create)}"
-        )
+        mock_logger.log.assert_any_call(LogLevel.INFO, f"Count of users to create: {len(mock_users_to_create)}")
         sync.create_users.assert_called_once_with(users=mock_users_to_create)
 
     def test_handle_users_to_create_no_users(self, sync, mock_logger):
         mock_users_to_create = []
         sync.create_users = MagicMock()
         sync.handle_users_to_create(mock_users_to_create)
-        unexpected_call = call(
-            LogLevel.INFO, f"Count of users to create: {len(mock_users_to_create)}"
-        )
+        unexpected_call = call(LogLevel.INFO, f"Count of users to create: {len(mock_users_to_create)}")
         assert unexpected_call not in mock_logger.log.call_args_list
         sync.create_users.assert_not_called()
         mock_logger.log.assert_any_call(LogLevel.INFO, "No users to create.")
@@ -201,16 +183,12 @@ class TestSync:
         # Setup Expected User
         expected_user = user_dict.copy()
         expected_user["PrimaryGroupId"] = primary_group_id
-        expected_user["Groups"] = [
-            {"GroupId": primary_group_id, "Rights": {"RoleName": "users"}}
-        ]
+        expected_user["Groups"] = [{"GroupId": primary_group_id, "Rights": {"RoleName": "users"}}]
 
         # Mock user and group resources
         sync.users_resource = MagicMock(get_new_user=MagicMock(return_value=user_dict))
         default_group = MagicMock(Id=primary_group_id)
-        sync.groups_resource = MagicMock(
-            get_default_group=MagicMock(return_value=default_group)
-        )
+        sync.groups_resource = MagicMock(get_default_group=MagicMock(return_value=default_group))
 
         # Get New User
         user_dict = sync.get_new_user()
@@ -219,9 +197,7 @@ class TestSync:
         sync.groups_resource.get_default_group.assert_called_once()
         assert user_dict == expected_user
         assert user_dict["PrimaryGroupId"] == default_group.Id
-        assert user_dict["Groups"] == [
-            {"GroupId": default_group.Id, "Rights": {"RoleName": "users"}}
-        ]
+        assert user_dict["Groups"] == [{"GroupId": default_group.Id, "Rights": {"RoleName": "users"}}]
 
     def test_create_users(self, sync):
         mock_users = [MagicMock(spec=User) for _ in range(2)]
@@ -242,16 +218,10 @@ class TestSync:
 
         # Confirm appropriate logs were made and user was created.
         sync.users_resource.create_user.assert_called_once_with(expected_user_dict)
-        mock_logger.log.assert_any_call(
-            LogLevel.INFO, f"Creating 3CX user {user_number}"
-        )
-        mock_logger.log.assert_any_call(
-            LogLevel.INFO, f"Created 3CX user {user_number}"
-        )
+        mock_logger.log.assert_any_call(LogLevel.INFO, f"Creating 3CX user {user_number}")
+        mock_logger.log.assert_any_call(LogLevel.INFO, f"Created 3CX user {user_number}")
 
-    def test_create_user_with_error(
-        self, sync, mock_logger, user_number, new_user_dict, user, http_error
-    ):
+    def test_create_user_with_error(self, sync, mock_logger, user_number, new_user_dict, user, http_error):
         """Test create_user method with UserCreateError logs error but doesn't raise exception."""
 
         # Setup Expected User
@@ -288,17 +258,11 @@ class TestSync:
 
         # Confirm appropriate logs were made and user was updated.
         mock_logger.log.assert_any_call(LogLevel.INFO, "Updating 3CX user 123")
-        mock_logger.log.assert_any_call(
-            LogLevel.INFO, f"Changing {str(user_change_detail)}"
-        )
-        sync.users_resource.update_user.assert_called_once_with(
-            user_change_detail.user_to_update
-        )
+        mock_logger.log.assert_any_call(LogLevel.INFO, f"Changing {str(user_change_detail)}")
+        sync.users_resource.update_user.assert_called_once_with(user_change_detail.user_to_update)
         sync.logout_user_hotdesks_on_disable.assert_called_once_with(user_change_detail)
 
-    def test_update_user_with_error(
-        self, sync, mock_logger, user_change_detail, http_error
-    ):
+    def test_update_user_with_error(self, sync, mock_logger, user_change_detail, http_error):
         sync.logout_user_hotdesks_on_disable = MagicMock()
         sync.users_resource = MagicMock(spec=UsersResource)
 
@@ -310,15 +274,11 @@ class TestSync:
         sync.update_user(user_change_detail)
 
         # Confirm appropriate logs were made
-        sync.users_resource.update_user.assert_called_once_with(
-            user_change_detail.user_to_update
-        )
+        sync.users_resource.update_user.assert_called_once_with(user_change_detail.user_to_update)
         mock_logger.log.assert_any_call(LogLevel.ERROR, str(error))
         sync.logout_user_hotdesks_on_disable.assert_not_called()
 
-    def test_logout_user_hotdesks_on_disable(
-        self, sync, user_change_detail, user_number
-    ):
+    def test_logout_user_hotdesks_on_disable(self, sync, user_change_detail, user_number):
         sync.app_config.logout_hotdesk_on_disable = True
         user_change_detail.field_changes = {"Enabled": FieldChange(old=True, new=False)}
         sync._logout_user_hotdesks_by_number = MagicMock()
@@ -347,9 +307,7 @@ class TestSync:
             ),
         )
 
-    def test_logout_user_hotdesks_on_disable_lookup_error(
-        self, sync, user_change_detail, user_number, http_error
-    ):
+    def test_logout_user_hotdesks_on_disable_lookup_error(self, sync, user_change_detail, user_number, http_error):
         error = UserHotdeskLookupError(http_error, user_number)
         sync.app_config.logout_hotdesk_on_disable = True
         user_change_detail.field_changes = {"Enabled": FieldChange(old=True, new=False)}
@@ -373,25 +331,15 @@ class TestSync:
         ]
         user_collection_response = UserCollectionResponse(value=mock_hotdesk_users)
         sync.users_resource = MagicMock(spec=UsersResource)
-        sync.users_resource.get_hotdesks_by_assigned_user_number.return_value = (
-            user_collection_response
-        )
+        sync.users_resource.get_hotdesks_by_assigned_user_number.return_value = user_collection_response
         # Run logout by number
         sync._logout_user_hotdesks_by_number(user_number)
-        sync.users_resource.get_hotdesks_by_assigned_user_number.assert_called_once_with(
-            user_number=user_number
-        )
-        assert sync.users_resource.clear_hotdesk_assignment.call_count == len(
-            mock_hotdesk_users
-        )
+        sync.users_resource.get_hotdesks_by_assigned_user_number.assert_called_once_with(user_number=user_number)
+        assert sync.users_resource.clear_hotdesk_assignment.call_count == len(mock_hotdesk_users)
         sync.logger.log.assert_has_calls(
             [
-                call(
-                    LogLevel.INFO, f"Logging user {user_number} out of hotdesk HD1111"
-                ),
-                call(
-                    LogLevel.INFO, f"Logging user {user_number} out of hotdesk HD2222"
-                ),
+                call(LogLevel.INFO, f"Logging user {user_number} out of hotdesk HD1111"),
+                call(LogLevel.INFO, f"Logging user {user_number} out of hotdesk HD2222"),
             ]
         )
 
@@ -399,14 +347,10 @@ class TestSync:
         # Hotdesks are themselves a type of user
         user_collection_response = UserCollectionResponse(value=[])
         sync.users_resource = MagicMock(spec=UsersResource)
-        sync.users_resource.get_hotdesks_by_assigned_user_number.return_value = (
-            user_collection_response
-        )
+        sync.users_resource.get_hotdesks_by_assigned_user_number.return_value = user_collection_response
         # Run logout by number
         sync._logout_user_hotdesks_by_number(user_number)
-        sync.users_resource.get_hotdesks_by_assigned_user_number.assert_called_once_with(
-            user_number=user_number
-        )
+        sync.users_resource.get_hotdesks_by_assigned_user_number.assert_called_once_with(user_number=user_number)
         assert sync.users_resource.clear_hotdesk_assignment.call_count == 0
         sync.logger.log.assert_called_once_with(
             LogLevel.INFO,
@@ -453,9 +397,7 @@ class TestSync:
 
             mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
             mock_get_app_config.assert_called_once_with(mock_logger)
-            mock_get_api_connection.assert_called_once_with(
-                mock_app_config, mock_logger
-            )
+            mock_get_api_connection.assert_called_once_with(mock_app_config, mock_logger)
             mock_sync_class.assert_called_once_with(
                 mock_api_connection,
                 mock_app_config,
@@ -476,9 +418,7 @@ def test_run_sync_authentication_error(mock_sync_source, mock_logger):
         run_sync(mock_sync_source, mock_logger)
 
         mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
-        mock_logger.log.assert_any_call(
-            LogLevel.ERROR, "Failed to sync. Unable to authenticate."
-        )
+        mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. Unable to authenticate.")
 
         # Sync is not created and sync method is not called
         mock_sync_class.assert_not_called()
@@ -530,21 +470,15 @@ def test_get_api_connection(mock_app_config, mock_logger):
             "password": "pass",
         }[key]
 
-        api_connection = get_api_connection(mock_app_config, mock_logger)
+        api_connection = initialize_api_connection(mock_app_config, mock_logger)
 
         mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing API Connection")
         mock_logger.log.assert_any_call(LogLevel.INFO, "API Connection Initialized")
-        mock_logger.log.assert_any_call(
-            LogLevel.INFO, "Authenticating to 3CX at http://example.com"
-        )
+        mock_logger.log.assert_any_call(LogLevel.INFO, "Authenticating to 3CX at http://example.com")
         mock_logger.log.assert_any_call(LogLevel.INFO, "Authentication Successful")
 
-        mock_ThreeCXApiConnection_class.assert_called_once_with(
-            server_url="http://example.com"
-        )
-        mock_api_connection_instance.authenticate.assert_called_once_with(
-            username="user", password="pass"
-        )
+        mock_ThreeCXApiConnection_class.assert_called_once_with(server_url="http://example.com")
+        mock_api_connection_instance.authenticate.assert_called_once_with(username="user", password="pass")
         assert api_connection == mock_api_connection_instance
 
 
@@ -563,7 +497,7 @@ def test_get_api_connection_authentication_error(mock_app_config, mock_logger):
         mock_api_connection.authenticate.side_effect = error
 
         with pytest.raises(APIAuthenticationError):
-            get_api_connection(mock_app_config, mock_logger)
+            initialize_api_connection(mock_app_config, mock_logger)
 
         mock_logger.log.assert_has_calls(
             [
@@ -574,9 +508,5 @@ def test_get_api_connection_authentication_error(mock_app_config, mock_logger):
             ]
         )
 
-        mock_ThreeCXApiConnection_class.assert_called_once_with(
-            server_url="http://example.com"
-        )
-        mock_api_connection.authenticate.assert_called_once_with(
-            username="user", password="pass"
-        )
+        mock_ThreeCXApiConnection_class.assert_called_once_with(server_url="http://example.com")
+        mock_api_connection.authenticate.assert_called_once_with(username="user", password="pass")

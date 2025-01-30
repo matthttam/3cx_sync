@@ -124,12 +124,12 @@ class App(tk.Tk, Window):
         self.destroy()
 
     def handle_csv_sync_click(self) -> None:
-        window_sync = WindowSync(self, self.logger)
+        window_sync = WindowSync(self)
         window_sync.start_sync()
 
     def run_sync_in_thread(self) -> None:
         try:
-            run_sync(sync_source=SyncCSV, logger=self.logger)
+            run_sync(sync_source=SyncCSV, logger=self.logger, on_sync_initialized=self.on_sync_initialized)
         finally:
             self.sync_running = False
 
@@ -147,3 +147,6 @@ class App(tk.Tk, Window):
         csv_mapping = CSVMapping()
         csv_mapping.load()
         csv_mapping.save_to(export_directory)
+
+    def on_sync_initialized(self, sync):
+        self.sync = sync

@@ -623,21 +623,20 @@ class WindowCSVMapping(PopupWindow):
 
 
 class WindowSync(PopupWindow):
-    def __init__(self, master, logger: SyncLogger, *args, **kwargs):
+    def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
         # Set up a protocol to handle the window close event
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
 
         self.resizable(height=False, width=False)
-        self.logger = logger
         self.widgets = WidgetList()
         self.is_paused = False
         self.sync_running = False
 
         self.build_gui()
 
-        self.logger.add_text_window_handler(self.widgets.txt_output)
+        self.master.logger.add_text_window_handler(self.widgets.txt_output)
 
     def build_gui(self):
         # Frame: Window
@@ -676,11 +675,9 @@ class WindowSync(PopupWindow):
         self.is_paused = not self.is_paused
 
         if self.is_paused:
-            self.logger.log(LogLevel.INFO, "Paused by user")
             self.master.sync.pause_sync()
             self.widgets.btn_pause_resume.configure(text="Resume")
         else:
-            self.logger.log(LogLevel.INFO, "Resumed by user")
             self.master.sync.resume_sync()
             self.widgets.btn_pause_resume.configure(text="Pause")
 
@@ -692,5 +689,5 @@ class WindowSync(PopupWindow):
 
     def on_destroy(self):
         self.sync_running = False
-        self.logger.remove_text_window_handler(self.widgets.txt_output)
+        self.master.logger.remove_text_window_handler(self.widgets.txt_output)
         self.destroy()

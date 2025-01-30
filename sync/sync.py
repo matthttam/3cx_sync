@@ -99,23 +99,20 @@ class Sync:
 
     @pause_if_needed
     def initialize_user_comparer(self):
-        return UserComparer(
-            tcx_user_list=self.tcx_user_list, sync_source=self.sync_source
-        )
+        return UserComparer(tcx_user_list=self.tcx_user_list, sync_source=self.sync_source)
 
     def pause_sync(self):
         self.running_event.clear()  # Reset to False
 
     def resume_sync(self):
         self.running_event.set()  # Reset to True
+        self.logger.log(LogLevel.INFO, "Resumed by user")
 
     def get_new_user(self):
         new_user = self.users_resource.get_new_user()
         default_group = self.groups_resource.get_default_group()
         new_user["PrimaryGroupId"] = default_group.Id
-        new_user["Groups"].append(
-            {"GroupId": default_group.Id, "Rights": {"RoleName": "users"}}
-        )
+        new_user["Groups"].append({"GroupId": default_group.Id, "Rights": {"RoleName": "users"}})
         return new_user
 
     @pause_if_needed
@@ -130,9 +127,7 @@ class Sync:
             new_user_dict = self.get_new_user()
             merged_user_dict = new_user_dict | user.model_dump()
             self.users_resource.create_user(merged_user_dict)
-            self.logger.log(
-                LogLevel.INFO, f"Created 3CX user {merged_user_dict['Number']}"
-            )
+            self.logger.log(LogLevel.INFO, f"Created 3CX user {merged_user_dict['Number']}")
 
         except UserCreateError as e:
             self.logger.log(LogLevel.ERROR, str(e))
@@ -145,9 +140,7 @@ class Sync:
     @pause_if_needed
     def update_user(self, user_change_detail: UserChangeDetail):
         try:
-            self.logger.log(
-                LogLevel.INFO, f"Updating 3CX user {user_change_detail.Number}"
-            )
+            self.logger.log(LogLevel.INFO, f"Updating 3CX user {user_change_detail.Number}")
             self.logger.log(LogLevel.INFO, f"Changing {str(user_change_detail)}")
             self.users_resource.update_user(user_change_detail.user_to_update)
             self.logout_user_hotdesks_on_disable(user_change_detail)
@@ -155,15 +148,10 @@ class Sync:
             self.logger.log(LogLevel.ERROR, str(e))
 
     @pause_if_needed
-    def logout_user_hotdesks_on_disable(
-        self, user_change_detail: UserChangeDetail
-    ) -> None:
+    def logout_user_hotdesks_on_disable(self, user_change_detail: UserChangeDetail) -> None:
         # If the option to log out hotdesk on disable is enabled, and the user is being disabled
         # log the user out of any assigned hotdesks
-        if (
-            self.app_config.logout_hotdesk_on_disable
-            and user_change_detail.is_disabling
-        ):
+        if self.app_config.logout_hotdesk_on_disable and user_change_detail.is_disabling:
             try:
                 self._logout_user_hotdesks_by_number(user_change_detail.Number)
             except UserHotdeskLogoutError as e:
@@ -173,10 +161,8 @@ class Sync:
 
     @pause_if_needed
     def _logout_user_hotdesks_by_number(self, user_number: str) -> None:
-        hotdesk_user_collection_response = (
-            self.users_resource.get_hotdesks_by_assigned_user_number(
-                user_number=user_number
-            )
+        hotdesk_user_collection_response = self.users_resource.get_hotdesks_by_assigned_user_number(
+            user_number=user_number
         )
         if not hotdesk_user_collection_response.value:
             self.logger.log(
@@ -193,7 +179,7 @@ class Sync:
             )
             self.users_resource.clear_hotdesk_assignment(hotdesk_user)
 
-    def sync(self):
+    def run(self):
         self.initialize_sync_source()
         self.source_user_list = self.sync_source.get_source_users()
         self.tcx_user_list = self.get_users()
@@ -206,23 +192,49 @@ class Sync:
         self.logger.log(LogLevel.INFO, "Sync Complete")
 
     def _pause_if_needed(self):
+        if not self.running_event.is_set():
+            self.logger.log(LogLevel.INFO, "Paused by user")
         self.running_event.wait()  # Block thread if False
 
 
-def run_sync(sync_source: SyncSourceStrategy, logger: SyncLogger):
+def run_sync(sync_source: SyncSourceStrategy, logger: SyncLogger, on_sync_initialized: callable = None):
+    """
+    Runs the synchronization process using the provided sync source strategy and logger.
+
+    Args:
+        sync_source (SyncSourceStrategy): The strategy to use for syncing data.
+        logger (SyncLogger): The logger to use for logging messages.
+        on_sync_initialized (callable, optional): A callback function to be called once the sync is initialized. Defaults to None.
+
+    Raises:
+        APIAuthenticationError: If there is an authentication error with the API.
+        Exception: For any other exceptions that occur during the sync process.
+    """
     try:
         logger.log(LogLevel.INFO, "Initializing Sync")
-        app_config = get_app_config(logger)
-        api_connection = get_api_connection(app_config, logger)
-        sync = Sync(api_connection, app_config, sync_source(logger), logger)
-        sync.sync()
+        app_config = initialize_app_config(logger)
+        api_connection = initialize_api_connection(app_config, logger)
+        sync_source = create_sync_source(sync_source, logger)
+        sync = Sync(api_connection, app_config, sync_source, logger)
+
+        # Call callback if provided
+        if on_sync_initialized:
+            on_sync_initialized(sync)
+        sync.run()
     except APIAuthenticationError:
         logger.log(LogLevel.ERROR, "Failed to sync. Unable to authenticate.")
     except Exception as e:
         logger.log(LogLevel.ERROR, f"Failed to sync. {e}")
 
 
-def get_app_config(logger: SyncLogger):
+def create_sync_source(sync_source: SyncSourceStrategy, logger: SyncLogger):
+    logger.log(LogLevel.INFO, "Initializing Sync Source")
+    sync_source = sync_source(logger)
+    logger.log(LogLevel.INFO, "Sync Source Initialized")
+    return sync_source
+
+
+def initialize_app_config(logger: SyncLogger):
     logger.log(LogLevel.INFO, "Loading App Config")
     app_config = AppConfig()
     app_config.load()
@@ -230,7 +242,7 @@ def get_app_config(logger: SyncLogger):
     return app_config
 
 
-def get_api_connection(app_config, logger):
+def initialize_api_connection(app_config, logger):
     logger.log(LogLevel.INFO, "Initializing API Connection")
     api_connection = ThreeCXApiConnection(server_url=app_config.server_url)
     logger.log(LogLevel.INFO, "API Connection Initialized")
