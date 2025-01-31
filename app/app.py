@@ -3,12 +3,13 @@ import sys
 import tkinter as tk
 from tkinter import ttk
 from tkinter.filedialog import askdirectory
+from threading import Thread
 
 from app.mapping import CSVMapping
 from app.windows import WindowCSVMapping, WindowAppConfig, Window, WindowSync
 from app.config import AppConfig
 from app.widgets import WidgetList
-from sync.sync_strategy import SyncCSV
+from sync.sync_strategy import SyncCSV, SyncSourceStrategy
 from sync.sync import run_sync
 from sync.logging import SyncLogger
 
@@ -24,9 +25,10 @@ class App(tk.Tk, Window):
 
         self.widgets = WidgetList()
         self.is_paused = False
-        self.sync_running = False
         self.app_config = app_config
         self.logger = logger
+        self.sync = None
+        self.sync_thread = None
 
         # Load the theme and apply styles
         self.load_theme()
@@ -125,13 +127,9 @@ class App(tk.Tk, Window):
 
     def handle_csv_sync_click(self) -> None:
         window_sync = WindowSync(self)
-        window_sync.start_sync()
-
-    def run_sync_in_thread(self) -> None:
-        try:
-            run_sync(sync_source=SyncCSV, logger=self.logger, on_sync_initialized=self.on_sync_initialized)
-        finally:
-            self.sync_running = False
+        self.sync_thread = Thread(target=run_sync, args=(SyncCSV, self.logger, self.on_sync_initialized))
+        window_sync.periodic_update()
+        self.sync_thread.start()
 
     def handle_csv_export_configs_click(self) -> None:
         export_directory = askdirectory()
@@ -150,3 +148,29 @@ class App(tk.Tk, Window):
 
     def on_sync_initialized(self, sync):
         self.sync = sync
+
+    def resume_sync(self):
+        if not self.sync:
+            return
+        self.sync.resume()
+
+    def pause_sync(self):
+        if not self.sync:
+            return
+        self.sync.pause()
+
+    def toggle_sync_state(self):
+        if not self.sync:
+            return
+        if self.sync.is_paused:
+            self.sync.resume()
+        else:
+            self.sync.pause()
+
+    def terminate_sync(self):
+        if not self.sync:
+            return
+        self.sync.terminate()
+        self.sync.running_event.set()
+        # if self.sync_thread.is_alive():
+        #    self.sync_thread.join()

@@ -628,12 +628,8 @@ class WindowSync(PopupWindow):
 
         # Set up a protocol to handle the window close event
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
-
         self.resizable(height=False, width=False)
         self.widgets = WidgetList()
-        self.is_paused = False
-        self.sync_running = False
-
         self.build_gui()
 
         self.master.logger.add_text_window_handler(self.widgets.txt_output)
@@ -663,31 +659,28 @@ class WindowSync(PopupWindow):
         self.widgets.frm_navigation = ttk.Frame(self)
         self.widgets.frm_navigation.pack(side="bottom", anchor="e", pady=5)
 
-    def start_sync(self):
-        self.sync_running = True
-        sync_thread = Thread(target=self.master.run_sync_in_thread)
-        sync_thread.start()
-        self.periodic_update()
-
     def handle_pause_resume(self):
-        if not self.sync_running:
+        if not self.master.sync:
             return
-        self.is_paused = not self.is_paused
+        self.master.toggle_sync_state()
+        self.update_btn_pause_resume_text()
 
-        if self.is_paused:
-            self.master.sync.pause_sync()
-            self.widgets.btn_pause_resume.configure(text="Resume")
-        else:
-            self.master.sync.resume_sync()
-            self.widgets.btn_pause_resume.configure(text="Pause")
+    def update_btn_pause_resume_text(self):
+        self.widgets.btn_pause_resume.configure(text="Pause" if not self.master.sync.is_paused else "Resume")
 
     def periodic_update(self) -> None:
-        if not self.sync_running:
+        if not self.master.sync or self.master.sync.is_terminated:
             return
         self.update()
         self.after(100, self.periodic_update)
 
+    def wait_for_sync_thread(self) -> None:
+        # This will block the main thread until the sync thread is finished
+        if self.master.sync_thread.is_alive():
+            self.master.sync_thread.join()
+
     def on_destroy(self):
-        self.sync_running = False
+        self.master.terminate_sync()
         self.master.logger.remove_text_window_handler(self.widgets.txt_output)
+        self.wait_for_sync_thread()
         self.destroy()

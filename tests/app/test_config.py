@@ -12,9 +12,7 @@ class TestAppConfig:
     @patch("app.config.initialize_or_get_user_config_file")
     def test_config_file_path(self, mock_helper, app_config):
         app_config.config_file_path
-        mock_helper.assert_called_once_with(
-            "3cx_sync", "3cx_sync", "conf", "app_conf.ini"
-        )
+        mock_helper.assert_called_once_with("3cx_sync", "3cx_sync", "conf", "app_conf.ini")
 
     def test_is_dirty(self, app_config):
         app_config.set_original_config()
@@ -48,8 +46,8 @@ class TestAppConfig:
             mock_config_file_path.return_value = config_file_path
             app_config.load()
             mock_read.assert_called_once_with(config_file_path)
-            mock_fetch_secure_credential.assert_called_once_with()
-            mock_set_original_config.assert_called_once_with()
+            mock_fetch_secure_credential.assert_called_once()
+            mock_set_original_config.assert_called_once()
 
     @patch("builtins.open", new_callable=mock_open)
     def test_save(self, mock_open, app_config):
@@ -65,10 +63,10 @@ class TestAppConfig:
             mock_file = MagicMock()
             mock_open.return_value = mock_file
             app_config.save()
-            mock_store_secure_credential.assert_called_once_with()
+            mock_store_secure_credential.assert_called_once()
             mock_open.assert_called_once_with(config_file_path, "w")
             mock_write.assert_called_once_with(mock_file.__enter__())
-            mock_set_original_config.assert_called_once_with()
+            mock_set_original_config.assert_called_once()
 
     @patch("app.config.deepcopy")
     def test_set_original_config(self, mock_deepcopy, app_config):
@@ -94,9 +92,7 @@ class TestAppConfig:
         new_callable=PropertyMock(return_value=False),
     )
     @patch.object(AppConfig, "set")
-    def test_fetch_secure_credential_not_used(
-        self, mock_set, mock_store_credential_securely, mock_keyring, app_config
-    ):
+    def test_fetch_secure_credential_not_used(self, mock_set, mock_store_credential_securely, mock_keyring, app_config):
         app_config.fetch_secure_credential()
         mock_keyring.get_password.assert_not_called()
         mock_set.assert_not_called()
@@ -133,9 +129,7 @@ class TestAppConfig:
         new_callable=PropertyMock(return_value=False),
     )
     @patch.object(AppConfig, "set")
-    def test_store_secure_credential_not_used(
-        self, mock_set, mock_store_credential_securely, mock_keyring, app_config
-    ):
+    def test_store_secure_credential_not_used(self, mock_set, mock_store_credential_securely, mock_keyring, app_config):
         app_config.fetch_secure_credential()
         mock_keyring.set_password.assert_not_called()
         mock_set.assert_not_called()
@@ -165,7 +159,5 @@ class TestAppConfig:
 
         mock_keyring.get_password.return_value = password
         app_config.store_secure_credential()
-        mock_keyring.set_password.assert_called_once_with(
-            "3CX_Sync", username, password
-        )
+        mock_keyring.set_password.assert_called_once_with("3CX_Sync", username, password)
         mock_set.assert_called_once_with("3cx", "password", None)

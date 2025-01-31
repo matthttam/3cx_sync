@@ -169,12 +169,12 @@ class TestSync:
         assert comparer.tcx_user_list == sync.tcx_user_list
         assert comparer.sync_source == sync.sync_source
 
-    def test_pause_sync(self, sync):
-        sync.pause_sync()
+    def test_pause(self, sync):
+        sync.pause()
         assert not sync.running_event.is_set()
 
-    def test_resume_sync(self, sync):
-        sync.resume_sync()
+    def test_resume(self, sync):
+        sync.resume()
         assert sync.running_event.is_set()
 
     def test_get_new_user(self, sync, user_dict):

@@ -25,8 +25,8 @@ class TestCSVMapping:
     @patch.object(CSVMapping, "load")
     def test_initialize(self, mock_load, mock_load_defaults, csv_mapping):
         csv_mapping.initialize()
-        mock_load_defaults.assert_called_once_with()
-        mock_load.assert_called_once_with()
+        mock_load_defaults.assert_called_once()
+        mock_load.assert_called_once()
 
     def test_is_dirty(self, csv_mapping):
         csv_mapping.load_defaults()

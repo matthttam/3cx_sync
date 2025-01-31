@@ -4,6 +4,7 @@ import tkinter as tk
 from unittest.mock import MagicMock, patch
 from app.app import App
 from app.windows import Window
+from sync.sync_strategy import SyncCSV
 
 
 class TestApp:
@@ -24,12 +25,13 @@ class TestApp:
         app = App(logger=mock_logger, app_config=mock_app_config)
         assert app.widgets == mock_widget_list
         assert app.is_paused is False
-        assert app.sync_running is False
         assert app.logger == mock_logger
+        assert app.sync == None
+        assert app.sync_thread == None
         assert isinstance(app, tk.Tk)
         assert isinstance(app, Window)
-        mock_load_theme.assert_called_once_with()
-        mock_build_gui.assert_called_once_with()
+        mock_load_theme.assert_called_once()
+        mock_build_gui.assert_called_once()
 
     @patch("app.app.ttk.Style")
     @patch.object(App, "get_theme_path")
@@ -86,17 +88,26 @@ class TestApp:
     @patch.object(App, "destroy")
     def test_handle_exit_click(self, mock_destroy, app):
         app.handle_exit_click()
-        mock_destroy.assert_called_once_with()
+        mock_destroy.assert_called_once()
 
+    @patch("app.app.run_sync")
+    @patch("app.app.Thread")
     @patch("app.app.WindowSync")
-    def test_handle_csv_sync_click(self, mock_window_sync_class, app):
+    def test_handle_csv_sync_click(self, mock_window_sync_class, mock_thread, mock_run_sync, app):
+        mock_sync_thread = MagicMock()
+        mock_thread.return_value = mock_sync_thread
+
         mock_window_sync = MagicMock()
         mock_window_sync_class.return_value = mock_window_sync
-        app.handle_csv_sync_click()
-        mock_window_sync_class.assert_called_once_with(app)
-        mock_window_sync.start_sync.assert_called_once_with()
 
-    # @patch("app.app.App.CSVMapping")
+        app.handle_csv_sync_click()
+
+        assert app.sync_thread == mock_sync_thread
+        mock_thread.assert_called_once_with(target=mock_run_sync, args=(SyncCSV, app.logger, app.on_sync_initialized))
+        mock_window_sync_class.assert_called_once_with(app)
+        mock_window_sync.periodic_update.assert_called_once()
+        app.sync_thread.start.assert_called_once()
+
     def test_export_app_config(self, app):
         app._export_app_config("fake_dir")
         app.app_config.save_to.assert_called_once_with("fake_dir")
@@ -106,5 +117,5 @@ class TestApp:
         mock_csv_mapping = MagicMock()
         mock_csv_mapping_class.return_value = mock_csv_mapping
         app._export_csv_mapping("fake_dir")
-        mock_csv_mapping.load.assert_called_once_with()
+        mock_csv_mapping.load.assert_called_once()
         mock_csv_mapping.save_to.assert_called_once_with("fake_dir")

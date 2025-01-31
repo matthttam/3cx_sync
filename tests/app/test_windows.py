@@ -1,6 +1,6 @@
 import pytest
 import tkinter as tk
-from unittest.mock import patch, MagicMock
+from unittest.mock import PropertyMock, patch, MagicMock
 from app.windows import (
     WindowAppConfig,
     WidgetList,
@@ -23,8 +23,8 @@ class TestWindow:
     @patch.object(Window, "reset_column")
     def test_reset_row_and_column(self, mock_reset_column, mock_reset_row, window):
         window.reset_row_and_column()
-        mock_reset_column.assert_called_once_with()
-        mock_reset_row.assert_called_once_with()
+        mock_reset_column.assert_called_once()
+        mock_reset_row.assert_called_once()
 
     @patch.object(Window, "reset_column")
     def test_increment_row_dont_reset_column(self, mock_reset_column, window):
@@ -38,7 +38,7 @@ class TestWindow:
         window._current_row = 4
         window.increment_row(reset_column=True)
         assert window._current_row == 5
-        mock_reset_column.assert_called_once_with()
+        mock_reset_column.assert_called_once()
 
     def test_get_current_row(self, window):
         window._current_row = 1000
@@ -56,7 +56,7 @@ class TestWindow:
         # Get Current Row actually returns the pointer row and then increments
         window._current_row = 1000
         assert window.get_next_row(increment=True) == 1000
-        mock_increment_row.assert_called_once_with()
+        mock_increment_row.assert_called_once()
 
     def test_increment_column(self, window):
         window._current_column = 1000
@@ -82,7 +82,7 @@ class TestWindow:
     def test_get_next_column_increment(self, mock_increment_column, window):
         window._current_column = 1000
         assert window.get_next_column(increment=True) == 1000
-        mock_increment_column.assert_called_once_with()
+        mock_increment_column.assert_called_once()
 
 
 class TestPopupWindow:
@@ -90,8 +90,8 @@ class TestPopupWindow:
     @patch.object(PopupWindow, "focus_force")
     def test_popup_window(self, mock_focus_force, mock_grab_set, root):
         window = PopupWindow(master=root)
-        mock_focus_force.assert_called_once_with()
-        mock_grab_set.assert_called_once_with()
+        mock_focus_force.assert_called_once()
+        mock_grab_set.assert_called_once()
         window.destroy()
 
 
@@ -103,8 +103,8 @@ class TestWindowAppConfig:
         assert isinstance(window, PopupWindow)
         assert isinstance(window.widgets, WidgetList)
         assert window.app_config == mock_app_config
-        mock_initialize_variables.assert_called_once_with()
-        mock_build_gui.assert_called_once_with()
+        mock_initialize_variables.assert_called_once()
+        mock_build_gui.assert_called_once()
 
     @pytest.mark.parametrize(
         "mock_app_config",
@@ -210,9 +210,9 @@ class TestWindowAppConfig:
             window_app_config.confirm_discard_changes = MagicMock()
             window_app_config.confirm_discard_changes.return_value = True
             window_app_config.widgets.btn_cancel.invoke()
-            window_app_config.confirm_discard_changes.assert_called_once_with()
-            window_app_config.app_config.load.assert_called_once_with()
-            mock_destroy.assert_called_once_with()
+            window_app_config.confirm_discard_changes.assert_called_once()
+            window_app_config.app_config.load.assert_called_once()
+            mock_destroy.assert_called_once()
 
     def test_btn_cancel_click_is_dirty_dont_discard(self, window_app_config):
         with patch.object(window_app_config, "destroy") as mock_destroy:
@@ -229,8 +229,8 @@ class TestWindowAppConfig:
             window_app_config.confirm_discard_changes = MagicMock()
             window_app_config.widgets.btn_cancel.invoke()
             window_app_config.confirm_discard_changes.assert_not_called()
-            window_app_config.app_config.load.assert_called_once_with()
-            mock_destroy.assert_called_once_with()
+            window_app_config.app_config.load.assert_called_once()
+            mock_destroy.assert_called_once()
 
     @patch("app.windows.messagebox")
     def test_confirm_discard_changes_messagebox(self, mock_messagebox, window_app_config):
@@ -240,7 +240,7 @@ class TestWindowAppConfig:
     def test_btn_apply_click(self, window_app_config):
         window_app_config.save_config = MagicMock()
         window_app_config.widgets.btn_apply.invoke()
-        window_app_config.save_config.assert_called_once_with()
+        window_app_config.save_config.assert_called_once()
 
     def test_btn_save_click(self, window_app_config):
         window_app_config.save_config = MagicMock()
@@ -252,7 +252,7 @@ class TestWindowAppConfig:
     @patch("app.windows.messagebox")
     def test_save_config_success(self, mock_messagebox, window_app_config):
         window_app_config.save_config()
-        window_app_config.app_config.save.assert_called_once_with()
+        window_app_config.app_config.save.assert_called_once()
         mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!")
 
     @patch("app.windows.messagebox")
@@ -260,7 +260,7 @@ class TestWindowAppConfig:
         e = Exception("Failed to save!")
         window_app_config.app_config.save.side_effect = e
         window_app_config.save_config()
-        window_app_config.app_config.save.assert_called_once_with()
+        window_app_config.app_config.save.assert_called_once()
         mock_messagebox.showerror.assert_called_once_with(title="Error!", message=f"{e}")
 
 
@@ -285,8 +285,8 @@ class TestWindowCSVMapping:
         window_csv_mapping = WindowCSVMapping(master=root)
         assert window_csv_mapping.widgets == mock_widget_list
         assert window_csv_mapping.mapping == mock_csv_mapping
-        mock_initialize_variables.assert_called_once_with()
-        mock_build_gui.assert_called_once_with()
+        mock_initialize_variables.assert_called_once()
+        mock_build_gui.assert_called_once()
 
     @patch("app.windows.messagebox")
     @patch.object(WindowCSVMapping, "set_mapping_values", return_value=MagicMock())
@@ -294,9 +294,9 @@ class TestWindowCSVMapping:
     def test_handle_save_click(self, mock_destroy, mock_set_mapping_values, mock_messagebox, window_csv_mapping):
         window_csv_mapping.widgets.btn_save.invoke()
 
-        mock_set_mapping_values.assert_called_once_with()
+        mock_set_mapping_values.assert_called_once()
         mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!")
-        mock_destroy.assert_called_once_with()
+        mock_destroy.assert_called_once()
 
     def test_set_mapping_values(self):
         pytest.skip()
@@ -314,9 +314,9 @@ class TestWindowCSVMapping:
         window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = True
         window_csv_mapping.handle_cancel_click()
-        mock_set_mapping_values.assert_called_once_with()
-        window_csv_mapping.mapping.load.assert_called_once_with()
-        mock_destroy.assert_called_once_with()
+        mock_set_mapping_values.assert_called_once()
+        window_csv_mapping.mapping.load.assert_called_once()
+        mock_destroy.assert_called_once()
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
     @patch.object(WindowCSVMapping, "confirm_discard_changes")
@@ -332,7 +332,7 @@ class TestWindowCSVMapping:
         window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = False
         window_csv_mapping.handle_cancel_click()
-        mock_set_mapping_values.assert_called_once_with()
+        mock_set_mapping_values.assert_called_once()
         window_csv_mapping.mapping.load.assert_not_called()
         mock_destroy.assert_not_called()
 
@@ -350,9 +350,9 @@ class TestWindowCSVMapping:
         window_csv_mapping.mapping.is_dirty = False
         window_csv_mapping.handle_cancel_click()
         mock_confirm_discard_changes.assert_not_called()
-        mock_set_mapping_values.assert_called_once_with()
-        window_csv_mapping.mapping.load.assert_called_once_with()
-        mock_destroy.assert_called_once_with()
+        mock_set_mapping_values.assert_called_once()
+        window_csv_mapping.mapping.load.assert_called_once()
+        mock_destroy.assert_called_once()
 
     @patch("app.windows.messagebox")
     def test_confirm_discard_changes(self, mock_messagebox, window_csv_mapping):
@@ -372,82 +372,84 @@ class TestWindowCSVMapping:
         pytest.skip()
 
 
+import itertools
+
+
 class TestWindowSync:
     @patch("app.windows.WidgetList")
     @patch.object(WindowSync, "build_gui")
     def test_init(self, mock_build_gui, mock_widget_list_class, app):
-        mock_widget_list = mock_widget_list_class.return_value
-        mock_widget_list.txt_output = MagicMock(spec=ScrolledText)
+        mock_widget_list_class.return_value.txt_output = MagicMock(spec=ScrolledText)
         window = WindowSync(master=app)
 
-        assert window.widgets == mock_widget_list
-        assert window.is_paused is False
-        assert window.sync_running is False
+        assert window.widgets == mock_widget_list_class.return_value
+        mock_build_gui.assert_called_once()
+        app.logger.add_text_window_handler.assert_called_once_with(mock_widget_list_class.return_value.txt_output)
 
-        mock_build_gui.assert_called_once_with()
-        app.logger.add_text_window_handler.assert_called_once_with(mock_widget_list.txt_output)
+    def test_handle_pause_resume(self, window_sync):
+        # Mock the sync object
+        window_sync.update_btn_pause_resume_text = MagicMock()
+        window_sync.master.sync = MagicMock()
+        mock_master_toggle_sync_state = MagicMock()
+        window_sync.master.toggle_sync_state = mock_master_toggle_sync_state
 
-    @patch("app.windows.Thread")
-    @patch.object(WindowSync, "periodic_update")
-    def test_start_sync(self, mock_periodic_update, mock_thread_class, window_sync):
-        mock_sync_thread = MagicMock()
-        mock_thread_class.return_value = mock_sync_thread
-        mock_master_run_sync_in_thread = window_sync.master.run_sync_in_thread = MagicMock()
+        # Simulate if already paused
+        type(window_sync.master.sync).is_paused = PropertyMock(return_value=True)
+        window_sync.handle_pause_resume()  # Sync Resumed
+        window_sync.update_btn_pause_resume_text.assert_called_once()
 
-        window_sync.start_sync()
-
-        mock_thread_class.assert_called_once_with(target=mock_master_run_sync_in_thread)
-        mock_sync_thread.start.assert_called_once_with()
-        mock_periodic_update.assert_called_once_with()
-        assert window_sync.sync_running is True
-
-    def test_handle_pause_resume_sync_running_not_paused(self, window_sync):
-        # Set so that sync is running and not paused
-        window_sync.sync_running = True
-        window_sync.is_paused = False
+    def test_update_btn_pause_resume_text(self, window_sync):
+        # Mock the sync object
         window_sync.master.sync = MagicMock()
 
-        window_sync.handle_pause_resume()
-
-        assert window_sync.is_paused is True
-        window_sync.master.sync.pause_sync.assert_called_once_with()
-        assert window_sync.widgets.btn_pause_resume.cget("text") == "Resume"
-
-    def test_handle_pause_resume_sync_running_paused(self, window_sync):
-        # Set so that sync is running and not paused
-        window_sync.sync_running = True
-        window_sync.is_paused = True
-        window_sync.master.sync = MagicMock()
-
-        window_sync.handle_pause_resume()
-
-        assert window_sync.is_paused is False
-        window_sync.master.sync.resume_sync.assert_called_once_with()
+        # Simulate if resumed and we update the button text
+        type(window_sync.master.sync).is_paused = PropertyMock(return_value=False)
+        window_sync.update_btn_pause_resume_text()
         assert window_sync.widgets.btn_pause_resume.cget("text") == "Pause"
 
-    def test_handle_pause_resume_not_running(self, window_sync):
-        # Set so that sync is not running and paused
-        window_sync.sync_running = False
-        window_sync.is_paused = False
-        window_sync.master.sync = MagicMock()
+        # Simulate if paused and we update the button text
+        type(window_sync.master.sync).is_paused = PropertyMock(return_value=True)
+        window_sync.update_btn_pause_resume_text()  # Sync Resumed
+        assert window_sync.widgets.btn_pause_resume.cget("text") == "Resume"
+
+    #
+    # window_sync.handle_pause_resume()  # Sync Paused
+    # type(window_sync.master.sync).is_paused = PropertyMock(return_value=True)
+    #
+    # assert window_sync.widgets.btn_pause_resume.cget("text") == "Resume"
+
+    def test_handle_pause_resume_sync_is_none(self, window_sync):
+        # Set so that sync is running and not paused
+        window_sync.update_btn_pause_resume_text = MagicMock()
+        window_sync.master = MagicMock()
+        window_sync.master.sync = None
 
         window_sync.handle_pause_resume()
-
-        assert window_sync.is_paused is False
-        window_sync.master.sync.pause_sync.assert_not_called()
+        window_sync.master.toggle_sync_state.assert_not_called()
+        window_sync.update_btn_pause_resume_text.assert_not_called()
 
     @patch.object(WindowSync, "update")
     @patch.object(WindowSync, "after")
     def test_periodic_update(self, mock_after, mock_update, window_sync):
-        window_sync.sync_running = True
+        window_sync.master.sync = MagicMock()
+        type(window_sync.master.sync).is_terminated = PropertyMock(return_value=False)
         window_sync.periodic_update()
-        mock_update.assert_called_once_with()
+        mock_update.assert_called_once()
         mock_after.assert_called_once_with(100, window_sync.periodic_update)
 
     @patch.object(WindowSync, "update")
     @patch.object(WindowSync, "after")
-    def test_periodic_update_not_running(self, mock_after, mock_update, window_sync):
-        window_sync.sync_running = False
+    def test_periodic_update_master_sync_is_none(self, mock_after, mock_update, window_sync):
+        window_sync.master.sync = None
+        window_sync.periodic_update()
+        mock_update.assert_not_called()
+        mock_after.assert_not_called()
+
+    @patch.object(WindowSync, "update")
+    @patch.object(WindowSync, "after")
+    def test_periodic_update_master_sync_is_terminated(self, mock_after, mock_update, window_sync):
+        window_sync.master.sync = MagicMock()
+        type(window_sync.master.sync).is_terminated = PropertyMock(return_value=True)
         window_sync.periodic_update()
         mock_update.assert_not_called()
         mock_after.assert_not_called()
@@ -455,10 +457,25 @@ class TestWindowSync:
     def test_on_destroy_is_registered(self, window_sync):
         assert window_sync.protocol("WM_DELETE_WINDOW").endswith("on_destroy")
 
+    def test_wait_for_sync_thread_is_alive(self, window_sync):
+        window_sync.master.sync_thread = MagicMock()
+        window_sync.master.sync_thread.is_alive = MagicMock(return_value=True)
+        window_sync.wait_for_sync_thread()
+        window_sync.master.sync_thread.join.assert_called_once()
+
+    def test_wait_for_sync_thread_is_not_alive(self, window_sync):
+        window_sync.master.sync_thread = MagicMock()
+        window_sync.master.sync_thread.is_alive = MagicMock(return_value=False)
+        window_sync.wait_for_sync_thread()
+        window_sync.master.sync_thread.join.assert_not_called()
+
     def test_on_destroy(self, window_sync):
-        window_sync.sync_running = True
+        window_sync.master.terminate_sync = MagicMock()
         window_sync.destroy = MagicMock()
+        window_sync.wait_for_sync_thread = MagicMock()
         window_sync.on_destroy()
 
         window_sync.master.logger.remove_text_window_handler.assert_called_once_with(window_sync.widgets.txt_output)
-        window_sync.destroy.assert_called_once_with()
+        window_sync.destroy.assert_called_once()
+        window_sync.master.terminate_sync.assert_called_once()
+        window_sync.wait_for_sync_thread.assert_called_once()

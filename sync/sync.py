@@ -31,6 +31,9 @@ class Sync:
         self.running_event = threading.Event()
         self.running_event.set()  # Allow sync to run initially
 
+        # Event to stop the sync process if early termination is triggered
+        self.terminate_event = threading.Event()
+
         self.logger = logger
         self.sync_source = sync_source
         self.app_config = app_config
@@ -40,22 +43,30 @@ class Sync:
         self.users_resource = UsersResource(api=self.api_connection)
         self.groups_resource = GroupsResource(api=self.api_connection)
 
+    @property
+    def is_terminated(self):
+        return self.terminate_event.is_set()
+
+    @property
+    def is_paused(self):
+        return not self.running_event.is_set()
+
     @staticmethod
-    def pause_if_needed(method):
+    def handle_interupts(method):
         def wrapper(self, *args, **kwargs):
-            self._pause_if_needed()
+            self._handle_interupts()
             result = method(self, *args, **kwargs)
-            self._pause_if_needed()
+            self._handle_interupts()
             return result
 
         return wrapper
 
-    @pause_if_needed
+    @handle_interupts
     def initialize_sync_source(self):
         self.logger.log(LogLevel.INFO, "Initializing Sync Source")
         self.sync_source.initialize()
 
-    @pause_if_needed
+    @handle_interupts
     def get_users(self) -> list[User]:
         try:
             self.logger.log(LogLevel.INFO, "Fetching Users From 3CX")
@@ -73,7 +84,7 @@ class Sync:
         )
         return user_collection_response.value
 
-    @pause_if_needed
+    @handle_interupts
     def handle_users_to_update(self, user_change_details):
         if len(user_change_details) > 0:
             self.logger.log(
@@ -85,7 +96,7 @@ class Sync:
         else:
             self.logger.log(LogLevel.INFO, "No users to update.")
 
-    @pause_if_needed
+    @handle_interupts
     def handle_users_to_create(self, users_to_create):
         if len(users_to_create) > 0:
             self.logger.log(
@@ -97,14 +108,14 @@ class Sync:
         else:
             self.logger.log(LogLevel.INFO, "No users to create.")
 
-    @pause_if_needed
+    @handle_interupts
     def initialize_user_comparer(self):
         return UserComparer(tcx_user_list=self.tcx_user_list, sync_source=self.sync_source)
 
-    def pause_sync(self):
+    def pause(self):
         self.running_event.clear()  # Reset to False
 
-    def resume_sync(self):
+    def resume(self):
         self.running_event.set()  # Reset to True
         self.logger.log(LogLevel.INFO, "Resumed by user")
 
@@ -115,12 +126,12 @@ class Sync:
         new_user["Groups"].append({"GroupId": default_group.Id, "Rights": {"RoleName": "users"}})
         return new_user
 
-    @pause_if_needed
+    @handle_interupts
     def create_users(self, users: list[User]):
         for user in users:
             self.create_user(user)
 
-    @pause_if_needed
+    @handle_interupts
     def create_user(self, user: User):
         try:
             self.logger.log(LogLevel.INFO, f"Creating 3CX user {user.Number}")
@@ -132,12 +143,12 @@ class Sync:
         except UserCreateError as e:
             self.logger.log(LogLevel.ERROR, str(e))
 
-    @pause_if_needed
+    @handle_interupts
     def update_users(self, user_change_details: list[UserChangeDetail]) -> None:
         for user_change_detail in user_change_details:
             self.update_user(user_change_detail)
 
-    @pause_if_needed
+    @handle_interupts
     def update_user(self, user_change_detail: UserChangeDetail):
         try:
             self.logger.log(LogLevel.INFO, f"Updating 3CX user {user_change_detail.Number}")
@@ -147,7 +158,7 @@ class Sync:
         except UserUpdateError as e:
             self.logger.log(LogLevel.ERROR, str(e))
 
-    @pause_if_needed
+    @handle_interupts
     def logout_user_hotdesks_on_disable(self, user_change_detail: UserChangeDetail) -> None:
         # If the option to log out hotdesk on disable is enabled, and the user is being disabled
         # log the user out of any assigned hotdesks
@@ -159,7 +170,7 @@ class Sync:
             except UserHotdeskLookupError as e:
                 self.logger.log(LogLevel.ERROR, str(e))
 
-    @pause_if_needed
+    @handle_interupts
     def _logout_user_hotdesks_by_number(self, user_number: str) -> None:
         hotdesk_user_collection_response = self.users_resource.get_hotdesks_by_assigned_user_number(
             user_number=user_number
@@ -183,16 +194,27 @@ class Sync:
         self.initialize_sync_source()
         self.source_user_list = self.sync_source.get_source_users()
         self.tcx_user_list = self.get_users()
+
+        # Create a UserComparer object to compare users from the source and 3CX
         user_comparer = self.initialize_user_comparer()
         user_change_details = user_comparer.get_user_change_details()
         user_change_details.sort(key=lambda x: x.user_to_update.Number)
+
+        # Perform User Updates
         self.handle_users_to_update(user_change_details)
+
+        # Perform User Creates
         users_to_create = user_comparer.get_users_to_create()
         self.handle_users_to_create(users_to_create)
         self.logger.log(LogLevel.INFO, "Sync Complete")
 
-    def _pause_if_needed(self):
-        if not self.running_event.is_set():
+    def terminate(self):
+        self.terminate_event.set()  # Set to True
+
+    def _handle_interupts(self):
+        if self.is_terminated:
+            raise Exception("Sync terminated by user")
+        if self.is_paused:
             self.logger.log(LogLevel.INFO, "Paused by user")
         self.running_event.wait()  # Block thread if False
 
