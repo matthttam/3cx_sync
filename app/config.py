@@ -33,9 +33,7 @@ class AppConfig(ConfigParser):
 
     @property
     def config_file_path(self) -> str:
-        return initialize_or_get_user_config_file(
-            "3cx_sync", "3cx_sync", "conf", self.filename
-        )
+        return initialize_or_get_user_config_file("3cx_sync", "3cx_sync", "conf", self.filename)
 
     @property
     def is_dirty(self) -> bool:
@@ -76,8 +74,8 @@ class AppConfig(ConfigParser):
             self.write(config_file)
         self.set_original_config()
 
-    def save_to(self, path) -> None:
-        with open(os.path.join(path, self.filename), "w") as config_file:
+    def save_to(self, directory) -> None:
+        with open(os.path.join(directory, self.filename), "w") as config_file:
             self.write(config_file)
 
     def set_original_config(self):
@@ -101,7 +99,5 @@ class AppConfig(ConfigParser):
         if not self.store_credential_securely:
             return
         # save credential using keyring
-        keyring.set_password(
-            "3CX_Sync", self.get("3cx", "username"), self.get("3cx", "password")
-        )
+        keyring.set_password("3CX_Sync", self.get("3cx", "username"), self.get("3cx", "password"))
         self.set("3cx", "password", None)

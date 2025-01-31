@@ -16,11 +16,6 @@ def root():
 
 
 @pytest.fixture
-def mock_app():
-    yield MagicMock(spec=App)
-
-
-@pytest.fixture
 def mock_app_config(request):
     mock_app_config = MagicMock(spec=AppConfig)
     if not hasattr(request, "param"):

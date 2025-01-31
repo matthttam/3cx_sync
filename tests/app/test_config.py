@@ -1,3 +1,4 @@
+import os
 from app.config import AppConfig
 from unittest.mock import MagicMock, patch, PropertyMock, mock_open
 
@@ -49,24 +50,45 @@ class TestAppConfig:
             mock_fetch_secure_credential.assert_called_once()
             mock_set_original_config.assert_called_once()
 
+    @patch("app.config.AppConfig.set_original_config")
+    @patch("app.config.AppConfig.store_secure_credential")
+    @patch("app.config.AppConfig.config_file_path", new_callable=PropertyMock)
+    @patch("app.config.AppConfig.write")
     @patch("builtins.open", new_callable=mock_open)
-    def test_save(self, mock_open, app_config):
-        with patch("app.config.AppConfig.write") as mock_write, patch(
-            "app.config.AppConfig.config_file_path", new_callable=PropertyMock
-        ) as mock_config_file_path, patch(
-            "app.config.AppConfig.store_secure_credential"
-        ) as mock_store_secure_credential, patch(
-            "app.config.AppConfig.set_original_config"
-        ) as mock_set_original_config:
-            config_file_path = "/test/path"
-            mock_config_file_path.return_value = config_file_path
+    def test_save(
+        self,
+        mock_open,
+        mock_write,
+        mock_config_file_path,
+        mock_store_secure_credential,
+        mock_set_original_config,
+        app_config,
+    ):
+        config_file_path = "/test/path"
+        mock_config_file_path.return_value = config_file_path
+        mock_file = MagicMock()
+        mock_open.return_value = mock_file
+        app_config.save()
+        mock_store_secure_credential.assert_called_once()
+        mock_open.assert_called_once_with(config_file_path, "w")
+        mock_write.assert_called_once_with(mock_file.__enter__())
+        mock_set_original_config.assert_called_once()
+
+    @patch("app.config.AppConfig.set_original_config")
+    @patch("app.config.AppConfig.write")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_save_to(self, mock_open, mock_write, mock_set_original_config, app_config):
+        with patch("app.config.AppConfig.set_original_config") as mock_set_original_config:
+            directory = "/test/path"
+
             mock_file = MagicMock()
             mock_open.return_value = mock_file
-            app_config.save()
-            mock_store_secure_credential.assert_called_once()
-            mock_open.assert_called_once_with(config_file_path, "w")
+            app_config.save_to(directory)
+            file_path = os.path.join(directory, app_config.filename)
+
+            mock_open.assert_called_once_with(file_path, "w")
             mock_write.assert_called_once_with(mock_file.__enter__())
-            mock_set_original_config.assert_called_once()
+            mock_set_original_config.assert_not_called()
 
     @patch("app.config.deepcopy")
     def test_set_original_config(self, mock_deepcopy, app_config):
@@ -129,7 +151,7 @@ class TestAppConfig:
         new_callable=PropertyMock(return_value=False),
     )
     @patch.object(AppConfig, "set")
-    def test_store_secure_credential_not_used(self, mock_set, mock_store_credential_securely, mock_keyring, app_config):
+    def test_fetch_secure_credential_not_used(self, mock_set, mock_store_credential_securely, mock_keyring, app_config):
         app_config.fetch_secure_credential()
         mock_keyring.set_password.assert_not_called()
         mock_set.assert_not_called()
@@ -161,3 +183,15 @@ class TestAppConfig:
         app_config.store_secure_credential()
         mock_keyring.set_password.assert_called_once_with("3CX_Sync", username, password)
         mock_set.assert_called_once_with("3cx", "password", None)
+
+    @patch("app.config.keyring")
+    @patch.object(
+        AppConfig,
+        "store_credential_securely",
+        new_callable=PropertyMock(return_value=False),
+    )
+    @patch.object(AppConfig, "set")
+    def test_store_secure_credential_not_used(self, mock_set, mock_store_credential_securely, mock_keyring, app_config):
+        app_config.store_secure_credential()
+        mock_keyring.set_password.assert_not_called()
+        mock_set.assert_not_called()
