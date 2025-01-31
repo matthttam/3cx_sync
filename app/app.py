@@ -149,16 +149,6 @@ class App(tk.Tk, Window):
     def on_sync_initialized(self, sync):
         self.sync = sync
 
-    def resume_sync(self):
-        if not self.sync:
-            return
-        self.sync.resume()
-
-    def pause_sync(self):
-        if not self.sync:
-            return
-        self.sync.pause()
-
     def toggle_sync_state(self):
         if not self.sync:
             return

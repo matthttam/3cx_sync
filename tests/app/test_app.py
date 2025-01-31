@@ -2,6 +2,8 @@ import os
 import sys
 import tkinter as tk
 from unittest.mock import MagicMock, patch
+
+from pytest import skip
 from app.app import App
 from app.windows import Window
 from sync.sync_strategy import SyncCSV
@@ -119,3 +121,25 @@ class TestApp:
         app._export_csv_mapping("fake_dir")
         mock_csv_mapping.load.assert_called_once()
         mock_csv_mapping.save_to.assert_called_once_with("fake_dir")
+
+    def test_toggle_sync_state(self, app):
+        skip()
+
+    def test_toggle_sync_state_sync_is_none(self, app):
+        # Basically just make sure no errors are raised and nothing is returned.
+        app.sync = None
+        assert app.toggle_sync_state() is None
+
+    def test_terminate_sync_sync_is_none(self, app):
+        # Basically just make sure no errors are raised and nothing is returned.
+        app.sync = None
+        assert app.terminate_sync() is None
+
+    def test_terminate_sync(self, app):
+        mock_sync = MagicMock()
+        app.sync = mock_sync
+
+        app.terminate_sync()
+
+        mock_sync.terminate.assert_called_once()
+        mock_sync.running_event.set.assert_called_once()
