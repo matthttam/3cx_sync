@@ -1,8 +1,9 @@
 import pytest
 import json
 from requests.exceptions import HTTPError
-from unittest.mock import MagicMock, patch, call
-from sync.sync import Sync, run_sync, initialize_api_connection
+from unittest.mock import MagicMock, PropertyMock, patch, call
+from sync.exceptions import ThreadTermination
+from sync.sync import Sync, initialize_app_config, run_sync, initialize_api_connection
 from sync.logging import SyncLogger, LogLevel
 from sync.sync_strategy import SyncSourceStrategy
 from threecxapi.resources.users import UsersResource
@@ -390,13 +391,15 @@ class TestSync:
         mock_app_config = MagicMock()
         mock_api_connection = MagicMock()
         mock_sync_instance = MagicMock()
+        mock_callable = MagicMock(spec=callable)
 
         mock_initialize_app_config.return_value = mock_app_config
         mock_initialize_api_connection.return_value = mock_api_connection
         mock_sync_class.return_value = mock_sync_instance
 
-        run_sync(mock_sync_source, mock_logger)
+        run_sync(mock_sync_source, mock_logger, mock_callable)
 
+        mock_callable.assert_called_once_with(mock_sync_instance)
         mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
         mock_initialize_app_config.assert_called_once_with(mock_logger)
         mock_initialize_api_connection.assert_called_once_with(mock_app_config, mock_logger)
@@ -407,6 +410,25 @@ class TestSync:
             mock_logger,
         )
         mock_sync_instance.run.assert_called_once()
+
+    def test_terminate(self, sync):
+        sync.terminate_event = MagicMock()
+        sync.terminate()
+        sync.terminate_event.set.assert_called_once()
+
+    @patch.object(Sync, "is_terminated", new_callable=PropertyMock(return_value=True))
+    @patch.object(Sync, "is_paused", new_callable=PropertyMock(return_value=False))
+    def test_handle_interupts_terminate(self, mock_is_paused, mock_is_terminated, sync):
+        with pytest.raises(ThreadTermination):
+            sync._handle_interupts()
+
+    @patch.object(Sync, "is_terminated", new_callable=PropertyMock(return_value=False))
+    @patch.object(Sync, "is_paused", new_callable=PropertyMock(return_value=True))
+    def test_handle_interupts_pause(self, mock_is_paused, mock_is_terminated, sync):
+        sync.running_event = MagicMock()
+        sync._handle_interupts()
+        sync.logger.log.assert_called_once_with(LogLevel.INFO, "Paused by user")
+        sync.running_event.wait.assert_called_once()
 
 
 @patch("sync.sync.initialize_app_config")
@@ -517,3 +539,16 @@ def test_get_api_connection_authentication_error(mock_app_config, mock_logger):
 
         mock_ThreeCXApiConnection_class.assert_called_once_with(server_url="http://example.com")
         mock_api_connection.authenticate.assert_called_once_with(username="user", password="pass")
+
+
+@patch("sync.sync.AppConfig")
+def test_initialize_app_config(mock_app_config_class, mock_app_config, mock_logger):
+    mock_app_config_class.return_value = mock_app_config
+
+    result = initialize_app_config(mock_logger)
+
+    mock_app_config.load.assert_called_once()
+    assert result == mock_app_config
+    mock_logger.log.assert_has_calls(
+        [call(LogLevel.INFO, "Loading App Config"), call(LogLevel.INFO, "App Config Loaded")]
+    )

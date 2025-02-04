@@ -71,34 +71,19 @@ class TestUserChangeDetail:
 
 class TestUserComparer:
 
-    class SyncSource(SyncSourceStrategy):
-        @property
-        def mapping(self):
-            return self._mapping
-
-        @mapping.setter
-        def mapping(self, value):
-            self._mapping = value
-
-        def initialize(self):
-            return super().initialize()
-
-        def get_source_users(self):
-            return [
-                User(Id=1, Number="100", FirstName="New Name"),
-                User(Id=2, Number="101", FirstName="Old Name"),
-            ]
-
-        def get_source_groups(self):
-            return [Group(Id=1, Name="Group 1"), Group(Id=2, Name="Group 2")]
-
-        def get_user_update_fields(self):
-            return ["FirstName"]
-
     @pytest.fixture
     def custom_sync_source(self):
         mock_logger = MagicMock(spec=SyncLogger)
-        yield self.SyncSource(mock_logger)
+        mock_sync_source = MagicMock(spec=SyncSourceStrategy, logger=mock_logger)
+        mock_sync_source.get_source_users.return_value = [
+            User(Id=1, Number="100", FirstName="New Name"),
+            User(Id=2, Number="101", FirstName="Old Name"),
+        ]
+        mock_sync_source.get_source_groups = [Group(Id=1, Name="Group 1"), Group(Id=2, Name="Group 2")]
+        mock_sync_source.get_user_update_fields.return_value = ["FirstName"]
+        # mock_sync_source.logger = mock_logger
+        yield mock_sync_source
+        # yield SyncSource(mock_logger)
 
     def test_init(self, custom_sync_source):
         tcx_user_list = [User(Id=1, Number="100"), User(Id=2, Number="101")]

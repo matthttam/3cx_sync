@@ -91,7 +91,8 @@ class AppConfig(ConfigParser):
         if not self.store_credential_securely:
             return
         # get credential using keyring
-        password = keyring.get_password("3CX_Sync", self.get("3cx", "username"))
+        username = self.get("3cx", "username")
+        password = keyring.get_password("3CX_Sync", username)
         self.set("3cx", "password", password)
 
     def store_secure_credential(self):
@@ -99,5 +100,7 @@ class AppConfig(ConfigParser):
         if not self.store_credential_securely:
             return
         # save credential using keyring
-        keyring.set_password("3CX_Sync", self.get("3cx", "username"), self.get("3cx", "password"))
+        username = self.get("3cx", "username")
+        password = self.get("3cx", "password")
+        keyring.set_password("3CX_Sync", username, password)
         self.set("3cx", "password", None)

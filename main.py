@@ -1,9 +1,9 @@
-from app.app import App
 import argparse
-from sync.logging import SyncLogger
+from app.app import App
 from app.config import AppConfig
 from sync.sync import run_sync
 from sync.sync_strategy import SyncCSV
+from sync.logging import LogLevel, SyncLogger
 
 
 def get_app_args():
@@ -22,18 +22,34 @@ def get_app_args():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def run_silent_mode(app_args: argparse.Namespace, logger: SyncLogger):
+    """Runs the sync process in silent mode without GUI."""
+    sync_source = SyncCSV if app_args.mode == "CSV" else None
+    if sync_source:
+        run_sync(sync_source=sync_source, logger=logger)
+    else:
+        logger.log(LogLevel.ERROR, "Invalid mode for silent sync")
+        raise SystemExit("Invalid Arugments")
+
+
+def run_gui_mode(logger: SyncLogger):
+    """Runs the application in GUI mode"""
+    app_config = AppConfig()
+    app_config.load()
+    app = App(logger=logger, app_config=app_config)
+    app.mainloop()
+
+
+def main():
     app_args = get_app_args()
     logger = SyncLogger()
     logger.add_file_handler()
 
     if app_args.silent:
-        if app_args.mode == "CSV":
-            sync_source = SyncCSV
-        run_sync(sync_source=sync_source, logger=logger)
-
+        run_silent_mode(app_args, logger)
     else:
-        app_config = AppConfig()
-        app_config.load()
-        app = App(logger=logger, app_config=app_config)
-        app.mainloop()
+        run_gui_mode(logger)
+
+
+if __name__ == "__main__":
+    main()

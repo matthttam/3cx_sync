@@ -1,6 +1,6 @@
 import os
 from app.config import AppConfig
-from unittest.mock import MagicMock, patch, PropertyMock, mock_open
+from unittest.mock import MagicMock, call, patch, PropertyMock, mock_open
 
 
 class TestAppConfig:
@@ -111,38 +111,21 @@ class TestAppConfig:
     @patch.object(
         AppConfig,
         "store_credential_securely",
-        new_callable=PropertyMock(return_value=False),
-    )
-    @patch.object(AppConfig, "set")
-    def test_fetch_secure_credential_not_used(self, mock_set, mock_store_credential_securely, mock_keyring, app_config):
-        app_config.fetch_secure_credential()
-        mock_keyring.get_password.assert_not_called()
-        mock_set.assert_not_called()
-
-    @patch("app.config.keyring")
-    @patch.object(
-        AppConfig,
-        "store_credential_securely",
         new_callable=PropertyMock(return_value=True),
     )
     @patch.object(AppConfig, "get")
     @patch.object(AppConfig, "set")
-    def test_fetch_secure_credential_is_used(
-        self,
-        mock_set,
-        mock_get,
-        mock_store_credential_securely,
-        mock_keyring,
-        app_config,
+    def test_fetch_secure_credential(
+        self, mock_set, mock_get, mock_store_credential_securely_property, mock_keyring, app_config
     ):
-        username = "test_username"
-        password = "test_password"
-        mock_get.return_value = username
-        mock_keyring.get_password.return_value = password
+        mock_get.return_value = "test_username"
+        mock_keyring.get_password.return_value = "test_password"
+
         app_config.fetch_secure_credential()
+
         mock_get.assert_called_once_with("3cx", "username")
-        mock_keyring.get_password.assert_called_once_with("3CX_Sync", username)
-        mock_set.assert_called_once_with("3cx", "password", password)
+        mock_keyring.get_password.assert_called_once_with("3CX_Sync", "test_username")
+        mock_set.assert_called_once_with("3cx", "password", "test_password")
 
     @patch("app.config.keyring")
     @patch.object(

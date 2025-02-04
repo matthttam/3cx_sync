@@ -1,4 +1,5 @@
 import threading
+from typing import Callable, Optional
 from app.config import AppConfig
 from sync.sync_strategy import SyncSourceStrategy
 from threecxapi.connection import ThreeCXApiConnection
@@ -16,6 +17,7 @@ from threecxapi.resources.exceptions.users_exceptions import (
     UserHotdeskLookupError,
 )
 from sync.logging import SyncLogger, LogLevel
+from sync.exceptions import ThreadTermination
 
 
 class Sync:
@@ -213,20 +215,25 @@ class Sync:
 
     def _handle_interupts(self):
         if self.is_terminated:
-            raise Exception("Sync terminated by user")
+            raise ThreadTermination("Sync terminated by user")
         if self.is_paused:
             self.logger.log(LogLevel.INFO, "Paused by user")
         self.running_event.wait()  # Block thread if False
 
 
-def run_sync(sync_source: SyncSourceStrategy, logger: SyncLogger, on_sync_initialized: callable = None):
+def run_sync(
+    sync_source: SyncSourceStrategy, logger: SyncLogger, on_sync_initialized: Optional[Callable[[Sync], None]] = None
+):
     """
     Runs the synchronization process using the provided sync source strategy and logger.
 
     Args:
         sync_source (SyncSourceStrategy): The strategy to use for syncing data.
         logger (SyncLogger): The logger to use for logging messages.
-        on_sync_initialized (callable, optional): A callback function to be called once the sync is initialized. Defaults to None.
+        on_sync_initialized (callable[[Sync], None], optional):
+            A callback function that is called once the sync is initialized.
+            The function receives a `Sync` instance as its argument.
+            Defaults to None.
 
     Raises:
         APIAuthenticationError: If there is an authentication error with the API.

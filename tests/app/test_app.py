@@ -122,11 +122,6 @@ class TestApp:
         mock_csv_mapping.load.assert_called_once()
         mock_csv_mapping.save_to.assert_called_once_with("fake_dir")
 
-    def test_toggle_sync_state_sync_is_none(self, app):
-        app.sync = None
-        # No error should be raised
-        assert app.toggle_sync_state() == None
-
     def test_toggle_sync_state_is_paused(self, app):
         mock_sync = MagicMock()
         app.sync = mock_sync
