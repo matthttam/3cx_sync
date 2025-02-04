@@ -2,6 +2,7 @@ from argparse import Namespace
 import pytest
 import sys
 from unittest.mock import MagicMock, patch
+from app.config import AppConfig
 from main import get_app_args, main, run_gui_mode, run_silent_mode
 from sync.logging import SyncLogger
 
@@ -89,6 +90,23 @@ def test_main_gui_mode(mock_sync_logger_class, mock_run_silent_mode, mock_run_gu
     mock_run_gui_mode.assert_called_once_with(mock_sync_logger)
 
 
-def test_run_gui_mode():
+@patch("main.App")
+@patch("main.AppConfig")
+def test_run_gui_mode(mock_app_config_class, mock_app):
     mock_logger = MagicMock(spec=SyncLogger)
-    run_gui_mode
+    mock_app_config = MagicMock(spec=AppConfig)
+    mock_app_config_class.return_value = mock_app_config
+
+    run_gui_mode(mock_logger)
+    mock_app_config.load.assert_called_once()
+
+
+# @patch("main.App")
+# @patch("main.AppConfig")
+# def test_run_silent_mode_csv(mock_app_config_class, mock_app):
+#    mock_sync_logger = MagicMock()
+#
+#
+#    mock_sync_logger.add_file_handler.assert_called_once()
+#    mock_run_silent_mode.assert_called_once_with(Namespace(silent=True, mode="CSV"), mock_sync_logger)
+#    mock_run_gui_mode.assert_not_called()
