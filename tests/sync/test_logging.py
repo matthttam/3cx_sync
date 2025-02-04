@@ -165,3 +165,13 @@ class TestSyncLogger:
         # Test logging with additional arguments and keyword arguments
         sync_logger.log("info", "Test message", "arg1", key="value")
         mock_logger.info.assert_called_once_with("Test message", "arg1", key="value")
+
+    def test_remove_text_window_handler(self, sync_logger):
+        mock_text_widget = MagicMock()
+        mock_text_window_handler = MagicMock()
+        sync_logger.logger.handlers = [mock_text_window_handler]
+
+        sync_logger.remove_text_window_handler(mock_text_widget)
+
+        assert mock_text_window_handler not in sync_logger.logger.handlers
+        mock_text_window_handler.close.assert_called_once()

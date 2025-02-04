@@ -122,8 +122,26 @@ class TestApp:
         mock_csv_mapping.load.assert_called_once()
         mock_csv_mapping.save_to.assert_called_once_with("fake_dir")
 
-    def test_toggle_sync_state(self, app):
-        skip()
+    def test_toggle_sync_state_sync_is_none(self, app):
+        app.sync = None
+        # No error should be raised
+        assert app.toggle_sync_state() == None
+
+    def test_toggle_sync_state_is_paused(self, app):
+        mock_sync = MagicMock()
+        app.sync = mock_sync
+        app.sync.is_paused = True
+        app.toggle_sync_state()
+        mock_sync.resume.assert_called_once()
+        mock_sync.pause.assert_not_called()
+
+    def test_toggle_sync_state_is_not_paused(self, app):
+        mock_sync = MagicMock()
+        app.sync = mock_sync
+        app.sync.is_paused = False
+        app.toggle_sync_state()
+        mock_sync.resume.assert_not_called()
+        mock_sync.pause.assert_called_once()
 
     def test_toggle_sync_state_sync_is_none(self, app):
         # Basically just make sure no errors are raised and nothing is returned.
@@ -143,3 +161,32 @@ class TestApp:
 
         mock_sync.terminate.assert_called_once()
         mock_sync.running_event.set.assert_called_once()
+
+    @patch("app.app.askdirectory")
+    @patch.object(App, "_export_app_config")
+    @patch.object(App, "_export_csv_mapping")
+    def test_handle_csv_export_configs_click(
+        self, mock_export_csv_mapping, mock_export_app_config, mock_askdirectory, app
+    ):
+        mock_askdirectory.return_value = "fake_dir"
+        app.handle_csv_export_configs_click()
+        mock_askdirectory.assert_called_once()
+        mock_export_app_config.assert_called_once_with("fake_dir")
+        mock_export_csv_mapping.assert_called_once_with("fake_dir")
+
+    @patch("app.app.askdirectory")
+    @patch.object(App, "_export_app_config")
+    @patch.object(App, "_export_csv_mapping")
+    def test_handle_csv_export_configs_click_no_directory(
+        self, mock_export_csv_mapping, mock_export_app_config, mock_askdirectory, app
+    ):
+        mock_askdirectory.return_value = ""
+        app.handle_csv_export_configs_click()
+        mock_askdirectory.assert_called_once()
+        mock_export_app_config.assert_not_called()
+        mock_export_csv_mapping.assert_not_called()
+
+    def test_on_sync_initialized(self, app):
+        mock_sync = MagicMock()
+        app.on_sync_initialized(mock_sync)
+        assert app.sync == mock_sync

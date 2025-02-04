@@ -61,7 +61,7 @@ class SyncLogger:
         self.logger.addHandler(text_window_handler)
 
     def remove_text_window_handler(self, text_widget):
-        for handler in self.logger.handlers:
+        for handler in list(self.logger.handlers):
             if isinstance(handler, TextWindowHandler) and handler.text_widget == text_widget:
                 self.logger.removeHandler(handler)
 

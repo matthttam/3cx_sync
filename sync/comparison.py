@@ -57,31 +57,21 @@ class UserComparer:
         self.source_user_keys = set(self.source_user_dict.keys())
 
     def _index_users(self, users: list[User], key: str = "Number") -> dict[str, User]:
-        return {
-            getattr(user, key): user
-            for user in users
-            if user is not None and getattr(user, key) is not None
-        }
+        return {getattr(user, key): user for user in users if user is not None and getattr(user, key) is not None}
 
     def get_user_change_details(self) -> list[UserChangeDetail]:
         user_change_details = []
-        user_keys_to_compare = list(
-            self.source_user_keys.intersection(self.tcx_user_keys)
-        )
+        user_keys_to_compare = list(self.source_user_keys.intersection(self.tcx_user_keys))
         update_fields = self.sync_source.get_user_update_fields()
 
         for key in user_keys_to_compare:
-            user_change_detail = self.compare_user(
-                self.tcx_user_dict[key], self.source_user_dict[key], update_fields
-            )
+            user_change_detail = self.compare_user(self.tcx_user_dict[key], self.source_user_dict[key], update_fields)
             if user_change_detail.field_changes:
                 user_change_details.append(user_change_detail)
 
         return user_change_details
 
-    def compare_user(
-        self, tcx_user: User, source_user: User, update_fields: list
-    ) -> UserChangeDetail:
+    def compare_user(self, tcx_user: User, source_user: User, update_fields: list) -> UserChangeDetail:
         updated_fields = {}
         field_changes = {}
 
@@ -92,20 +82,14 @@ class UserComparer:
                 updated_fields[field] = source_value
                 field_changes[field] = FieldChange(old=tcx_value, new=source_value)
 
-        if not update_fields:
-            return None
-
         user_to_update = User(**(tcx_user.model_dump() | updated_fields))
-        return UserChangeDetail(
-            user_to_update=user_to_update, field_changes=field_changes
-        )
+        return UserChangeDetail(user_to_update=user_to_update, field_changes=field_changes)
 
     def get_users_to_create(self) -> list[User]:
         # Determine users to create
         user_keys_to_create = list(self.source_user_keys - self.tcx_user_keys)
         users_to_create = [
-            self.source_user_dict[k]
-            for k in list(set(self.source_user_dict).intersection(user_keys_to_create))
+            self.source_user_dict[k] for k in list(set(self.source_user_dict).intersection(user_keys_to_create))
         ]
         users_to_create.sort(key=lambda x: x.Number)
         return users_to_create
