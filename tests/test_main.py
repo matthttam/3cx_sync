@@ -1,56 +1,52 @@
+import sys
 from argparse import Namespace
 import pytest
-import sys
+from argparse import ArgumentParser, Namespace
 from unittest.mock import MagicMock, patch
 from app.config import AppConfig
-from main import get_app_args, main, run_gui_mode, run_silent_mode
+from main import get_app_args, main, run_gui_mode, run_silent_mode, App
 from sync.logging import SyncLogger
 
 
-def test_get_app_args_no_args():
-    test_args = ["main.py"]
-    with patch.object(sys, "argv", test_args):
-        args = get_app_args()
-        assert not args.silent
-        assert args.mode is None
+@pytest.mark.parametrize(
+    "silent_mode, expected_called_func",
+    [
+        (None, "run_gui_mode"),  # GUI mode → Calls run_gui_mode(logger)
+        (False, "run_gui_mode"),  # GUI mode → Calls run_gui_mode(logger)
+        (True, "run_silent_mode"),  # Silent mode → Calls run_silent_mode(app_args, logger)
+    ],
+)
+@patch("main.run_gui_mode")
+@patch("main.run_silent_mode")
+@patch("main.SyncLogger")
+@patch("main.get_app_args")
+def test_main(
+    mock_get_app_args,
+    mock_sync_logger_class,
+    mock_run_silent_mode,
+    mock_run_gui_mode,
+    silent_mode,
+    expected_called_func,
+):
+    mock_sync_logger = MagicMock(spec=SyncLogger)
+    mock_sync_logger_class.return_value = mock_sync_logger
+    mock_app_args = MagicMock(spec=Namespace)
+    mock_app_args.silent = silent_mode
+    mock_get_app_args.return_value = mock_app_args
 
+    from main import main
 
-def test_get_app_args_silent():
-    test_args = ["main.py", "--silent"]
-    with patch.object(sys, "argv", test_args):
-        args = get_app_args()
-        assert args.silent
-        assert args.mode is None
+    main()
 
+    mock_get_app_args.assert_called_once()
+    mock_sync_logger.add_file_handler.assert_called_once()
 
-def test_get_app_args_mode_csv():
-    test_args = ["main.py", "--mode", "CSV"]
-    with patch.object(sys, "argv", test_args):
-        args = get_app_args()
-        assert not args.silent
-        assert args.mode == "CSV"
-
-
-def test_get_app_args_silent_mode_csv():
-    test_args = ["main.py", "--silent", "--mode", "CSV"]
-    with patch.object(sys, "argv", test_args):
-        args = get_app_args()
-        assert args.silent
-        assert args.mode == "CSV"
-
-
-def test_get_app_args_invalid_mode():
-    test_args = ["main.py", "--INVALID", "--MOREINVALID"]
-    with patch.object(sys, "argv", test_args):
-        with pytest.raises(SystemExit):
-            get_app_args()
-
-
-def test_get_app_args_help():
-    test_args = ["main.py", "--help"]
-    with patch.object(sys, "argv", test_args):
-        with pytest.raises(SystemExit):
-            get_app_args()
+    if expected_called_func == "run_gui_mode":
+        mock_run_silent_mode.assert_not_called()
+        mock_run_gui_mode.assert_called_once_with(mock_sync_logger)
+    else:
+        mock_run_silent_mode.assert_called_once_with(mock_app_args, mock_sync_logger)
+        mock_run_gui_mode.assert_not_called()
 
 
 @patch("main.main")
@@ -60,53 +56,53 @@ def test_import_does_not_run_main(mock_main):
     mock_main.assert_not_called()
 
 
-@patch("main.run_gui_mode")
-@patch("main.run_silent_mode")
-@patch("main.SyncLogger")
-def test_main_silent_mode(mock_sync_logger_class, mock_run_silent_mode, mock_run_gui_mode):
-    mock_sync_logger = MagicMock()
-    test_args = ["main.py", "--silent", "--mode", "CSV"]
-    mock_sync_logger_class.return_value = mock_sync_logger
-    with patch.object(sys, "argv", test_args):
-        main()
-
-    mock_sync_logger.add_file_handler.assert_called_once()
-    mock_run_silent_mode.assert_called_once_with(Namespace(silent=True, mode="CSV"), mock_sync_logger)
-    mock_run_gui_mode.assert_not_called()
+@patch.object(sys, "argv", ["main.py", "--silent", "--mode", "CSV"])
+def test_get_app_args():
+    args = get_app_args()
+    assert args == Namespace(silent=True, mode="CSV")
 
 
-@patch("main.run_gui_mode")
-@patch("main.run_silent_mode")
-@patch("main.SyncLogger")
-def test_main_gui_mode(mock_sync_logger_class, mock_run_silent_mode, mock_run_gui_mode):
-    mock_sync_logger = MagicMock()
-    test_args = ["main.py"]
-    mock_sync_logger_class.return_value = mock_sync_logger
-    with patch.object(sys, "argv", test_args):
-        main()
+@patch.object(sys, "argv", ["main.py", "--silent"])
+def test_get_app_args_invalid_combination():
+    with pytest.raises(SystemExit):
+        get_app_args()
 
-    mock_sync_logger.add_file_handler.assert_called_once()
-    mock_run_silent_mode.assert_not_called()
-    mock_run_gui_mode.assert_called_once_with(mock_sync_logger)
+
+@pytest.mark.parametrize(
+    "mode",
+    [
+        ("CSV"),  # CSV mode should run_sync with SyncCSV
+        ("INVALID"),  # INVALID mode shoudl log and error
+    ],
+)
+@patch("main.SyncCSV")
+@patch("main.run_sync")
+def test_run_silent_mode(mock_run_sync, mock_sync_csv_class, mode):
+    mock_logger = MagicMock(spec=SyncLogger)
+    args = Namespace(mode=mode)
+
+    if mode == "INVALID":
+        with pytest.raises(SystemExit):
+            run_silent_mode(args, mock_logger)
+        mock_run_sync.assert_not_called()
+        return
+
+    if mode == "CSV":
+        run_silent_mode(args, mock_logger)
+        mock_run_sync.assert_called_once_with(mock_sync_csv_class, mock_logger)
 
 
 @patch("main.App")
 @patch("main.AppConfig")
-def test_run_gui_mode(mock_app_config_class, mock_app):
+def test_run_gui_mode(mock_app_config_class, mock_app_class):
     mock_logger = MagicMock(spec=SyncLogger)
     mock_app_config = MagicMock(spec=AppConfig)
     mock_app_config_class.return_value = mock_app_config
+    mock_app = MagicMock(spec=App)
+    mock_app_class.return_value = mock_app
 
     run_gui_mode(mock_logger)
+
     mock_app_config.load.assert_called_once()
-
-
-# @patch("main.App")
-# @patch("main.AppConfig")
-# def test_run_silent_mode_csv(mock_app_config_class, mock_app):
-#    mock_sync_logger = MagicMock()
-#
-#
-#    mock_sync_logger.add_file_handler.assert_called_once()
-#    mock_run_silent_mode.assert_called_once_with(Namespace(silent=True, mode="CSV"), mock_sync_logger)
-#    mock_run_gui_mode.assert_not_called()
+    mock_app_class.assert_called_once_with(mock_logger, mock_app_config)
+    mock_app.mainloop.assert_called_once()
