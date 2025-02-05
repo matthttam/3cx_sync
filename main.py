@@ -39,7 +39,7 @@ def run_gui_mode(logger: SyncLogger):
     """Runs the application in GUI mode"""
     app_config = AppConfig()
     app_config.load()
-    app = App(logger, app_config)
+    app = App(logger=logger, app_config=app_config)
     app.mainloop()
 
 

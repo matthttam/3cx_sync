@@ -104,5 +104,5 @@ def test_run_gui_mode(mock_app_config_class, mock_app_class):
     run_gui_mode(mock_logger)
 
     mock_app_config.load.assert_called_once()
-    mock_app_class.assert_called_once_with(mock_logger, mock_app_config)
+    mock_app_class.assert_called_once_with(logger=mock_logger, app_config=mock_app_config)
     mock_app.mainloop.assert_called_once()
