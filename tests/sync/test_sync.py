@@ -401,7 +401,7 @@ class TestSync:
 
         mock_callable.assert_called_once_with(mock_sync_instance)
         mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
-        mock_initialize_app_config.assert_called_once_with(mock_logger)
+        mock_initialize_app_config.assert_called_once_with(logger=mock_logger, config_path=None)
         mock_initialize_api_connection.assert_called_once_with(mock_app_config, mock_logger)
         mock_sync_class.assert_called_once_with(
             mock_api_connection,
@@ -483,7 +483,7 @@ def test_run_sync_general_exception(
 
     mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing Sync")
     mock_logger.log.assert_any_call(LogLevel.ERROR, "Failed to sync. General error")
-    mock_initialize_app_config.assert_called_once_with(mock_logger)
+    mock_initialize_app_config.assert_called_once_with(logger=mock_logger, config_path=None)
     mock_initialize_api_connection.assert_not_called()
     mock_sync_class.assert_not_called()
 

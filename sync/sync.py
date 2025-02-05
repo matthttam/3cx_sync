@@ -1,7 +1,7 @@
 import threading
 from typing import Callable, Optional
 from app.config import AppConfig
-from sync.sync_strategy import SyncSourceStrategy
+from sync.sync_strategy import SyncSourceStrategy, create_sync_source
 from threecxapi.connection import ThreeCXApiConnection
 from threecxapi.resources.users import UsersResource, ListUserParameters
 from threecxapi.components.schemas.pbx import User
@@ -222,7 +222,10 @@ class Sync:
 
 
 def run_sync(
-    sync_source: SyncSourceStrategy, logger: SyncLogger, on_sync_initialized: Optional[Callable[[Sync], None]] = None
+    sync_source_class: SyncSourceStrategy,
+    logger: SyncLogger,
+    on_sync_initialized: Optional[Callable[[Sync], None]] = None,
+    **kwargs,
 ):
     """
     Runs the synchronization process using the provided sync source strategy and logger.
@@ -240,10 +243,11 @@ def run_sync(
         Exception: For any other exceptions that occur during the sync process.
     """
     try:
+        logger.log(LogLevel.INFO, "=" * 40)
         logger.log(LogLevel.INFO, "Initializing Sync")
-        app_config = initialize_app_config(logger)
+        app_config = initialize_app_config(logger=logger, config_path=kwargs.get("config_path"))
         api_connection = initialize_api_connection(app_config, logger)
-        sync_source = create_sync_source(sync_source, logger)
+        sync_source = build_sync_source(sync_source_class, logger, **kwargs)
         sync = Sync(api_connection, app_config, sync_source, logger)
 
         # Call callback if provided
@@ -256,16 +260,16 @@ def run_sync(
         logger.log(LogLevel.ERROR, f"Failed to sync. {e}")
 
 
-def create_sync_source(sync_source: SyncSourceStrategy, logger: SyncLogger):
+def build_sync_source(sync_source_class: type[SyncSourceStrategy], logger: SyncLogger, **kwargs):
     logger.log(LogLevel.INFO, "Initializing Sync Source")
-    sync_source = sync_source(logger)
+    sync_source = create_sync_source(strategy_class=sync_source_class, logger=logger, **kwargs)
     logger.log(LogLevel.INFO, "Sync Source Initialized")
     return sync_source
 
 
-def initialize_app_config(logger: SyncLogger):
+def initialize_app_config(logger: SyncLogger, **kwargs):
     logger.log(LogLevel.INFO, "Loading App Config")
-    app_config = AppConfig()
+    app_config = AppConfig(config_path=kwargs.get("config_path"))
     app_config.load()
     logger.log(LogLevel.INFO, "App Config Loaded")
     return app_config

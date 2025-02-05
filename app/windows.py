@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from threading import Thread
 from threecxapi.connection import ThreeCXApiConnection
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
@@ -8,8 +7,6 @@ from app.widgets import Checkbox, ExtensionMappingFieldSet, WidgetList
 from app.config import AppConfig
 from app.mapping import CSVMapping
 from tkinter.scrolledtext import ScrolledText
-from sync.logging import SyncLogger, LogLevel
-from app.util import initialize_or_get_user_config_file
 
 
 class Window:
@@ -374,10 +371,10 @@ class WindowAppConfig(PopupWindow):
 
 class WindowCSVMapping(PopupWindow):
 
-    def __init__(self, master, *args, **kwargs) -> None:
+    def __init__(self, master, *args, csv_mapping: CSVMapping, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
         self.widgets = WidgetList()
-        self.mapping = CSVMapping()
+        self.mapping = csv_mapping
         self.mapping.initialize()
         self.title("CSV Mapping Settings")
         self.initialize_variables()

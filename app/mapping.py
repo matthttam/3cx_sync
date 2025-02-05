@@ -1,21 +1,22 @@
 import os
 import json
+from pathlib import Path
 from collections import UserDict
 from copy import deepcopy
 import platformdirs
-from app.util import initialize_or_get_user_config_file
+from app.util import initialize_or_get_user_config_path
 
 
 class CSVMapping(UserDict):
     DEFAULT_FILENAME = "csv_mapping.json"
 
-    def __init__(self, *args, mapping_file_path: str = None, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, config_path: Path = None) -> None:
+        super().__init__()
         self.set_original_config()
-        self.mapping_file_path = mapping_file_path or initialize_or_get_user_config_file(
-            "3cx_sync", "3cx_sync", "conf", self.DEFAULT_FILENAME
-        )
-        # self.mapping_file_path = mapping_file_path
+        self.mapping_file_path = (
+            config_path or initialize_or_get_user_config_path("3cx_sync", "3cx_sync", "conf")
+        ) / self.DEFAULT_FILENAME
+
         self.default_config = {
             "Extension": {
                 "Path": platformdirs.user_documents_dir(),
@@ -55,7 +56,8 @@ class CSVMapping(UserDict):
         """Load configuration from the specified file."""
         try:
             # Check if the file exists and is not empty
-            if os.path.getsize(self.mapping_file_path) > 0:
+            if self.mapping_file_path.stat().st_size > 0:
+                # if os.path.getsize(self.mapping_file_path) > 0:
                 with open(self.mapping_file_path, "r") as mapping_file:
                     self.update(json.load(mapping_file))
                 self.set_original_config()
@@ -73,8 +75,9 @@ class CSVMapping(UserDict):
             json.dump(self.data, mapping_file)
         self.set_original_config()
 
-    def save_to(self, path):
-        with open(os.path.join(path, self.DEFAULT_FILENAME), "w") as mapping_file:
+    def save_to(self, path: str):
+        file_path = Path(path) / self.DEFAULT_FILENAME
+        with file_path.open("w") as mapping_file:
             json.dump(self.data, mapping_file)
 
     def set_original_config(self):

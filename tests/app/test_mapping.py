@@ -1,6 +1,7 @@
 import os
 import json
 import pytest
+from pathlib import Path
 from app.mapping import CSVMapping
 from collections import UserDict
 from unittest.mock import patch, MagicMock, mock_open
@@ -8,16 +9,22 @@ from unittest.mock import patch, MagicMock, mock_open
 
 class TestCSVMapping:
 
-    test_path = "/test/path"
+    # test_path = Path("/test/path")
 
     @pytest.fixture
-    def csv_mapping(self):
-        yield CSVMapping(mapping_file_path=self.test_path)
+    def mock_path(self):
+        path = MagicMock(spec=Path)
+        yield path
+
+    @pytest.fixture
+    def csv_mapping(self, mock_path):
+        yield CSVMapping(config_path=mock_path)
 
     def test_init(self):
-        csv_mapping = CSVMapping(mapping_file_path=self.test_path)
+        test_path = Path("/test/path")
+        csv_mapping = CSVMapping(config_path=test_path)
         assert issubclass(CSVMapping, UserDict)
-        assert csv_mapping.mapping_file_path == self.test_path
+        assert csv_mapping.mapping_file_path == test_path / CSVMapping.DEFAULT_FILENAME
         assert csv_mapping.default_config is not None
         assert csv_mapping.original_config == {}
 
@@ -41,29 +48,31 @@ class TestCSVMapping:
         assert csv_mapping.data == csv_mapping.default_config
 
     @patch("builtins.open", new_callable=mock_open, read_data='{"key": "value"}')
-    @patch("os.path.getsize", return_value=10)
-    def test_load_successful(self, mock_getsize, mock_open, csv_mapping):
+    def test_load_successful(self, mock_open, csv_mapping):
         csv_mapping.update = MagicMock()
+        csv_mapping.mapping_file_path.stat = MagicMock(return_value=MagicMock(st_size=10))
+
         csv_mapping.set_original_config = MagicMock()
         csv_mapping.load()
         csv_mapping.update.assert_called_once_with({"key": "value"})
         csv_mapping.set_original_config.assert_called_once()
 
-    @patch("os.path.getsize", side_effect=FileNotFoundError)
-    def test_load_file_not_found(self, mock_getsize, csv_mapping):
+    # @patch("os.path.getsize", side_effect=FileNotFoundError)
+    def test_load_file_not_found(self, csv_mapping):
+        csv_mapping.mapping_file_path.stat = MagicMock(side_effect=FileNotFoundError)
         with pytest.raises(FileNotFoundError):
             csv_mapping.load()
 
     @patch("builtins.open", new_callable=mock_open, read_data="")
-    @patch("os.path.getsize", return_value=0)
-    def test_load_empty_file(self, mock_getsize, mock_open, csv_mapping):
+    def test_load_empty_file(self, mock_open, csv_mapping):
+        csv_mapping.mapping_file_path.stat = MagicMock(return_value=MagicMock(st_size=0))
         with patch("builtins.print") as mocked_print:
             csv_mapping.load()
-            mocked_print.assert_called_once_with(f"Warning: {self.test_path} is empty.")
+            mocked_print.assert_called_once_with(f"Warning: {csv_mapping.mapping_file_path} is empty.")
 
     @patch("builtins.open", new_callable=mock_open, read_data="invalid json")
-    @patch("os.path.getsize", return_value=10)
-    def test_load_invalid_json(self, mock_getsize, mock_open, csv_mapping):
+    def test_load_invalid_json(self, mock_open, csv_mapping):
+        csv_mapping.mapping_file_path.stat = MagicMock(return_value=MagicMock(st_size=10))
         with pytest.raises(json.JSONDecodeError):
             csv_mapping.load()
 
@@ -75,13 +84,13 @@ class TestCSVMapping:
         mock_json.dump.return_value = json.dumps(fake_data)
         csv_mapping.set_original_config = MagicMock()
         csv_mapping.save()
-        mock_open.assert_called_once_with(self.test_path, "w")
+        mock_open.assert_called_once_with(csv_mapping.mapping_file_path, "w")
         mock_json.dump.assert_called_once_with(fake_data, mock_open())
         csv_mapping.set_original_config.assert_called_once()
 
     @patch("app.mapping.json")
-    @patch("builtins.open", new_callable=mock_open)
-    def test_save_to(self, mock_open, mock_json, csv_mapping):
+    @patch("app.mapping.Path.open")
+    def test_save_to(self, mock_path_open, mock_json, csv_mapping):
         path = "/another/test/path"
 
         fake_data = {"key": "value"}
@@ -91,8 +100,8 @@ class TestCSVMapping:
 
         csv_mapping.save_to(path)
 
-        mock_open.assert_called_once_with(os.path.join(path, CSVMapping.DEFAULT_FILENAME), "w")
-        mock_json.dump.assert_called_once_with(fake_data, mock_open())
+        mock_path_open.assert_called_once_with("w")
+        mock_json.dump.assert_called_once_with(fake_data, mock_path_open().__enter__())
 
     def test_set_original_config(self, csv_mapping):
         csv_mapping.data = {"key": "value"}

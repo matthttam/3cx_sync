@@ -267,22 +267,19 @@ class TestWindowAppConfig:
 class TestWindowCSVMapping:
 
     @patch("app.windows.WidgetList")
-    @patch("app.windows.CSVMapping")
     @patch.object(WindowCSVMapping, "initialize_variables")
     @patch.object(WindowCSVMapping, "build_gui")
     def test_init(
         self,
         mock_build_gui,
         mock_initialize_variables,
-        mock_csv_mapping_class,
         mock_widget_list_class,
         root,
     ):
         mock_widget_list = MagicMock()
         mock_widget_list_class.return_value = mock_widget_list
         mock_csv_mapping = MagicMock()
-        mock_csv_mapping_class.return_value = mock_csv_mapping
-        window_csv_mapping = WindowCSVMapping(master=root)
+        window_csv_mapping = WindowCSVMapping(master=root, csv_mapping=mock_csv_mapping)
         assert window_csv_mapping.widgets == mock_widget_list
         assert window_csv_mapping.mapping == mock_csv_mapping
         mock_initialize_variables.assert_called_once()
@@ -291,8 +288,8 @@ class TestWindowCSVMapping:
     @patch("app.windows.messagebox")
     @patch.object(WindowCSVMapping, "set_mapping_values", return_value=MagicMock())
     @patch.object(WindowCSVMapping, "destroy")
-    def test_handle_save_click(self, mock_destroy, mock_set_mapping_values, mock_messagebox, window_csv_mapping):
-        window_csv_mapping.widgets.btn_save.invoke()
+    def test_handle_save_click(self, mock_destroy, mock_set_mapping_values, mock_messagebox, mock_window_csv_mapping):
+        mock_window_csv_mapping.widgets.btn_save.invoke()
 
         mock_set_mapping_values.assert_called_once()
         mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!")
@@ -309,13 +306,13 @@ class TestWindowCSVMapping:
         mock_destroy,
         mock_confirm_discard_changes,
         mock_set_mapping_values,
-        window_csv_mapping,
+        mock_window_csv_mapping,
     ):
-        window_csv_mapping.mapping.is_dirty = True
+        mock_window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = True
-        window_csv_mapping.handle_cancel_click()
+        mock_window_csv_mapping.handle_cancel_click()
         mock_set_mapping_values.assert_called_once()
-        window_csv_mapping.mapping.load.assert_called_once()
+        mock_window_csv_mapping.mapping.load.assert_called_once()
         mock_destroy.assert_called_once()
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
@@ -326,14 +323,14 @@ class TestWindowCSVMapping:
         mock_destroy,
         mock_confirm_discard_changes,
         mock_set_mapping_values,
-        window_csv_mapping,
+        mock_window_csv_mapping,
     ):
-        window_csv_mapping.mapping = MagicMock()
-        window_csv_mapping.mapping.is_dirty = True
+        mock_window_csv_mapping.mapping = MagicMock()
+        mock_window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = False
-        window_csv_mapping.handle_cancel_click()
+        mock_window_csv_mapping.handle_cancel_click()
         mock_set_mapping_values.assert_called_once()
-        window_csv_mapping.mapping.load.assert_not_called()
+        mock_window_csv_mapping.mapping.load.assert_not_called()
         mock_destroy.assert_not_called()
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
@@ -344,29 +341,29 @@ class TestWindowCSVMapping:
         mock_destroy,
         mock_confirm_discard_changes,
         mock_set_mapping_values,
-        window_csv_mapping,
+        mock_window_csv_mapping,
     ):
-        window_csv_mapping.mapping = MagicMock()
-        window_csv_mapping.mapping.is_dirty = False
-        window_csv_mapping.handle_cancel_click()
+        mock_window_csv_mapping.mapping = MagicMock()
+        mock_window_csv_mapping.mapping.is_dirty = False
+        mock_window_csv_mapping.handle_cancel_click()
         mock_confirm_discard_changes.assert_not_called()
         mock_set_mapping_values.assert_called_once()
-        window_csv_mapping.mapping.load.assert_called_once()
+        mock_window_csv_mapping.mapping.load.assert_called_once()
         mock_destroy.assert_called_once()
 
     @patch("app.windows.messagebox")
-    def test_confirm_discard_changes(self, mock_messagebox, window_csv_mapping):
-        window_csv_mapping.confirm_discard_changes()
+    def test_confirm_discard_changes(self, mock_messagebox, mock_window_csv_mapping):
+        mock_window_csv_mapping.confirm_discard_changes()
         mock_messagebox.askyesno.assert_called_once_with("Unsaved Changes", "Discard unsaved changes?")
 
     @patch("app.windows.askopenfilename")
-    def test_browse_file_csv(self, mock_askopenfilename, window_csv_mapping):
-        window_csv_mapping.var_csv_mapping_import_file_path = MagicMock()
+    def test_browse_file_csv(self, mock_askopenfilename, mock_window_csv_mapping):
+        mock_window_csv_mapping.var_csv_mapping_import_file_path = MagicMock()
         test_filename = "test_filename.csv"
         mock_askopenfilename.return_value = test_filename
-        window_csv_mapping.browse_file_csv()
+        mock_window_csv_mapping.browse_file_csv()
         mock_askopenfilename.assert_called_once_with(filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
-        window_csv_mapping.var_csv_mapping_import_file_path.set.assert_called_once_with(test_filename)
+        mock_window_csv_mapping.var_csv_mapping_import_file_path.set.assert_called_once_with(test_filename)
 
     def test_initialize_mapping_field_sets(self):
         pytest.skip()

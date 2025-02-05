@@ -82,10 +82,16 @@ class TestApp:
         app.show_WindowAppConfig()
         window_app_config.assert_called_once_with(app, app.app_config)
 
+    @patch("app.app.CSVMapping")
     @patch("app.app.WindowCSVMapping")
-    def test_show_window_csv_mapping(self, window_csv_mapping, app):
+    def test_show_window_csv_mapping(self, mock_window_csv_mapping, mock_csv_mapping_class, app):
+        app.app_config.config_path = "/test/path"
+        mock_csv_mapping = MagicMock()
+        mock_csv_mapping_class.return_value = mock_csv_mapping
+
         app.show_WindowCSVMapping()
-        window_csv_mapping.assert_called_once_with(app)
+        mock_csv_mapping_class.assert_called_once_with(config_path="/test/path")
+        mock_window_csv_mapping.assert_called_once_with(app, csv_mapping=mock_csv_mapping)
 
     @patch.object(App, "destroy")
     def test_handle_exit_click(self, mock_destroy, app):
@@ -105,7 +111,14 @@ class TestApp:
         app.handle_csv_sync_click()
 
         assert app.sync_thread == mock_sync_thread
-        mock_thread.assert_called_once_with(target=mock_run_sync, args=(SyncCSV, app.logger, app.on_sync_initialized))
+        kwargs = {
+            "sync_source_class": SyncCSV,
+            "logger": app.logger,
+            "on_sync_initialized": app.on_sync_initialized,
+            "config_path": app.app_config.config_path,
+        }
+        mock_thread.assert_called_once_with(target=mock_run_sync, kwargs=kwargs)
+
         mock_window_sync_class.assert_called_once_with(app)
         mock_window_sync.periodic_update.assert_called_once()
         app.sync_thread.start.assert_called_once()
@@ -116,6 +129,7 @@ class TestApp:
 
     @patch("app.app.CSVMapping")
     def test_export_csv_mapping(self, mock_csv_mapping_class, app):
+        app.app_config.config_path.return_value = None
         mock_csv_mapping = MagicMock()
         mock_csv_mapping_class.return_value = mock_csv_mapping
         app._export_csv_mapping("fake_dir")

@@ -2,14 +2,19 @@ import os
 import keyring
 from copy import deepcopy
 from configparser import ConfigParser
-from app.util import initialize_or_get_user_config_file
+from app.util import initialize_or_get_user_config_path
 
 
 class AppConfig(ConfigParser):
+    DEFAULT_FILENAME = "app_conf.ini"
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, config_path: str = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.original_config = None
+        self.config_path = config_path
+        self.config_file_path = os.path.join(
+            (config_path or initialize_or_get_user_config_path("3cx_sync", "3cx_sync", "conf")), self.DEFAULT_FILENAME
+        )
         self.default_config = {
             "3cx": {
                 "scheme": "https",
@@ -21,7 +26,6 @@ class AppConfig(ConfigParser):
             },
             "app": {"logout_hotdesk_on_disable": True},
         }
-        self.filename = "app_conf.ini"
 
     @property
     def server_url(self) -> str:
@@ -30,10 +34,6 @@ class AppConfig(ConfigParser):
         port = self["3cx"].get("port")
 
         return f"{scheme}://{domain}:{port}"
-
-    @property
-    def config_file_path(self) -> str:
-        return initialize_or_get_user_config_file("3cx_sync", "3cx_sync", "conf", self.filename)
 
     @property
     def is_dirty(self) -> bool:
@@ -75,7 +75,7 @@ class AppConfig(ConfigParser):
         self.set_original_config()
 
     def save_to(self, directory) -> None:
-        with open(os.path.join(directory, self.filename), "w") as config_file:
+        with open(os.path.join(directory, self.DEFAULT_FILENAME), "w") as config_file:
             self.write(config_file)
 
     def set_original_config(self):

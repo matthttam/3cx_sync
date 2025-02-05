@@ -1,5 +1,6 @@
 import os
 import csv
+from pathlib import Path
 from abc import ABC, abstractmethod
 from app.mapping import CSVMapping
 from typing import Optional, List
@@ -31,6 +32,11 @@ class SyncSourceStrategy(ABC):
 
 
 class SyncCSV(SyncSourceStrategy):
+    config_path: Path = None
+
+    def __init__(self, logger: SyncLogger, config_path: str = None):
+        super().__init__(logger)
+        self.config_path = Path(config_path).resolve() if config_path else None
 
     def initialize(self):
         self.logger.log(LogLevel.INFO, "Initializing CSV Source")
@@ -47,9 +53,9 @@ class SyncCSV(SyncSourceStrategy):
 
     def _load_csv_mapping(self):
         self.logger.log(LogLevel.INFO, "Loading CSV Mapping")
-        self.mapping = CSVMapping()
+        self.mapping = CSVMapping(self.config_path)
         self.mapping.initialize()
-        self.logger.log(LogLevel.INFO, "CSV Mapping Loaded")
+        self.logger.log(LogLevel.INFO, f"CSV Mapping Loaded from '{self.mapping.mapping_file_path}'")
 
     def _set_comparison_properties(self):
         CSVUser.set_comparison_properties(self.mapping.get("Extension", {}).get("Update", []))
@@ -96,3 +102,10 @@ class SyncCSV(SyncSourceStrategy):
 
     def get_source_groups(self):
         return None
+
+
+def create_sync_source(strategy_class: type[SyncSourceStrategy], logger: SyncLogger, **kwargs) -> SyncSourceStrategy:
+    """Factory to create sync source instances with optional arguments."""
+    if strategy_class is SyncCSV:
+        return SyncCSV(config_path=kwargs.get("config_path"), logger=logger)
+    return strategy_class(logger=logger)  # Default case for other strategies

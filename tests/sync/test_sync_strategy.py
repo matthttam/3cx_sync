@@ -1,7 +1,7 @@
 from abc import ABC
 from sync.sync_strategy import SyncSourceStrategy, SyncCSV
 from sync.logging import SyncLogger, LogLevel
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch, mock_open, call
 import pytest
 
 
@@ -29,13 +29,17 @@ class TestSyncCSV:
             mock_set_comparison_properties.assert_called_once()
             mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing CSV Source")
 
-    def test_load_csv_mapping(self, sync_csv, mock_logger):
+    def test_load_csv_mapping(self, sync_csv):
         with patch("sync.sync_strategy.CSVMapping") as mock_csv_mapping:
             sync_csv._load_csv_mapping()
             mock_csv_mapping.assert_called_once()
             mock_csv_mapping.return_value.initialize.assert_called_once()
-            mock_logger.log.assert_any_call(LogLevel.INFO, "Loading CSV Mapping")
-            mock_logger.log.assert_any_call(LogLevel.INFO, "CSV Mapping Loaded")
+            sync_csv.logger.log.assert_has_calls(
+                [
+                    call(LogLevel.INFO, "Loading CSV Mapping"),
+                    call(LogLevel.INFO, f"CSV Mapping Loaded from '{sync_csv.mapping.mapping_file_path}'"),
+                ]
+            )
 
     def test_set_comparison_properties(self, sync_csv, mock_logger):
         with patch("sync.sync_strategy.CSVUser.set_comparison_properties") as mock_set_comparison_properties:

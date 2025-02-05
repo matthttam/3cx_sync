@@ -17,7 +17,7 @@ def root():
 
 @pytest.fixture
 def mock_app_config(request):
-    mock_app_config = MagicMock(spec=AppConfig)
+    mock_app_config = MagicMock()
     if not hasattr(request, "param"):
         mock_app_config.get.return_value = ""
         mock_app_config.getboolean.return_value = False
@@ -43,9 +43,9 @@ def window_app_config(root, mock_app_config):
 
 
 @pytest.fixture
-def window_csv_mapping(root):
+def mock_window_csv_mapping(root):
     with patch("app.windows.CSVMapping", MagicMock()):
-        yield WindowCSVMapping(master=root)
+        yield WindowCSVMapping(master=root, csv_mapping=MagicMock())
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ from app.mapping import CSVMapping
 from app.windows import WindowCSVMapping, WindowAppConfig, Window, WindowSync
 from app.config import AppConfig
 from app.widgets import WidgetList
-from sync.sync_strategy import SyncCSV, SyncSourceStrategy
+from sync.sync_strategy import SyncCSV
 from sync.sync import run_sync
 from sync.logging import SyncLogger
 
@@ -120,14 +120,21 @@ class App(tk.Tk, Window):
         WindowAppConfig(self, self.app_config)
 
     def show_WindowCSVMapping(self):
-        WindowCSVMapping(self)
+        csv_mapping = CSVMapping(config_path=self.app_config.config_path)
+        WindowCSVMapping(self, csv_mapping=csv_mapping)
 
     def handle_exit_click(self) -> None:
         self.destroy()
 
     def handle_csv_sync_click(self) -> None:
         window_sync = WindowSync(self)
-        self.sync_thread = Thread(target=run_sync, args=(SyncCSV, self.logger, self.on_sync_initialized))
+        kwargs = {
+            "sync_source_class": SyncCSV,
+            "logger": self.logger,
+            "on_sync_initialized": self.on_sync_initialized,
+            "config_path": self.app_config.config_path,
+        }
+        self.sync_thread = Thread(target=run_sync, kwargs=kwargs)
         window_sync.periodic_update()
         self.sync_thread.start()
 
@@ -142,7 +149,7 @@ class App(tk.Tk, Window):
         self.app_config.save_to(export_directory)
 
     def _export_csv_mapping(self, export_directory: str) -> None:
-        csv_mapping = CSVMapping()
+        csv_mapping = CSVMapping(config_path=self.app_config.config_path)
         csv_mapping.load()
         csv_mapping.save_to(export_directory)
 
