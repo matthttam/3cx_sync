@@ -33,11 +33,6 @@ def mock_app_config(request):
 
 
 @pytest.fixture
-def mock_logger():
-    yield MagicMock(spec=SyncLogger)
-
-
-@pytest.fixture
 def window_app_config(root, mock_app_config):
     yield WindowAppConfig(master=root, app_config=mock_app_config)
 

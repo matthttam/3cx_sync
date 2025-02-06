@@ -4,7 +4,7 @@ import pytest
 from argparse import ArgumentParser, Namespace
 from unittest.mock import MagicMock, patch
 from app.config import AppConfig
-from main import get_app_args, main, run_gui_mode, run_silent_mode, App
+from main import dir_path, get_app_args, main, run_gui_mode, run_silent_mode, App
 from sync.logging import SyncLogger
 
 
@@ -109,3 +109,18 @@ def test_run_gui_mode(mock_app_config_class, mock_app_class):
     mock_app_config.load.assert_called_once()
     mock_app_class.assert_called_once_with(logger=mock_logger, app_config=mock_app_config)
     mock_app.mainloop.assert_called_once()
+
+
+@patch("main.os.path.isdir")
+def test_dir_path(mock_isdir):
+    mock_isdir.return_value = True
+    result = dir_path("/test/path/")
+    assert result == "/test/path/"
+
+
+@patch("main.os.path.isdir")
+def test_dir_path_invalid_path(mock_isdir):
+    mock_isdir.return_value = False
+    with pytest.raises(NotADirectoryError):
+        result = dir_path("/test/path/")
+        assert result is None
