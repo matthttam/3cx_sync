@@ -122,5 +122,4 @@ def test_dir_path(mock_isdir):
 def test_dir_path_invalid_path(mock_isdir):
     mock_isdir.return_value = False
     with pytest.raises(NotADirectoryError):
-        result = dir_path("/test/path/")
-        assert result is None
+        dir_path("/test/path/")
