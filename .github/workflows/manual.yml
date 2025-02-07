@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+    branches:
+      - 'release/*' # Trigger for any branch starting with 'release/'
 
 jobs:
   build:
@@ -12,7 +14,7 @@ jobs:
         include:
           - os: windows-latest
             TARGET: windows
-            CMD_BUILD: python -m PyInstaller --onefile --windowed --name 3cx_sync --add-data "conf/app_defaults.ini;conf" --add-data "conf/csv_mapping_defaults.json;conf" main.py
+            CMD_BUILD: python -m PyInstaller --onefile --windowed --name 3cx_sync main.py
             OUT_FILE_NAME: dist/3cx_sync.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
           - os: macos-latest
@@ -50,6 +52,7 @@ jobs:
   upload_release:
     needs: build
     runs-on: ubuntu-latest
+    if: startWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
