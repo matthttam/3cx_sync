@@ -11,7 +11,7 @@ from app.config import AppConfig
 from app.widgets import WidgetList
 from sync.sync_strategy import SyncCSV
 from sync.sync import run_sync
-from sync.logging import SyncLogger
+from sync.logging import LogLevel, SyncLogger
 
 # from app.themes.Forest-ttk-theme-1.0.example import scale
 
@@ -120,8 +120,13 @@ class App(tk.Tk, Window):
         WindowAppConfig(self, self.app_config)
 
     def show_WindowCSVMapping(self):
-        csv_mapping = CSVMapping(config_path=self.app_config.config_path)
-        WindowCSVMapping(self, csv_mapping=csv_mapping)
+        try:
+            csv_mapping = CSVMapping(config_path=self.app_config.config_path)
+            WindowCSVMapping(self, csv_mapping=csv_mapping)
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"An error occured: {e}")
+            self.logger.log(LogLevel.CRITICAL, f"A critical error has occured and the application must exit. {e}")
+            self.logger.log(LogLevel.CRITICAL, f"Traceback: {sys.exc_info()[2]}")
 
     def handle_exit_click(self) -> None:
         self.destroy()

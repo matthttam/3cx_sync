@@ -373,6 +373,7 @@ class WindowCSVMapping(PopupWindow):
 
     def __init__(self, master, *args, csv_mapping: CSVMapping, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
+
         self.widgets = WidgetList()
         self.mapping = csv_mapping
         self.mapping.initialize()

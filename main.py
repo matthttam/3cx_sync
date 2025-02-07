@@ -1,6 +1,6 @@
 import os
+import sys
 from argparse import ArgumentParser, Namespace
-from pathlib import Path
 from app.app import App
 from app.config import AppConfig
 from sync.sync import run_sync
@@ -59,14 +59,19 @@ def run_gui_mode(logger: SyncLogger, config_path: str = None):
 
 
 def main():
-    app_args = get_app_args()
     logger = SyncLogger()
     logger.add_file_handler()
 
-    if app_args.silent:
-        run_silent_mode(app_args, logger)
-    else:
-        run_gui_mode(logger=logger, config_path=app_args.config_path)
+    try:
+        app_args = get_app_args()
+        if app_args.silent:
+            run_silent_mode(app_args, logger)
+        else:
+            run_gui_mode(logger=logger, config_path=app_args.config_path)
+    except Exception as e:
+        logger.log(LogLevel.CRITICAL, f"A critical error has occured and the application must exit. {e}")
+        logger.log(LogLevel.CRITICAL, f"Traceback: {sys.exc_info()[2]}")
+        raise
 
 
 if __name__ == "__main__":
