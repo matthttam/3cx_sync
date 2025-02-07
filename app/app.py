@@ -126,7 +126,6 @@ class App(tk.Tk, Window):
         except Exception as e:
             tk.messagebox.showerror("Error", f"An error occured: {e}")
             self.logger.log(LogLevel.CRITICAL, f"A critical error has occured and the application must exit. {e}")
-            self.logger.log(LogLevel.CRITICAL, f"Traceback: {sys.exc_info()[2]}")
 
     def handle_exit_click(self) -> None:
         self.destroy()
