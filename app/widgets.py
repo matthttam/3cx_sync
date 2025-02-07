@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import tkinter as tk
 from typing import NamedTuple
 
@@ -29,12 +30,6 @@ class ExtensionMappingFieldSet(NamedTuple):
     delete: tk.Button
 
 
-def select_all(event):
-    widget = event.widget
-    widget.select_range(0, tk.END)
-    widget.icursor(tk.END)  # Move cursor to the end
-
-
-def bind_shortcuts(widget):
-    # Bind CTRL+A for select all
-    widget.bind_all("<Control-a>", select_all)
+@dataclass
+class WidgetList:
+    pass

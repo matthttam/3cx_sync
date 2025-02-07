@@ -1,25 +1,13 @@
-from abc import ABC, abstractmethod
 import os
 import csv
-
+from pathlib import Path
+from abc import ABC, abstractmethod
 from app.mapping import CSVMapping
-from typing import Callable, Optional, List, Dict
-from tcx_api.components.schemas.pbx import Group, User
+from typing import Optional, List
+from threecxapi.components.schemas.pbx import Group, User
 from sync.schema import CSVUser
 from pydantic import TypeAdapter
-
-
-def create_subclass_with_custom_comparison(
-    prefix: str, base_class, properties_to_compare: list[str]
-):
-    def custom_eq(self, other):
-        # Compare only the specified properties
-        for prop in properties_to_compare:
-            if getattr(self, prop) != getattr(other, prop):
-                return False
-        return True
-
-    return type(prefix + base_class.__name__, (base_class,), {"__eq__": custom_eq})
+from sync.logging import SyncLogger, LogLevel
 
 
 class SyncSourceStrategy(ABC):
@@ -27,8 +15,8 @@ class SyncSourceStrategy(ABC):
     @abstractmethod
     def mapping(self): ...
 
-    def __init__(self, output: Callable):
-        self.output = output
+    def __init__(self, logger: SyncLogger):
+        self.logger = logger
 
     @abstractmethod
     def initialize(self) -> None: ...
@@ -44,6 +32,17 @@ class SyncSourceStrategy(ABC):
 
 
 class SyncCSV(SyncSourceStrategy):
+    config_path: Path = None
+
+    def __init__(self, logger: SyncLogger, config_path: str = None):
+        super().__init__(logger)
+        self.config_path = Path(config_path).resolve() if config_path else None
+
+    def initialize(self):
+        self.logger.log(LogLevel.INFO, "Initializing CSV Source")
+        self._load_csv_mapping()
+        self._set_comparison_properties()
+
     @property
     def mapping(self):
         return self._mapping
@@ -52,45 +51,61 @@ class SyncCSV(SyncSourceStrategy):
     def mapping(self, value):
         self._mapping = value
 
-    def initialize(self):
-        self.output("Initializing CSV Source")
-        self.output("Loading CSV Mapping")
-        self.mapping = CSVMapping()
-        self.mapping.load_mapping_config()
-        CSVUser._comparison_properties = self.mapping.get("Extension", {}).get(
-            "Update", []
-        )
-        self.output("CSV Mapping Loaded")
+    def _load_csv_mapping(self):
+        self.logger.log(LogLevel.INFO, "Loading CSV Mapping")
+        self.mapping = CSVMapping(self.config_path)
+        self.mapping.initialize()
+        self.logger.log(LogLevel.INFO, f"CSV Mapping Loaded from '{self.mapping.mapping_file_path}'")
+
+    def _set_comparison_properties(self):
+        CSVUser.set_comparison_properties(self.mapping.get("Extension", {}).get("Update", []))
+        self.logger.log(LogLevel.INFO, "Comparison Properties Set")
 
     def get_source_users(self) -> Optional[List[User]]:
-        user_data = list()
-        self.output("Loading CSV User Data")
+        self.logger.log(LogLevel.INFO, "Loading CSV User Data")
+        csv_data_path = self._get_csv_data_path()
+        user_data = self._parse_csv_file(csv_data_path)
+        csv_user_list = self._validate_csv_users(user_data)
+        self.logger.log(LogLevel.INFO, f"Loaded {len(csv_user_list)} Users from CSV File")
+        return csv_user_list
+
+    def _get_csv_data_path(self) -> str:
+        """Retrieve and validate the CSV data file path."""
         csv_data_path = self.mapping.get("Extension", {}).get("Path", "")
         if not os.path.isfile(csv_data_path):
-            self.output(f"Unable to find file at: {csv_data_path}")
-            raise (FileNotFoundError)
+            self.logger.log(LogLevel.ERROR, f"Unable to find file at: {csv_data_path}")
+            raise FileNotFoundError(f"CSV file not found at: {csv_data_path}")
+        return csv_data_path
 
+    def _parse_csv_file(self, csv_data_path: str) -> List[dict]:
+        """Parse the CSV file and return a list of user dictionaries."""
+        user_data = []
         with open(csv_data_path) as csv_file:
             csv_reader = csv.reader(csv_file)
-            user_mapping = self.mapping.get("Extension").get("New")
             headers = next(csv_reader)
+            user_mapping = self.mapping.get("Extension").get("New", {})
 
             for row in csv_reader:
                 row_dict = dict(zip(headers, row))
-                user_dict = {
-                    key: row_dict[value]
-                    for key, value in user_mapping.items()
-                    if value in row_dict
-                }
-                if user_dict["Enabled"] == "0":
+                user_dict = {key: row_dict[value] for key, value in user_mapping.items() if value in row_dict}
+                if user_dict.get("Enabled") == "0":
                     user_dict["HotdeskingAssignment"] = ""
                 user_data.append(user_dict)
-        csv_user_list = TypeAdapter(List[CSVUser]).validate_python(user_data)
-        self.output(f"Loaded {len(csv_user_list)} Users from CSV File")
-        return csv_user_list
+        return user_data
+
+    def _validate_csv_users(self, user_data: List[dict]) -> List[CSVUser]:
+        """Validate and convert raw user data into a list of CSVUser objects."""
+        return TypeAdapter(List[CSVUser]).validate_python(user_data)
 
     def get_user_update_fields(self) -> list:
         return self.mapping["Extension"]["Update"]
 
     def get_source_groups(self):
         return None
+
+
+def create_sync_source(strategy_class: type[SyncSourceStrategy], logger: SyncLogger, **kwargs) -> SyncSourceStrategy:
+    """Factory to create sync source instances with optional arguments."""
+    if strategy_class is SyncCSV:
+        return SyncCSV(config_path=kwargs.get("config_path"), logger=logger)
+    return strategy_class(logger=logger)  # Default case for other strategies

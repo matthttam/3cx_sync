@@ -24,6 +24,31 @@
             ]
         },
         {
+            "name": "PyDebug: Main Alt Config Path",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config_path",
+                "./test_export_directory/"
+            ]
+        },
+        {
+            "name": "PyDebug: Main Silent CSV Alt Config Path",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--silent",
+                "--mode",
+                "CSV",
+                "--config_path",
+                "./test_export_directory/"
+            ]
+        },
+        {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",

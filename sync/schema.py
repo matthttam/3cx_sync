@@ -1,9 +1,15 @@
-from tcx_api.components.schemas.pbx import User
+from threecxapi.components.schemas.pbx import User
 from typing import Optional
 
 
 class SourceSchema:
     _comparison_properties: list = None
+
+    @classmethod
+    def set_comparison_properties(cls, properties: list[str]) -> None:
+        if not isinstance(properties, list):
+            raise TypeError("Comparison properties must be a list of strings.")
+        cls._comparison_properties = properties
 
     def __eq__(self, other):
         if not self._comparison_properties:
