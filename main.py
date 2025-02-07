@@ -1,5 +1,6 @@
 import os
 from argparse import ArgumentParser, Namespace
+from pathlib import Path
 from app.app import App
 from app.config import AppConfig
 from sync.sync import run_sync
