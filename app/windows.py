@@ -544,7 +544,7 @@ class WindowCSVMapping(PopupWindow):
         self.resize()
 
     def add_mapping_field_set(self, header="", field="", static=False, update=False, key=False):
-        current_row = len(self.mapping_fields)
+        current_row = len(self.mapping_fields) + 3
         lblfrm_csv_mapping_fields = self.nametowidget("csv_mapping.csv_mapping_fields")
 
         # 3CX Field
