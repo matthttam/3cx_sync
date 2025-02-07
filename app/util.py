@@ -25,7 +25,5 @@ def handle_error(func):
         except Exception as e:
             tk.messagebox.showerror("Error", f"An error occurred: {e}")
             self.logger.log(LogLevel.CRITICAL, f"A critical error has occurred and the application must exit. {e}")
-            # Optionally, exit the app if needed
-            # self.quit()  # Uncomment if you want to exit after an error
 
     return wrapper

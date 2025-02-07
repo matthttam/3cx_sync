@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from app.config import AppConfig
 from unittest.mock import MagicMock, call, patch, PropertyMock, mock_open
 import pytest
@@ -9,15 +10,17 @@ class TestAppConfig:
     def test_init_default(self):
         app_config = AppConfig()
         assert app_config.config_path is None
-        assert app_config.config_file_path.endswith(AppConfig.DEFAULT_FILENAME)
+        assert str(app_config.config_file_path).endswith(AppConfig.DEFAULT_FILENAME)
         assert app_config.default_config["3cx"]["scheme"] == "https"
         assert app_config.default_config["app"]["logout_hotdesk_on_disable"] is True
 
     def test_init_with_config_path(self):
         config_path = "/custom/path"
         app_config = AppConfig(config_path=config_path)
-        assert app_config.config_path == config_path
-        assert app_config.config_file_path == os.path.join(config_path, AppConfig.DEFAULT_FILENAME)
+        assert isinstance(app_config.config_path, Path)
+        assert str(app_config.config_path) == config_path
+        assert isinstance(app_config.config_file_path, Path)
+        assert str(app_config.config_file_path) == os.path.join(config_path, AppConfig.DEFAULT_FILENAME)
 
     def test_server_url(self, app_config):
         app_config["3cx"] = {"scheme": "http", "domain": "example.com", "port": "8080"}

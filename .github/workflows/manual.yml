@@ -33,15 +33,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12.2'
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/pip
-          key: ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-cache-
+          cache: 'pip'
 
       - name: Installing dependencies
         run: |
