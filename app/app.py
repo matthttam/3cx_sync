@@ -124,6 +124,7 @@ class App(tk.Tk, Window):
     @handle_error
     def show_WindowCSVMapping(self):
         csv_mapping = CSVMapping(config_path=self.app_config.config_path)
+        csv_mapping.initialize()
         WindowCSVMapping(self, csv_mapping=csv_mapping)
 
     def handle_exit_click(self) -> None:

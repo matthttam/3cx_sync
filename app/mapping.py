@@ -71,3 +71,26 @@ class CSVMapping(UserDict):
 
     def set_original_config(self):
         self.original_config = deepcopy(self.data)
+
+    def get_parsed_config(self) -> list[dict]:
+        """
+        Returns an array with a dictionary for each field
+        containing values for what each field has set.
+        """
+        parsed_config = []
+        extension_mapping = self.get("Extension", {})
+        new_mapping = extension_mapping.get("New", {})
+        key_header = extension_mapping.get("Key", None)
+        for field, header in new_mapping.items():
+            update = field in extension_mapping.get("Update", {})
+            static = field in extension_mapping.get("Static", {})
+            parsed_config.append(
+                {
+                    "header": header,
+                    "field": field,
+                    "static": static,
+                    "key": (header == key_header),
+                    "update": update,
+                }
+            )
+        return parsed_config

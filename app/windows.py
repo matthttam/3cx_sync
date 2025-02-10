@@ -376,7 +376,6 @@ class WindowCSVMapping(PopupWindow):
 
         self.widgets = WidgetList()
         self.mapping = csv_mapping
-        self.mapping.initialize()
         self.title("CSV Mapping Settings")
         self.initialize_variables()
         self.build_gui()
@@ -390,10 +389,6 @@ class WindowCSVMapping(PopupWindow):
 
     def build_gui(self) -> None:
         # Frame: window
-        # Initialize style
-        s = ttk.Style()
-        # Create style used by default for all Frames
-        s.configure("new.TFrame", background="green")
         self.widgets.frm_window = ttk.Frame(self, name="csv_mapping")
         self.widgets.frm_window.pack(**self.pack_defaults["frm"], expand=True, fill="both")
 
@@ -423,24 +418,29 @@ class WindowCSVMapping(PopupWindow):
             borderwidth=2,
         )
         self.widgets.lblfrm_csv_mapping_fields.pack(side="top", fill="both", ipady=self.frame_iy_padding, expand=True)
-
+        self.widgets.lblfrm_csv_mapping_fields.grid_columnconfigure(0, weight=1)
+        self.widgets.lblfrm_csv_mapping_fields.grid_columnconfigure(1, weight=2)
         # CSV Mapping Headers
         self.widgets.lbl_csv_mapping_3cx_field = ttk.Label(
             self.widgets.lblfrm_csv_mapping_fields, text="3cx Field", width=20
         )
+        self.widgets.lbl_csv_mapping_3cx_field.grid(row=0, column=0, sticky="ew")
+
         self.widgets.lbl_csv_mapping_header = ttk.Label(
             self.widgets.lblfrm_csv_mapping_fields, text="CSV Header", width=20
         )
-        self.widgets.lbl_csv_mapping_static = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="Static", width=5)
-        self.widgets.lbl_csv_mapping_update = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="Update", width=5)
-        self.widgets.lbl_csv_mapping_key = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="Key", width=5)
-        self.widgets.lbl_csv_mapping_3cx_field.grid(row=1, column=1, sticky="w")
-        self.widgets.lbl_csv_mapping_header.grid(row=1, column=2, sticky="w")
-        self.widgets.lbl_csv_mapping_static.grid(row=1, column=3, sticky="w")
-        self.widgets.lbl_csv_mapping_update.grid(row=1, column=4, sticky="w")
-        self.widgets.lbl_csv_mapping_key.grid(row=1, column=5, sticky="w")
+        self.widgets.lbl_csv_mapping_header.grid(row=0, column=1, sticky="ew")
 
-        self.initialize_mapping_field_sets()
+        self.widgets.lbl_csv_mapping_static = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="Static", width=5)
+        self.widgets.lbl_csv_mapping_static.grid(row=0, column=2, sticky="w")
+
+        self.widgets.lbl_csv_mapping_update = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="Update", width=5)
+        self.widgets.lbl_csv_mapping_update.grid(row=0, column=3, sticky="w")
+
+        self.widgets.lbl_csv_mapping_key = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="Key", width=5)
+        self.widgets.lbl_csv_mapping_key.grid(row=0, column=4, sticky="w")
+
+        self.initialize_mapping_field_sets(starting_row=1)
 
         # Frame: Add Remove Fields
         self.widgets.frm_add_delete_fields = ttk.Frame(self.widgets.frm_window)
@@ -456,28 +456,31 @@ class WindowCSVMapping(PopupWindow):
         )
 
         self.widgets.frm_add_delete_fields.pack(side="top", anchor="center", expand=True, fill="both")
-        self.widgets.btn_add_field.grid(row=1, column=1)
-        self.widgets.btn_delete_field.grid(row=1, column=2)
+        self.widgets.btn_add_field.grid(row=0, column=0)
+        self.widgets.btn_delete_field.grid(row=0, column=1)
 
         # Frame: Navigation
         self.widgets.frm_navigation = ttk.Frame(self.widgets.frm_window)
+        self.widgets.frm_navigation.pack(side="bottom", anchor="e", expand=True)
+
         self.widgets.btn_save = ttk.Button(
             self.widgets.frm_navigation,
             text="Save",
             command=self.handle_save_click,
         )
+        self.widgets.btn_save.grid(row=0, column=0, padx=5)
+
         self.widgets.btn_cancel = ttk.Button(
             self.widgets.frm_navigation,
             text="Cancel",
             command=self.handle_cancel_click,
         )
-        self.widgets.frm_navigation.pack(side="bottom", anchor="e", expand=True)
-        self.widgets.btn_save.grid(row=1, column=1, padx=5)
-        self.widgets.btn_cancel.grid(row=1, column=2, padx=5)
+        self.widgets.btn_cancel.grid(row=0, column=1, padx=5)
 
     def resize(self):
         self.widgets.frm_window.update_idletasks()
-        width = self.widgets.frm_window.winfo_reqwidth()
+        # width = self.widgets.frm_window.winfo_reqwidth()
+        width = self.winfo_width()
         height = self.widgets.frm_window.winfo_reqheight() + 20
 
         self.geometry(f"{width}x{height}")
@@ -489,7 +492,7 @@ class WindowCSVMapping(PopupWindow):
         self.destroy()
 
     def set_mapping_values(self):
-        # This coudl be replaced with the trace mechanic like in
+        # This needs to be replaced with the trace method like in
         # the app config file.
         """Update the mapping config with values from the form"""
         self.mapping["Extension"] = {
@@ -528,65 +531,65 @@ class WindowCSVMapping(PopupWindow):
         filename = askopenfilename(filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
         self.var_csv_mapping_import_file_path.set(filename)
 
-    def initialize_mapping_field_sets(self):
-        extension_mapping = self.mapping.get("Extension", {})
-        new_mapping = extension_mapping.get("New", {})
-        key_header = extension_mapping.get("Key", None)
+    def initialize_mapping_field_sets(self, starting_row):
+        parsed_config = self.mapping.get_parsed_config()
+        row = starting_row
+        for field_info in parsed_config:
+            self.add_mapping_field_set(row=row, **field_info)
+            row += 1
 
-        for field, header in new_mapping.items():
-            key = header == key_header
-            update = field in extension_mapping.get("Update", {})
-            static = field in extension_mapping.get("Static", {})
-            self.add_mapping_field_set(header=header, field=field, static=static, key=key, update=update)
+        # extension_mapping = self.mapping.get("Extension", {})
+        # new_mapping = extension_mapping.get("New", {})
+        # key_header = extension_mapping.get("Key", None)
+        # row = starting_row
+        # for field, header in new_mapping.items():
+        #    update = field in extension_mapping.get("Update", {})
+        #    static = field in extension_mapping.get("Static", {})
+        #    self.add_mapping_field_set(
+        #        row=row, header=header, field=field, static=static, key=(header == key_header), update=update
+        #    )
+        #    row += 1
 
     def handle_button_add_mapping_field_set(self):
-        self.add_mapping_field_set()
+        self.add_mapping_field_set(row=len(self.mapping_fields) + 1)
         self.resize()
 
-    def add_mapping_field_set(self, header="", field="", static=False, update=False, key=False):
-        current_row = len(self.mapping_fields) + 3
-        lblfrm_csv_mapping_fields = self.nametowidget("csv_mapping.csv_mapping_fields")
-
-        # 3CX Field
-        ent_csv_mapping_3cx_field = ttk.Entry(lblfrm_csv_mapping_fields)
+    def add_mapping_field_set(self, row, header="", field="", static=False, update=False, key=False, **kwargs):
+        # 3cx Field
+        ent_csv_mapping_3cx_field = ttk.Entry(self.widgets.lblfrm_csv_mapping_fields)
         ent_csv_mapping_3cx_field.insert(0, field)
-        ent_csv_mapping_3cx_field.grid(row=current_row, column=1, sticky="w")
+        ent_csv_mapping_3cx_field.grid(row=row, column=0, sticky="ew")
 
         # CSV Header Field
-        ent_csv_mapping_header = ttk.Entry(lblfrm_csv_mapping_fields)
+        ent_csv_mapping_header = ttk.Entry(self.widgets.lblfrm_csv_mapping_fields)
         ent_csv_mapping_header.insert(0, header)
-        ent_csv_mapping_header.grid(row=current_row, column=2, sticky="w")
+        ent_csv_mapping_header.grid(row=row, column=1, sticky="ew")
 
         # Static Value Checkbox
         chk_csv_mapping_static_value = Checkbox(self.widgets.lblfrm_csv_mapping_fields, value=static)
-        chk_csv_mapping_static_value.grid(row=current_row, column=3, sticky="w")
+        chk_csv_mapping_static_value.grid(row=row, column=2, sticky="w")
 
         # Update Checkbox
         chk_csv_mapping_update = Checkbox(self.widgets.lblfrm_csv_mapping_fields, value=update)
-        chk_csv_mapping_update.grid(row=current_row, column=4, sticky="w")
+        chk_csv_mapping_update.grid(row=row, column=3, sticky="w")
 
         # Key Checkbox
         chk_csv_mapping_key = Checkbox(
             self.widgets.lblfrm_csv_mapping_fields,
             state=self.ceckbox_key_state.get(),
             command=self.handle_checkbox_key_change,
-            # value=key,
         )
-        chk_csv_mapping_key.grid(row=current_row, column=5, sticky="w")
+        chk_csv_mapping_key.grid(row=row, column=4, sticky="w")
 
         # Remove Button
         btn_csv_mapping_remove = ttk.Button(
             self.widgets.lblfrm_csv_mapping_fields,
             text="-",
-            # command=lambda row_index=len(self.mapping_fields): self.delete_mapping_field_set(row_index),
-            # command=partial(self.delete_mapping_field_set, len(self.mapping_fields))
-            # command=lambda row_index=current_row: self.delete_mapping_field_set(row_index),
-            # command=lambda btn=btn_csv_mapping_remove: self.delete_mapping_field_set(btn),
         )
         btn_csv_mapping_remove.config(
-            command=lambda btn=btn_csv_mapping_remove: self.delete_mapping_field_set_by_button(btn)
+            command=lambda btn=btn_csv_mapping_remove: self.handle_button_delete_specific_mapping_field_set(btn)
         )
-        btn_csv_mapping_remove.grid(row=current_row, column=6, padx=(0, 10))
+        btn_csv_mapping_remove.grid(row=row, column=5, padx=(0, 10))
 
         if key:
             chk_csv_mapping_key.invoke()
@@ -602,33 +605,27 @@ class WindowCSVMapping(PopupWindow):
         )
 
     def handle_button_delete_mapping_field_set(self):
-        self.delete_last_mapping_field_set()
+        # Delete the last mapping field set
+        self.delete_mapping_field_set_by_row_index(len(self.mapping_fields) - 1)
         self.resize()
 
-    def delete_last_mapping_field_set(self):
-        row_index = len(self.mapping_fields) - 1
-        row = self.mapping_fields.pop(row_index)
-
-        for widget in row:
-            widget.destroy()
-
-    def delete_mapping_field_set_by_button(self, button):
-        # if row_index is None:
-        #    row_index = len(self.mapping_fields) - 1
+    def handle_button_delete_specific_mapping_field_set(self, button):
         for index, mapping_field in enumerate(self.mapping_fields):
             if mapping_field.delete is button:
-                row_index = index
+                self.delete_mapping_field_set_by_row_index(index)
                 break
 
+    def delete_mapping_field_set_by_row_index(self, row_index: int):
         row = self.mapping_fields.pop(row_index)
-        for widget in row:
-            widget.destroy()
-        # if row_index is None:
-        #    row_index = len(self.mapping_fields) - 1
-
-        # row = self.mapping_fields.pop(row_index)
         # for widget in row:
-        #    widget.destroy()
+        row.destroy()
+        # Reindex the rows
+        self.reindex_mapping_field_rows(starting_row=row_index)
+
+    def reindex_mapping_field_rows(self, starting_row):
+        partial_mapping_fields = self.mapping_fields[starting_row : len(self.mapping_fields)]
+        for idx, x in enumerate(partial_mapping_fields, start=starting_row):
+            x.change_row(row=idx + 1)
 
     def handle_checkbox_key_change(self):
         if self.ceckbox_key_state.get() == "normal":

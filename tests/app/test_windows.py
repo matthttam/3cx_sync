@@ -1,6 +1,7 @@
 import pytest
 import tkinter as tk
 from unittest.mock import PropertyMock, patch, MagicMock
+from app.widgets import Checkbox, ExtensionMappingFieldSet
 from app.windows import (
     WindowAppConfig,
     WidgetList,
@@ -11,6 +12,7 @@ from app.windows import (
 )
 from sync.logging import LogLevel
 from tkinter.scrolledtext import ScrolledText
+from tkinter import Entry, Button
 
 
 class TestWindow:
@@ -368,8 +370,95 @@ class TestWindowCSVMapping:
     def test_initialize_mapping_field_sets(self):
         pytest.skip()
 
+    @patch.object(WindowCSVMapping, "add_mapping_field_set")
+    @patch.object(WindowCSVMapping, "resize")
+    def test_handle_button_add_mapping_field_set(
+        self, mock_resize, mock_add_mapping_field_set, mock_window_csv_mapping
+    ):
+        mock_window_csv_mapping.mapping_fields = [1, 2, 3]
+        mock_window_csv_mapping.handle_button_add_mapping_field_set()
+        mock_add_mapping_field_set.assert_called_once_with(row=4)
+        mock_resize.assert_called_once()
 
-import itertools
+    @patch.object(WindowCSVMapping, "delete_mapping_field_set_by_row_index")
+    @patch.object(WindowCSVMapping, "resize")
+    def test_handle_button_delete_mapping_field_set(
+        self, mock_resize, mock_delete_mapping_field_set_by_row_index, mock_window_csv_mapping
+    ):
+        mock_window_csv_mapping.mapping_fields = [1, 2, 3]
+        mock_window_csv_mapping.handle_button_delete_mapping_field_set()
+        mock_delete_mapping_field_set_by_row_index.assert_called_once_with(2)
+        mock_resize.assert_called_once()
+
+    @patch.object(WindowCSVMapping, "delete_mapping_field_set_by_row_index")
+    def test_handle_button_delete_specific_mapping_field_set(
+        self, mock_delete_mapping_field_set_by_row_index, mock_window_csv_mapping
+    ):
+        mock_delete_button = MagicMock(spec=Button)
+        mock_delete_button1 = MagicMock(spec=Button)
+        mock_delete_button2 = MagicMock(spec=Button)
+        field_set = ExtensionMappingFieldSet(
+            None,
+            None,
+            None,
+            None,
+            None,
+            delete=mock_delete_button,
+        )
+        field_set1 = ExtensionMappingFieldSet(
+            None,
+            None,
+            None,
+            None,
+            None,
+            delete=mock_delete_button1,
+        )
+        field_set2 = ExtensionMappingFieldSet(
+            None,
+            None,
+            None,
+            None,
+            None,
+            delete=mock_delete_button2,
+        )
+        mock_window_csv_mapping.mapping_fields = [field_set, field_set1, field_set2]
+        mock_window_csv_mapping.handle_button_delete_specific_mapping_field_set(mock_delete_button2)
+        mock_delete_mapping_field_set_by_row_index.assert_called_once_with(2)
+
+    @patch.object(WindowCSVMapping, "reindex_mapping_field_rows")
+    def test_delete_mapping_field_set_by_row_index(self, mock_reindex_mapping_field_rows, mock_window_csv_mapping):
+        mock_row = MagicMock()
+        mock_window_csv_mapping.mapping_fields = MagicMock()
+        mock_window_csv_mapping.mapping_fields.pop.return_value = mock_row
+
+        mock_window_csv_mapping.delete_mapping_field_set_by_row_index(5)
+
+        mock_window_csv_mapping.mapping_fields.pop.assert_called_once_with(5)
+        mock_row.destroy.assert_called_once()
+        mock_reindex_mapping_field_rows.assert_called_once_with(starting_row=5)
+
+    def test_reindex_mapping_field_rows(self, mock_window_csv_mapping):
+        ...
+        mock_field_1 = MagicMock()
+        mock_field_2 = MagicMock()
+        mock_field_3 = MagicMock()
+        mock_window_csv_mapping.mapping_fields = [mock_field_1, mock_field_2, mock_field_3]
+        mock_window_csv_mapping.reindex_mapping_field_rows(1)
+
+        mock_field_1.change_row.assert_not_called()
+        mock_field_2.change_row.assert_called_once_with(row=2)
+        mock_field_3.change_row.assert_called_once_with(row=3)
+
+    @patch.object(WindowCSVMapping, "geometry")
+    @patch.object(WindowCSVMapping, "winfo_width")
+    def test_resize(self, mock_winfo_width, mock_gemoetry, mock_window_csv_mapping):
+        mock_window_csv_mapping.widgets = MagicMock()
+        mock_winfo_width.return_value = 100
+        mock_window_csv_mapping.widgets.frm_window.winfo_reqheight.return_value = 2000
+        mock_window_csv_mapping.resize()
+        mock_window_csv_mapping.widgets.frm_window.update_idletasks.assert_called_once()
+        mock_winfo_width.assert_called_once()
+        mock_gemoetry.assert_called_once_with("100x2020")
 
 
 class TestWindowSync:
@@ -408,12 +497,6 @@ class TestWindowSync:
         type(window_sync.master.sync).is_paused = PropertyMock(return_value=True)
         window_sync.update_btn_pause_resume_text()  # Sync Resumed
         assert window_sync.widgets.btn_pause_resume.cget("text") == "Resume"
-
-    #
-    # window_sync.handle_pause_resume()  # Sync Paused
-    # type(window_sync.master.sync).is_paused = PropertyMock(return_value=True)
-    #
-    # assert window_sync.widgets.btn_pause_resume.cget("text") == "Resume"
 
     def test_handle_pause_resume_sync_is_none(self, window_sync):
         # Set so that sync is running and not paused

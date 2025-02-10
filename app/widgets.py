@@ -14,10 +14,10 @@ class Checkbox(tk.Checkbutton):
     def checked(self):
         return self.variable.get()
 
-    def check(self):
+    def check(self) -> None:
         self.variable.set(True)
 
-    def uncheck(self):
+    def uncheck(self) -> None:
         self.variable.set(False)
 
 
@@ -28,6 +28,21 @@ class ExtensionMappingFieldSet(NamedTuple):
     update: Checkbox
     key: Checkbox
     delete: tk.Button
+
+    def destroy(self) -> None:
+        """Destroy all widgets in the field set."""
+        for widget in self._widgets():
+            widget.destroy()
+
+    def change_row(self, **kwargs) -> None:
+        """Adjust all widges of a set to a new row."""
+        for idx, widget in enumerate(self._widgets()):
+            row = kwargs.get("row", 0)
+            widget.grid(row=row, column=idx)
+
+    def _widgets(self) -> list:
+        """Return a list of all widgets for easy iteration."""
+        return [getattr(self, field) for field in self._fields]
 
 
 @dataclass
