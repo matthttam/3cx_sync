@@ -1,7 +1,7 @@
 import pytest
 import tkinter as tk
-from unittest.mock import PropertyMock, patch, MagicMock
-from app.widgets import Checkbox, ExtensionMappingFieldSet
+from unittest.mock import PropertyMock, call, patch, MagicMock
+from app.widgets import ExtensionMappingFieldSet
 from app.windows import (
     WindowAppConfig,
     WidgetList,
@@ -10,9 +10,8 @@ from app.windows import (
     Window,
     WindowCSVMapping,
 )
-from sync.logging import LogLevel
 from tkinter.scrolledtext import ScrolledText
-from tkinter import Entry, Button
+from tkinter import Button
 
 
 class TestWindow:
@@ -290,15 +289,53 @@ class TestWindowCSVMapping:
     @patch("app.windows.messagebox")
     @patch.object(WindowCSVMapping, "set_mapping_values", return_value=MagicMock())
     @patch.object(WindowCSVMapping, "destroy")
-    def test_handle_save_click(self, mock_destroy, mock_set_mapping_values, mock_messagebox, mock_window_csv_mapping):
-        mock_window_csv_mapping.widgets.btn_save.invoke()
+    def test_handle_save_click(self, mock_destroy, mock_set_mapping_values, mock_messagebox, window_csv_mapping):
+        window_csv_mapping.widgets.btn_save.invoke()
 
         mock_set_mapping_values.assert_called_once()
         mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!")
         mock_destroy.assert_called_once()
 
-    def test_set_mapping_values(self):
-        pytest.skip()
+    def test_set_mapping_values(self, window_csv_mapping):
+        # Mock var_csv_mapping_import_file_path.get() return value
+        window_csv_mapping.var_csv_mapping_import_file_path = MagicMock()
+        window_csv_mapping.var_csv_mapping_import_file_path.get.return_value = "path/to/csv"
+
+        # Mock mapping_fields with MagicMock for each field
+        mock_row_1 = MagicMock()
+        mock_row_1.header.get.return_value = "Header1"
+        mock_row_1.field.get.return_value = "Field1"
+        mock_row_1.key.checked = True
+        mock_row_1.update.checked = False
+        mock_row_1.static.checked = True
+
+        mock_row_2 = MagicMock()
+        mock_row_2.header.get.return_value = "Header2"
+        mock_row_2.field.get.return_value = "Field2"
+        mock_row_2.key.checked = False
+        mock_row_2.update.checked = True
+        mock_row_2.static.checked = False
+
+        window_csv_mapping.mapping_fields = [mock_row_1, mock_row_2]
+
+        # Prepare mapping to be updated
+        window_csv_mapping.mapping = {}
+
+        # Call method under test
+        window_csv_mapping.set_mapping_values()
+
+        # Assertions
+        expected_mapping = {
+            "Extension": {
+                "Path": "path/to/csv",
+                "Key": "Header1",  # Only row_1 has key.checked == True
+                "New": {"Field1": "Header1", "Field2": "Header2"},
+                "Update": ["Field2"],  # Only row_2 has update.checked == True
+                "Static": ["Field1"],  # Only row_1 has static.checked == True
+            }
+        }
+
+        assert window_csv_mapping.mapping == expected_mapping
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
     @patch.object(WindowCSVMapping, "confirm_discard_changes")
@@ -308,13 +345,13 @@ class TestWindowCSVMapping:
         mock_destroy,
         mock_confirm_discard_changes,
         mock_set_mapping_values,
-        mock_window_csv_mapping,
+        window_csv_mapping,
     ):
-        mock_window_csv_mapping.mapping.is_dirty = True
+        window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = True
-        mock_window_csv_mapping.handle_cancel_click()
+        window_csv_mapping.handle_cancel_click()
         mock_set_mapping_values.assert_called_once()
-        mock_window_csv_mapping.mapping.load.assert_called_once()
+        window_csv_mapping.mapping.load.assert_called_once()
         mock_destroy.assert_called_once()
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
@@ -325,14 +362,14 @@ class TestWindowCSVMapping:
         mock_destroy,
         mock_confirm_discard_changes,
         mock_set_mapping_values,
-        mock_window_csv_mapping,
+        window_csv_mapping,
     ):
-        mock_window_csv_mapping.mapping = MagicMock()
-        mock_window_csv_mapping.mapping.is_dirty = True
+        window_csv_mapping.mapping = MagicMock()
+        window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = False
-        mock_window_csv_mapping.handle_cancel_click()
+        window_csv_mapping.handle_cancel_click()
         mock_set_mapping_values.assert_called_once()
-        mock_window_csv_mapping.mapping.load.assert_not_called()
+        window_csv_mapping.mapping.load.assert_not_called()
         mock_destroy.assert_not_called()
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
@@ -343,56 +380,108 @@ class TestWindowCSVMapping:
         mock_destroy,
         mock_confirm_discard_changes,
         mock_set_mapping_values,
-        mock_window_csv_mapping,
+        window_csv_mapping,
     ):
-        mock_window_csv_mapping.mapping = MagicMock()
-        mock_window_csv_mapping.mapping.is_dirty = False
-        mock_window_csv_mapping.handle_cancel_click()
+        window_csv_mapping.mapping = MagicMock()
+        window_csv_mapping.mapping.is_dirty = False
+        window_csv_mapping.handle_cancel_click()
         mock_confirm_discard_changes.assert_not_called()
         mock_set_mapping_values.assert_called_once()
-        mock_window_csv_mapping.mapping.load.assert_called_once()
+        window_csv_mapping.mapping.load.assert_called_once()
         mock_destroy.assert_called_once()
 
     @patch("app.windows.messagebox")
-    def test_confirm_discard_changes(self, mock_messagebox, mock_window_csv_mapping):
-        mock_window_csv_mapping.confirm_discard_changes()
+    def test_confirm_discard_changes(self, mock_messagebox, window_csv_mapping):
+        window_csv_mapping.confirm_discard_changes()
         mock_messagebox.askyesno.assert_called_once_with("Unsaved Changes", "Discard unsaved changes?")
 
     @patch("app.windows.askopenfilename")
-    def test_browse_file_csv(self, mock_askopenfilename, mock_window_csv_mapping):
-        mock_window_csv_mapping.var_csv_mapping_import_file_path = MagicMock()
+    def test_browse_file_csv(self, mock_askopenfilename, window_csv_mapping):
+        window_csv_mapping.var_csv_mapping_import_file_path = MagicMock()
         test_filename = "test_filename.csv"
         mock_askopenfilename.return_value = test_filename
-        mock_window_csv_mapping.browse_file_csv()
+        window_csv_mapping.browse_file_csv()
         mock_askopenfilename.assert_called_once_with(filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
-        mock_window_csv_mapping.var_csv_mapping_import_file_path.set.assert_called_once_with(test_filename)
+        window_csv_mapping.var_csv_mapping_import_file_path.set.assert_called_once_with(test_filename)
 
-    def test_initialize_mapping_field_sets(self):
-        pytest.skip()
+    @patch.object(WindowCSVMapping, "add_mapping_field_set")
+    def test_initialize_mapping_field_sets(self, mock_add_mapping_field_set, window_csv_mapping):
+        window_csv_mapping.mapping.get_parsed_config.return_value = [
+            {"test": "test_data_1"},
+            {"test": "test_data_2"},
+            {"test": "test_data_3"},
+        ]
+
+        window_csv_mapping.initialize_mapping_field_sets(starting_row=1)
+        mock_add_mapping_field_set.assert_has_calls(
+            [call(row=1, test="test_data_1"), call(row=2, test="test_data_2"), call(row=3, test="test_data_3")]
+        )
 
     @patch.object(WindowCSVMapping, "add_mapping_field_set")
     @patch.object(WindowCSVMapping, "resize")
-    def test_handle_button_add_mapping_field_set(
-        self, mock_resize, mock_add_mapping_field_set, mock_window_csv_mapping
-    ):
-        mock_window_csv_mapping.mapping_fields = [1, 2, 3]
-        mock_window_csv_mapping.handle_button_add_mapping_field_set()
+    def test_handle_button_add_mapping_field_set(self, mock_resize, mock_add_mapping_field_set, window_csv_mapping):
+        window_csv_mapping.mapping_fields = [1, 2, 3]
+        window_csv_mapping.handle_button_add_mapping_field_set()
         mock_add_mapping_field_set.assert_called_once_with(row=4)
         mock_resize.assert_called_once()
+
+    @patch("app.windows.ttk")
+    @patch("app.windows.Checkbox")
+    @patch("app.windows.ExtensionMappingFieldSet")
+    def test_add_mapping_field_set(
+        self, mock_extension_mapping_field_set_class, mock_checkbox_class, mock_ttk_class, window_csv_mapping
+    ):
+        mock_extension_mapping_field_set = MagicMock()
+        mock_extension_mapping_field_set_class.return_value = mock_extension_mapping_field_set
+        mock_lblfrm = MagicMock()
+        window_csv_mapping.widgets.lblfrm_csv_mapping_fields = mock_lblfrm
+        mock_entry = MagicMock()
+        mock_button = MagicMock()
+        mock_checkbox = MagicMock()
+        mock_ttk_class.Entry.return_value = mock_entry
+        mock_ttk_class.Button.return_value = mock_button
+        mock_checkbox_class.return_value = mock_checkbox
+
+        window_csv_mapping.add_mapping_field_set(
+            row=2, header="Header1", field="Field1", static=True, update=False, key=True
+        )
+
+        # Check if widgets were created and grid called with correct row/column
+        assert len(window_csv_mapping.mapping_fields) == 1
+
+        mock_ttk_class.Entry.assert_any_call(mock_lblfrm)
+        mock_entry.grid.assert_any_call(row=2, column=0, sticky="ew")
+        mock_entry.grid.assert_any_call(row=2, column=1, sticky="ew")
+        mock_entry.insert.assert_any_call(0, "Header1")
+        mock_entry.insert.assert_any_call(0, "Field1")
+
+        mock_checkbox_class.assert_any_call(mock_lblfrm, value=True)
+        mock_checkbox_class.assert_any_call(mock_lblfrm, value=False)
+
+        mock_checkbox.grid.assert_any_call(row=2, column=2, sticky="w")
+        mock_checkbox.grid.assert_any_call(row=2, column=3, sticky="w")
+        mock_checkbox.grid.assert_any_call(row=2, column=4, sticky="w")
+        mock_checkbox.invoke.assert_called_once_with()
+
+        mock_ttk_class.Button.assert_called_once_with(mock_lblfrm, width=2, text="−")
+        mock_button.grid.assert_any_call(row=2, column=5, padx=2, pady=2)
+
+        mock_extension_mapping_field_set_class.assert_called_once()
+        assert window_csv_mapping.mapping_fields == [mock_extension_mapping_field_set]
 
     @patch.object(WindowCSVMapping, "delete_mapping_field_set_by_row_index")
     @patch.object(WindowCSVMapping, "resize")
     def test_handle_button_delete_mapping_field_set(
-        self, mock_resize, mock_delete_mapping_field_set_by_row_index, mock_window_csv_mapping
+        self, mock_resize, mock_delete_mapping_field_set_by_row_index, window_csv_mapping
     ):
-        mock_window_csv_mapping.mapping_fields = [1, 2, 3]
-        mock_window_csv_mapping.handle_button_delete_mapping_field_set()
+        window_csv_mapping.mapping_fields = [1, 2, 3]
+        window_csv_mapping.handle_button_delete_mapping_field_set()
         mock_delete_mapping_field_set_by_row_index.assert_called_once_with(2)
         mock_resize.assert_called_once()
 
     @patch.object(WindowCSVMapping, "delete_mapping_field_set_by_row_index")
     def test_handle_button_delete_specific_mapping_field_set(
-        self, mock_delete_mapping_field_set_by_row_index, mock_window_csv_mapping
+        self, mock_delete_mapping_field_set_by_row_index, window_csv_mapping
     ):
         mock_delete_button = MagicMock(spec=Button)
         mock_delete_button1 = MagicMock(spec=Button)
@@ -421,29 +510,35 @@ class TestWindowCSVMapping:
             None,
             delete=mock_delete_button2,
         )
-        mock_window_csv_mapping.mapping_fields = [field_set, field_set1, field_set2]
-        mock_window_csv_mapping.handle_button_delete_specific_mapping_field_set(mock_delete_button2)
+        window_csv_mapping.mapping_fields = [field_set, field_set1, field_set2]
+        window_csv_mapping.handle_button_delete_specific_mapping_field_set(mock_delete_button2)
         mock_delete_mapping_field_set_by_row_index.assert_called_once_with(2)
 
-    @patch.object(WindowCSVMapping, "reindex_mapping_field_rows")
-    def test_delete_mapping_field_set_by_row_index(self, mock_reindex_mapping_field_rows, mock_window_csv_mapping):
+    @patch.object(WindowCSVMapping, "enable_key_checkboxes")
+    @patch.object(WindowCSVMapping, "shift_rows_up")
+    def test_delete_mapping_field_set_by_row_index(
+        self, mock_shift_rows_up, mock_enable_key_checkboxes, window_csv_mapping
+    ):
         mock_row = MagicMock()
-        mock_window_csv_mapping.mapping_fields = MagicMock()
-        mock_window_csv_mapping.mapping_fields.pop.return_value = mock_row
+        mock_row.key = MagicMock(checked=True)
 
-        mock_window_csv_mapping.delete_mapping_field_set_by_row_index(5)
+        window_csv_mapping.mapping_fields = MagicMock()
+        window_csv_mapping.mapping_fields.pop.return_value = mock_row
 
-        mock_window_csv_mapping.mapping_fields.pop.assert_called_once_with(5)
+        window_csv_mapping.delete_mapping_field_set_by_row_index(5)
+
+        window_csv_mapping.mapping_fields.pop.assert_called_once_with(5)
         mock_row.destroy.assert_called_once()
-        mock_reindex_mapping_field_rows.assert_called_once_with(starting_row=5)
+        mock_shift_rows_up.assert_called_once_with(starting_row=5)
+        mock_enable_key_checkboxes.assert_called_once()
 
-    def test_reindex_mapping_field_rows(self, mock_window_csv_mapping):
+    def test_reindex_mapping_field_rows(self, window_csv_mapping):
         ...
         mock_field_1 = MagicMock()
         mock_field_2 = MagicMock()
         mock_field_3 = MagicMock()
-        mock_window_csv_mapping.mapping_fields = [mock_field_1, mock_field_2, mock_field_3]
-        mock_window_csv_mapping.reindex_mapping_field_rows(1)
+        window_csv_mapping.mapping_fields = [mock_field_1, mock_field_2, mock_field_3]
+        window_csv_mapping.shift_rows_up(1)
 
         mock_field_1.change_row.assert_not_called()
         mock_field_2.change_row.assert_called_once_with(row=2)
@@ -451,14 +546,68 @@ class TestWindowCSVMapping:
 
     @patch.object(WindowCSVMapping, "geometry")
     @patch.object(WindowCSVMapping, "winfo_width")
-    def test_resize(self, mock_winfo_width, mock_gemoetry, mock_window_csv_mapping):
-        mock_window_csv_mapping.widgets = MagicMock()
+    def test_resize(self, mock_winfo_width, mock_gemoetry, window_csv_mapping):
+        window_csv_mapping.widgets = MagicMock()
         mock_winfo_width.return_value = 100
-        mock_window_csv_mapping.widgets.frm_window.winfo_reqheight.return_value = 2000
-        mock_window_csv_mapping.resize()
-        mock_window_csv_mapping.widgets.frm_window.update_idletasks.assert_called_once()
+        window_csv_mapping.widgets.frm_window.winfo_reqheight.return_value = 2000
+        window_csv_mapping.resize()
+        window_csv_mapping.widgets.frm_window.update_idletasks.assert_called_once()
         mock_winfo_width.assert_called_once()
         mock_gemoetry.assert_called_once_with("100x2020")
+
+    @patch.object(WindowCSVMapping, "disable_key_checkboxes")
+    @patch.object(WindowCSVMapping, "enable_key_checkboxes")
+    def test_handle_checkbox_key_change_normal(
+        self, mock_enable_key_checkboxes, mock_disable_key_checkboxes, window_csv_mapping
+    ):
+        window_csv_mapping.checkbox_key_state = MagicMock()
+        window_csv_mapping.checkbox_key_state.get.return_value = "normal"
+
+        window_csv_mapping.handle_checkbox_key_change()
+
+        mock_disable_key_checkboxes.assert_called_once()
+        mock_enable_key_checkboxes.assert_not_called()
+
+    @patch.object(WindowCSVMapping, "disable_key_checkboxes")
+    @patch.object(WindowCSVMapping, "enable_key_checkboxes")
+    def test_handle_checkbox_key_change_disable(
+        self, mock_enable_key_checkboxes, mock_disable_key_checkboxes, window_csv_mapping
+    ):
+        window_csv_mapping.checkbox_key_state = MagicMock()
+        window_csv_mapping.checkbox_key_state.get.return_value = "disable"
+
+        window_csv_mapping.handle_checkbox_key_change()
+
+        mock_disable_key_checkboxes.assert_not_called()
+        mock_enable_key_checkboxes.assert_called_once()
+
+    def test_disable_key_checkboxes(self, window_csv_mapping):
+        window_csv_mapping.checkbox_key_state = MagicMock()
+        checked_key = MagicMock(checked=False)
+        unchecked_key = MagicMock(checked=True)
+        row_1 = MagicMock(key=checked_key)
+        row_2 = MagicMock(key=unchecked_key)
+        window_csv_mapping.mapping_fields = [row_1, row_2]
+
+        window_csv_mapping.disable_key_checkboxes()
+
+        window_csv_mapping.checkbox_key_state.set.assert_called_once_with("disable")
+        checked_key.configure.assert_called_once_with(state="disable")
+        unchecked_key.configure.assert_not_called()
+
+    def test_enable_key_checkboxes(self, window_csv_mapping):
+        window_csv_mapping.checkbox_key_state = MagicMock()
+        checked_key = MagicMock(checked=False)
+        unchecked_key = MagicMock(checked=True)
+        row_1 = MagicMock(key=checked_key)
+        row_2 = MagicMock(key=unchecked_key)
+        window_csv_mapping.mapping_fields = [row_1, row_2]
+
+        window_csv_mapping.enable_key_checkboxes()
+
+        window_csv_mapping.checkbox_key_state.set.assert_called_once_with("normal")
+        checked_key.configure.assert_called_once_with(state="normal")
+        unchecked_key.configure.assert_called_once_with(state="normal")
 
 
 class TestWindowSync:

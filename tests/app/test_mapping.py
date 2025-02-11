@@ -105,3 +105,72 @@ class TestCSVMapping:
         csv_mapping.original_config = {"blah": "blah"}
         csv_mapping.set_original_config()
         assert csv_mapping.original_config == {"key": "value"}
+
+    def test_get_parsed_config(self, csv_mapping):
+        csv_mapping.update(
+            {
+                "Extension": {
+                    "Path": "/Fake/Path",
+                    "Key": "Number",
+                    "New": {
+                        "Number": "Number",
+                        "FirstName": "FirstName",
+                        "LastName": "LastName",
+                        "EmailAddress": "Email",
+                        "VMPIN": "VMPIN",
+                        "VMEmailOptions": "VMEmailOptions",
+                        "OutboundCallerID": "OutboundCallerID",
+                        "SendEmailMissedCalls": "SendEmailMissedCalls",
+                        "Enabled": "Enabled",
+                        "EnableHotdesking": "AllowToUseHotdesking",
+                        "RecordCalls": "RecordCalls",
+                        "RecordExternalCallsOnly": "RecordExternalCallsOnly",
+                        "VMEnabled": "VMEnabled",
+                        "WebMeetingFriendlyName": "WebMeetingFriendlyName",
+                    },
+                    "Update": ["FirstName", "LastName", "EmailAddress", "Enabled"],
+                }
+            }
+        )
+
+        expected_value = [
+            {"header": "Number", "field": "Number", "static": False, "key": True, "update": False},
+            {"header": "FirstName", "field": "FirstName", "static": False, "key": False, "update": True},
+            {"header": "LastName", "field": "LastName", "static": False, "key": False, "update": True},
+            {"header": "Email", "field": "EmailAddress", "static": False, "key": False, "update": True},
+            {"header": "VMPIN", "field": "VMPIN", "static": False, "key": False, "update": False},
+            {"header": "VMEmailOptions", "field": "VMEmailOptions", "static": False, "key": False, "update": False},
+            {"header": "OutboundCallerID", "field": "OutboundCallerID", "static": False, "key": False, "update": False},
+            {
+                "header": "SendEmailMissedCalls",
+                "field": "SendEmailMissedCalls",
+                "static": False,
+                "key": False,
+                "update": False,
+            },
+            {"header": "Enabled", "field": "Enabled", "static": False, "key": False, "update": True},
+            {
+                "header": "AllowToUseHotdesking",
+                "field": "EnableHotdesking",
+                "static": False,
+                "key": False,
+                "update": False,
+            },
+            {"header": "RecordCalls", "field": "RecordCalls", "static": False, "key": False, "update": False},
+            {
+                "header": "RecordExternalCallsOnly",
+                "field": "RecordExternalCallsOnly",
+                "static": False,
+                "key": False,
+                "update": False,
+            },
+            {"header": "VMEnabled", "field": "VMEnabled", "static": False, "key": False, "update": False},
+            {
+                "header": "WebMeetingFriendlyName",
+                "field": "WebMeetingFriendlyName",
+                "static": False,
+                "key": False,
+                "update": False,
+            },
+        ]
+        assert csv_mapping.get_parsed_config() == expected_value

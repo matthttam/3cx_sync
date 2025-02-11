@@ -84,14 +84,14 @@ class TestApp:
 
     @patch("app.app.CSVMapping")
     @patch("app.app.WindowCSVMapping")
-    def test_show_window_csv_mapping(self, mock_window_csv_mapping, mock_csv_mapping_class, app):
+    def test_show_window_csv_mapping(self, window_csv_mapping, mock_csv_mapping_class, app):
         app.app_config.config_path = "/test/path"
         mock_csv_mapping = MagicMock()
         mock_csv_mapping_class.return_value = mock_csv_mapping
 
         app.show_WindowCSVMapping()
         mock_csv_mapping_class.assert_called_once_with(config_path="/test/path")
-        mock_window_csv_mapping.assert_called_once_with(app, csv_mapping=mock_csv_mapping)
+        window_csv_mapping.assert_called_once_with(app, csv_mapping=mock_csv_mapping)
 
     @patch.object(App, "destroy")
     def test_handle_exit_click(self, mock_destroy, app):

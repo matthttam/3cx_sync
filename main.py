@@ -1,5 +1,5 @@
 import os
-import sys
+import traceback
 from argparse import ArgumentParser, Namespace
 from app.app import App
 from app.config import AppConfig
@@ -70,7 +70,7 @@ def main():
             run_gui_mode(logger=logger, config_path=app_args.config_path)
     except Exception as e:
         logger.log(LogLevel.CRITICAL, f"A critical error has occured and the application must exit. {e}")
-        logger.log(LogLevel.CRITICAL, f"Traceback: {sys.exc_info()[2]}")
+        logger.log(LogLevel.CRITICAL, f"Traceback: {traceback.format_exc()}")
         raise
 
 
