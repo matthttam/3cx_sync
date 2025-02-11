@@ -17,10 +17,12 @@ class TestAppConfig:
     def test_init_with_config_path(self):
         config_path = "/custom/path"
         app_config = AppConfig(config_path=config_path)
+
+        expected_path = Path(config_path).resolve()
         assert isinstance(app_config.config_path, Path)
-        assert str(app_config.config_path) == config_path
+        app_config.config_path == expected_path
         assert isinstance(app_config.config_file_path, Path)
-        assert str(app_config.config_file_path) == os.path.join(config_path, AppConfig.DEFAULT_FILENAME)
+        assert app_config.config_file_path == expected_path / AppConfig.DEFAULT_FILENAME
 
     def test_server_url(self, app_config):
         app_config["3cx"] = {"scheme": "http", "domain": "example.com", "port": "8080"}
