@@ -20,8 +20,8 @@ class Window:
     pack_defaults = {
         "frm": {"padx": 5, "pady": 5, "side": tk.LEFT},
         "lbl": {"padx": (0, 10), "fill": tk.X},
-        "btn": {"padx": 5, "pady": (5, 5)},
-        "ent": {"pady": (5, 5), "fill": tk.X},
+        "btn": {"padx": 5, "pady": 5},
+        "ent": {"pady": 5, "fill": tk.X},
         "lblfrm": {"padx": 20, "pady": 10, "fill": tk.BOTH, "expand": True},
     }
     grid_defaults = {
@@ -323,11 +323,13 @@ class WindowAppConfig(PopupWindow):
             row=self.get_current_row(),
             column=self.get_next_column(),
             **self.grid_defaults["btn"],
+            sticky="se",
         )
         self.widgets.btn_cancel.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
             **self.grid_defaults["btn"],
+            sticky="se",
         )
 
     def handle_test_connection(self):
@@ -378,6 +380,7 @@ class WindowCSVMapping(PopupWindow):
     def __init__(self, master, *args, csv_mapping: CSVMapping, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
+        self.geometry("600x1000")
         self.widgets = WidgetList()
         self.mapping = csv_mapping
         self.title("CSV Mapping Settings")
@@ -394,17 +397,19 @@ class WindowCSVMapping(PopupWindow):
     def build_gui(self) -> None:
         # Frame: window
         self.widgets.frm_window = ttk.Frame(self, name="csv_mapping")
+        self.widgets.frm_window.grid_rowconfigure(0, weight=1)
+        self.widgets.frm_window.grid_columnconfigure(0, weight=1)
         self.widgets.frm_window.pack(**self.pack_defaults["frm"], expand=True, fill="both")
 
         # Field: Extension Path
-        self.widgets.lblfrm_import_file_path = ttk.LabelFrame(self.widgets.frm_window, text="Import File Path")
-        self.widgets.lblfrm_import_file_path.pack(**self.pack_defaults["lblfrm"])
+        self.widgets.lblfrm_import_file_path = ttk.LabelFrame(self.widgets.frm_window, text="Extension CSV File Path")
+        self.widgets.lblfrm_import_file_path.pack(padx=20, pady=10, fill=tk.BOTH, expand=False)
 
         self.widgets.ent_import_file_path = ttk.Entry(
             self.widgets.lblfrm_import_file_path,
             textvariable=self.var_csv_mapping_import_file_path,
         )
-        self.widgets.ent_import_file_path.pack(**self.pack_defaults["ent"])
+        self.widgets.ent_import_file_path.pack(**self.pack_defaults["ent"], padx=25)
 
         self.widgets.btn_import_file_path_browse = ttk.Button(
             self.widgets.lblfrm_import_file_path, text=">", command=self.browse_file_csv
@@ -416,57 +421,98 @@ class WindowCSVMapping(PopupWindow):
         # Frame: CSV Mapping Fields
         self.widgets.lblfrm_csv_mapping_fields = ttk.LabelFrame(
             self.widgets.frm_window,
-            text="CSV Mapping",
-            name="csv_mapping_fields",
+            text="Extension CSV Mapping",
             relief="sunken",
             borderwidth=2,
         )
-        self.widgets.lblfrm_csv_mapping_fields.pack(side="top", fill="both", ipady=self.frame_iy_padding, expand=True)
-        self.widgets.lblfrm_csv_mapping_fields.grid_columnconfigure(0, weight=1)
-        self.widgets.lblfrm_csv_mapping_fields.grid_columnconfigure(1, weight=2)
+
+        self.widgets.lblfrm_csv_mapping_fields.pack(padx=20, pady=10, fill=tk.BOTH, expand=True)
+
+        # Adding scrollbar to CSV Mapping Fields
+        self.widgets.canvas_csv_mapping_fields_scroll_bar = tk.Canvas(self.widgets.lblfrm_csv_mapping_fields)
+        self.widgets.scrollbar_csv_mapping_fields = ttk.Scrollbar(
+            self.widgets.lblfrm_csv_mapping_fields,
+            orient="vertical",
+            command=self.widgets.canvas_csv_mapping_fields_scroll_bar.yview,
+        )
+        self.widgets.scrollbar_csv_mapping_fields.pack(side="right", fill="y")
+        self.widgets.frm_csv_mapping_fields_scrollable = ttk.Frame(self.widgets.canvas_csv_mapping_fields_scroll_bar)
+        self.widgets.frm_csv_mapping_fields_scrollable.grid_columnconfigure(0, weight=1)
+        self.widgets.frm_csv_mapping_fields_scrollable.grid_columnconfigure(1, weight=1)
+
+        self.widgets.canvas_csv_mapping_fields_scroll_bar.bind(
+            "<Configure>",
+            lambda e: (
+                self.update_scrollbar(),
+                self.widgets.canvas_csv_mapping_fields_scroll_bar.itemconfig(
+                    self.widgets.canvas_csv_mapping_fields_scroll_bar.find_withtag("inner_frame"), width=e.width
+                ),
+            ),
+        )
+
+        self.widgets.canvas_csv_mapping_fields_scroll_bar.create_window(
+            (0, 0), window=self.widgets.frm_csv_mapping_fields_scrollable, anchor="nw", tags="inner_frame"
+        )
+        self.widgets.canvas_csv_mapping_fields_scroll_bar.configure(
+            yscrollcommand=self.widgets.scrollbar_csv_mapping_fields.set
+        )
+
+        self.widgets.canvas_csv_mapping_fields_scroll_bar.pack(side="left", fill="both", expand=True)
+
         # CSV Mapping Headers
-        self.widgets.lbl_csv_mapping_3cx_field = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="3cx Field")
+        self.widgets.lbl_csv_mapping_3cx_field = ttk.Label(
+            self.widgets.frm_csv_mapping_fields_scrollable, text="3cx Field"
+        )
         self.widgets.lbl_csv_mapping_3cx_field.grid(row=0, column=0, sticky="s")
 
-        self.widgets.lbl_csv_mapping_header = ttk.Label(self.widgets.lblfrm_csv_mapping_fields, text="CSV Header")
+        self.widgets.lbl_csv_mapping_header = ttk.Label(
+            self.widgets.frm_csv_mapping_fields_scrollable, text="CSV Header"
+        )
         self.widgets.lbl_csv_mapping_header.grid(row=0, column=1, sticky="s")
 
-        self.widgets.lbl_csv_mapping_static = tk.Canvas(self.widgets.lblfrm_csv_mapping_fields, width=20, height=100)
-        self.widgets.lbl_csv_mapping_static.create_text(10, 83, text="Static", angle=90)
+        self.widgets.lbl_csv_mapping_static = tk.Canvas(
+            self.widgets.frm_csv_mapping_fields_scrollable, width=20, height=50
+        )
+        self.widgets.lbl_csv_mapping_static.create_text(10, 33, text="Static", angle=90)
         self.widgets.lbl_csv_mapping_static.grid(row=0, column=2, sticky="s")
 
-        self.widgets.lbl_csv_mapping_update = tk.Canvas(self.widgets.lblfrm_csv_mapping_fields, width=20, height=100)
-        self.widgets.lbl_csv_mapping_update.create_text(10, 79, text="Update", angle=90)
+        self.widgets.lbl_csv_mapping_update = tk.Canvas(
+            self.widgets.frm_csv_mapping_fields_scrollable, width=20, height=50
+        )
+        self.widgets.lbl_csv_mapping_update.create_text(10, 29, text="Update", angle=90)
         self.widgets.lbl_csv_mapping_update.grid(row=0, column=3, sticky="s")
 
-        self.widgets.lbl_csv_mapping_key = tk.Canvas(self.widgets.lblfrm_csv_mapping_fields, width=20, height=100)
-        self.widgets.lbl_csv_mapping_key.create_text(10, 90, text="Key", angle=90)
+        self.widgets.lbl_csv_mapping_key = tk.Canvas(
+            self.widgets.frm_csv_mapping_fields_scrollable, width=20, height=50
+        )
+        self.widgets.lbl_csv_mapping_key.create_text(10, 40, text="Key", angle=90)
         self.widgets.lbl_csv_mapping_key.grid(row=0, column=4, sticky="s")
 
         self.initialize_mapping_field_sets(starting_row=1)
 
         # Frame: Add Remove Fields
         self.widgets.frm_add_delete_fields = ttk.Frame(self.widgets.frm_window)
+        self.widgets.frm_add_delete_fields.pack(side="top", anchor="n", fill="x", padx=25, pady=5)
+
         self.widgets.btn_add_field = ttk.Button(
             self.widgets.frm_add_delete_fields,
             text="+",
             width=2,
             command=self.handle_button_add_mapping_field_set,
         )
+        self.widgets.btn_add_field.grid(row=0, column=0, padx=2, pady=2, sticky="se")
+
         self.widgets.btn_delete_field = ttk.Button(
             self.widgets.frm_add_delete_fields,
             text="−",
             width=2,
             command=self.handle_button_delete_mapping_field_set,
         )
-
-        self.widgets.frm_add_delete_fields.pack(side="top", anchor="center", expand=True, fill="both")
-        self.widgets.btn_add_field.grid(row=0, column=0)
-        self.widgets.btn_delete_field.grid(row=0, column=1, padx=2, pady=2)
+        self.widgets.btn_delete_field.grid(row=0, column=1, padx=2, pady=2, sticky="se")
 
         # Frame: Navigation
         self.widgets.frm_navigation = ttk.Frame(self.widgets.frm_window)
-        self.widgets.frm_navigation.pack(side="bottom", anchor="e", expand=True)
+        self.widgets.frm_navigation.pack(side="bottom", anchor="e", pady=10)
 
         self.widgets.btn_save = ttk.Button(
             self.widgets.frm_navigation,
@@ -481,14 +527,6 @@ class WindowCSVMapping(PopupWindow):
             command=self.handle_cancel_click,
         )
         self.widgets.btn_cancel.grid(row=0, column=1, padx=5)
-
-    def resize(self):
-        self.widgets.frm_window.update_idletasks()
-        # width = self.widgets.frm_window.winfo_reqwidth()
-        width = self.winfo_width()
-        height = self.widgets.frm_window.winfo_reqheight() + 20
-
-        self.geometry(f"{width}x{height}")
 
     def handle_save_click(self):
         self.set_mapping_values()
@@ -547,30 +585,35 @@ class WindowCSVMapping(PopupWindow):
 
     def handle_button_add_mapping_field_set(self):
         self.add_mapping_field_set(row=len(self.mapping_fields) + 1)
-        self.resize()
+        self.update_scrollbar()
+
+    def update_scrollbar(self):
+        canvas = self.widgets.canvas_csv_mapping_fields_scroll_bar
+        canvas.configure(scrollregion=canvas.bbox("all"))
 
     def add_mapping_field_set(self, row: int, header="", field="", static=False, update=False, key=False, **kwargs):
+        parent = self.widgets.frm_csv_mapping_fields_scrollable
         # 3cx Field
-        ent_csv_mapping_3cx_field = ttk.Entry(self.widgets.lblfrm_csv_mapping_fields)
+        ent_csv_mapping_3cx_field = ttk.Entry(parent)
         ent_csv_mapping_3cx_field.insert(0, field)
         ent_csv_mapping_3cx_field.grid(row=row, column=0, sticky="ew")
 
         # CSV Header Field
-        ent_csv_mapping_header = ttk.Entry(self.widgets.lblfrm_csv_mapping_fields)
+        ent_csv_mapping_header = ttk.Entry(parent)
         ent_csv_mapping_header.insert(0, header)
         ent_csv_mapping_header.grid(row=row, column=1, sticky="ew")
 
         # Static Value Checkbox
-        chk_csv_mapping_static_value = Checkbox(self.widgets.lblfrm_csv_mapping_fields, value=static)
+        chk_csv_mapping_static_value = Checkbox(parent, value=static)
         chk_csv_mapping_static_value.grid(row=row, column=2, sticky="w")
 
         # Update Checkbox
-        chk_csv_mapping_update = Checkbox(self.widgets.lblfrm_csv_mapping_fields, value=update)
+        chk_csv_mapping_update = Checkbox(parent, value=update)
         chk_csv_mapping_update.grid(row=row, column=3, sticky="w")
 
         # Key Checkbox
         chk_csv_mapping_key = Checkbox(
-            self.widgets.lblfrm_csv_mapping_fields,
+            parent,
             state=self.checkbox_key_state.get(),
             command=self.handle_checkbox_key_change,
         )
@@ -578,7 +621,7 @@ class WindowCSVMapping(PopupWindow):
 
         # Remove Button
         btn_csv_mapping_remove = ttk.Button(
-            self.widgets.lblfrm_csv_mapping_fields,
+            parent,
             width=2,
             text="−",
         )
@@ -603,7 +646,7 @@ class WindowCSVMapping(PopupWindow):
     def handle_button_delete_mapping_field_set(self):
         # Delete the last mapping field set
         self.delete_mapping_field_set_by_row_index(len(self.mapping_fields) - 1)
-        self.resize()
+        self.update_scrollbar()
 
     def handle_button_delete_specific_mapping_field_set(self, button):
         for index, mapping_field in enumerate(self.mapping_fields):
