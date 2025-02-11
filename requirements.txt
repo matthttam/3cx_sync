@@ -20,7 +20,7 @@ platformdirs==4.3.6
 pluggy==1.5.0
 pycparser==2.22
 pydantic==2.10.6
-pydantic_core==2.29.0
+pydantic_core==2.27.2
 pytest==8.3.4
 pytest-cov==6.0.0
 requests==2.32.3
