@@ -20,7 +20,7 @@ class TestAppConfig:
 
         expected_path = Path(config_path).resolve()
         assert isinstance(app_config.config_path, Path)
-        app_config.config_path == expected_path
+        assert app_config.config_path == expected_path
         assert isinstance(app_config.config_file_path, Path)
         assert app_config.config_file_path == expected_path / AppConfig.DEFAULT_FILENAME
 
