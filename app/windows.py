@@ -80,6 +80,7 @@ class WindowAppConfig(PopupWindow):
 
     def __init__(self, master, app_config: AppConfig, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
+        self.protocol("WM_DELETE_WINDOW", self.on_destroy)
         self.resizable(height=False, width=False)
         self.widgets = WidgetList()
         self.app_config = app_config
@@ -349,6 +350,9 @@ class WindowAppConfig(PopupWindow):
         self.destroy()
 
     def handle_cancel_click(self):
+        self.on_destroy()
+
+    def on_destroy(self):
         if self.app_config.is_dirty:
             if not self.confirm_discard_changes():
                 return
@@ -373,7 +377,7 @@ class WindowCSVMapping(PopupWindow):
 
     def __init__(self, master, *args, csv_mapping: CSVMapping, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
-
+        self.protocol("WM_DELETE_WINDOW", self.on_destroy)
         self.widgets = WidgetList()
         self.mapping = csv_mapping
         self.title("CSV Mapping Settings")
@@ -514,6 +518,9 @@ class WindowCSVMapping(PopupWindow):
         self.mapping["Extension"]["Static"] = mapping_static
 
     def handle_cancel_click(self):
+        self.on_destroy()
+
+    def on_destroy(self):
         self.set_mapping_values()
         if self.mapping.is_dirty:
             if not self.confirm_discard_changes():
@@ -645,6 +652,7 @@ class WindowSync(PopupWindow):
 
         # Set up a protocol to handle the window close event
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
+        self.geometry("1000x800")
         self.resizable(height=False, width=False)
         self.widgets = WidgetList()
         self.build_gui()
@@ -653,7 +661,7 @@ class WindowSync(PopupWindow):
 
     def build_gui(self):
         # Frame: Window
-        self.widgets.frm_window = ttk.Frame(self, width=800, height=1000)
+        self.widgets.frm_window = ttk.Frame(self)
         self.widgets.frm_window.pack(fill="both", anchor="nw", expand=True)
 
         # Text:  Output

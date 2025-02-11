@@ -99,8 +99,10 @@ class TestPopupWindow:
 class TestWindowAppConfig:
     @patch.object(WindowAppConfig, "build_gui")
     @patch.object(WindowAppConfig, "initialize_variables")
-    def test_init(self, mock_initialize_variables, mock_build_gui, mock_app_config, root):
+    @patch.object(WindowAppConfig, "protocol")
+    def test_init(self, mock_protocol, mock_initialize_variables, mock_build_gui, mock_app_config, root):
         window = WindowAppConfig(master=root, app_config=mock_app_config)
+        mock_protocol.assert_any_call("WM_DELETE_WINDOW", window.on_destroy)
         assert isinstance(window, PopupWindow)
         assert isinstance(window.widgets, WidgetList)
         assert window.app_config == mock_app_config
@@ -205,6 +207,11 @@ class TestWindowAppConfig:
         )
         mock_messagebox_showinfo.assert_called_once_with(title="Failure", message=f"Test Failed. {e}")
 
+    @patch.object(WindowCSVMapping, "on_destroy")
+    def test_handle_cancel_click(self, mock_on_destroy, window_csv_mapping):
+        window_csv_mapping.handle_cancel_click()
+        mock_on_destroy.assert_called_once()
+
     def test_btn_cancel_click_is_dirty_confirm_discard(self, window_app_config):
         with patch.object(window_app_config, "destroy") as mock_destroy:
             window_app_config.app_config.is_dirty = True
@@ -270,8 +277,10 @@ class TestWindowCSVMapping:
     @patch("app.windows.WidgetList")
     @patch.object(WindowCSVMapping, "initialize_variables")
     @patch.object(WindowCSVMapping, "build_gui")
+    @patch.object(WindowCSVMapping, "protocol")
     def test_init(
         self,
+        mock_protocol,
         mock_build_gui,
         mock_initialize_variables,
         mock_widget_list_class,
@@ -281,6 +290,7 @@ class TestWindowCSVMapping:
         mock_widget_list_class.return_value = mock_widget_list
         mock_csv_mapping = MagicMock()
         window_csv_mapping = WindowCSVMapping(master=root, csv_mapping=mock_csv_mapping)
+        mock_protocol.assert_any_call("WM_DELETE_WINDOW", window_csv_mapping.on_destroy)
         assert window_csv_mapping.widgets == mock_widget_list
         assert window_csv_mapping.mapping == mock_csv_mapping
         mock_initialize_variables.assert_called_once()
@@ -337,10 +347,15 @@ class TestWindowCSVMapping:
 
         assert window_csv_mapping.mapping == expected_mapping
 
+    @patch.object(WindowCSVMapping, "on_destroy")
+    def test_handle_cancel_click(self, mock_on_destroy, window_csv_mapping):
+        window_csv_mapping.handle_cancel_click()
+        mock_on_destroy.assert_called_once()
+
     @patch.object(WindowCSVMapping, "set_mapping_values")
     @patch.object(WindowCSVMapping, "confirm_discard_changes")
     @patch.object(WindowCSVMapping, "destroy")
-    def test_handle_cancel_click_dirty_confirm_discard_changes(
+    def test_on_destroy_dirty_confirm_discard_changes(
         self,
         mock_destroy,
         mock_confirm_discard_changes,
@@ -349,7 +364,7 @@ class TestWindowCSVMapping:
     ):
         window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = True
-        window_csv_mapping.handle_cancel_click()
+        window_csv_mapping.on_destroy()
         mock_set_mapping_values.assert_called_once()
         window_csv_mapping.mapping.load.assert_called_once()
         mock_destroy.assert_called_once()
@@ -357,7 +372,7 @@ class TestWindowCSVMapping:
     @patch.object(WindowCSVMapping, "set_mapping_values")
     @patch.object(WindowCSVMapping, "confirm_discard_changes")
     @patch.object(WindowCSVMapping, "destroy")
-    def test_handle_cancel_click_dirty_dont_discard_changes(
+    def test_on_destroy_dirty_dont_discard_changes(
         self,
         mock_destroy,
         mock_confirm_discard_changes,
@@ -367,7 +382,7 @@ class TestWindowCSVMapping:
         window_csv_mapping.mapping = MagicMock()
         window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = False
-        window_csv_mapping.handle_cancel_click()
+        window_csv_mapping.on_destroy()
         mock_set_mapping_values.assert_called_once()
         window_csv_mapping.mapping.load.assert_not_called()
         mock_destroy.assert_not_called()
@@ -375,7 +390,7 @@ class TestWindowCSVMapping:
     @patch.object(WindowCSVMapping, "set_mapping_values")
     @patch.object(WindowCSVMapping, "confirm_discard_changes")
     @patch.object(WindowCSVMapping, "destroy")
-    def test_handle_cancel_click_not_dirty(
+    def test_on_destroy_not_dirty(
         self,
         mock_destroy,
         mock_confirm_discard_changes,
@@ -384,7 +399,7 @@ class TestWindowCSVMapping:
     ):
         window_csv_mapping.mapping = MagicMock()
         window_csv_mapping.mapping.is_dirty = False
-        window_csv_mapping.handle_cancel_click()
+        window_csv_mapping.on_destroy()
         mock_confirm_discard_changes.assert_not_called()
         mock_set_mapping_values.assert_called_once()
         window_csv_mapping.mapping.load.assert_called_once()
@@ -613,10 +628,12 @@ class TestWindowCSVMapping:
 class TestWindowSync:
     @patch("app.windows.WidgetList")
     @patch.object(WindowSync, "build_gui")
-    def test_init(self, mock_build_gui, mock_widget_list_class, app):
+    @patch.object(WindowSync, "protocol")
+    def test_init(self, mock_protocol, mock_build_gui, mock_widget_list_class, app):
         mock_widget_list_class.return_value.txt_output = MagicMock(spec=ScrolledText)
         window = WindowSync(master=app)
 
+        mock_protocol.assert_any_call("WM_DELETE_WINDOW", window.on_destroy)
         assert window.widgets == mock_widget_list_class.return_value
         mock_build_gui.assert_called_once()
         app.logger.add_text_window_handler.assert_called_once_with(mock_widget_list_class.return_value.txt_output)
@@ -682,9 +699,6 @@ class TestWindowSync:
         window_sync.periodic_update()
         mock_update.assert_not_called()
         mock_after.assert_not_called()
-
-    def test_on_destroy_is_registered(self, window_sync):
-        assert window_sync.protocol("WM_DELETE_WINDOW").endswith("on_destroy")
 
     def test_wait_for_sync_thread_is_alive(self, window_sync):
         window_sync.master.sync_thread = MagicMock()
