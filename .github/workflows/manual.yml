@@ -43,7 +43,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest --maxfail=1 --disable-warnings -q -vvvv --import-mode=importlib --showlocals # Adjust based on your testing framework
+          pytest --maxfail=1 --disable-warnings -q -vvvv --showlocals # Adjust based on your testing framework
 
       - name: Build application for ${{matrix.TARGET}}
         run: ${{matrix.CMD_BUILD}}
