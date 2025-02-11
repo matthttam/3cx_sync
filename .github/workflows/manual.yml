@@ -41,6 +41,10 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      - name: Run tests
+        run: |
+          pytest --maxfail=1 --disable-warnings -q  # Adjust based on your testing framework
+
       - name: Build application for ${{matrix.TARGET}}
         run: ${{matrix.CMD_BUILD}}
 
