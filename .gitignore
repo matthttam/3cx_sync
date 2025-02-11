@@ -167,3 +167,4 @@ csv_mapping copy.json
 launch.json
 **/*.csv
 *.log
+/import
