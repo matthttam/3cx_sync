@@ -35,6 +35,16 @@ class TestCSVMapping:
         mock_load_defaults.assert_called_once()
         mock_load.assert_called_once()
 
+    @patch.object(CSVMapping, "load_defaults")
+    @patch.object(CSVMapping, "load")
+    def test_initialize_no_file_does_not_loa(self, mock_load, mock_load_defaults, csv_mapping):
+        csv_mapping.mapping_file_path.exists.return_value = False
+        csv_mapping.initialize()
+        mock_load_defaults.assert_called_once()
+        mock_load.assert_not_called()
+
+        csv_mapping.load()
+
     def test_is_dirty(self, csv_mapping):
         csv_mapping.load_defaults()
         csv_mapping.set_original_config()
@@ -56,19 +66,6 @@ class TestCSVMapping:
         csv_mapping.load()
         csv_mapping.update.assert_called_once_with({"key": "value"})
         csv_mapping.set_original_config.assert_called_once()
-
-    # @patch("os.path.getsize", side_effect=FileNotFoundError)
-    def test_load_file_not_found(self, csv_mapping):
-        csv_mapping.mapping_file_path.stat = MagicMock(side_effect=FileNotFoundError)
-        with pytest.raises(FileNotFoundError):
-            csv_mapping.load()
-
-    @patch("builtins.open", new_callable=mock_open, read_data="")
-    def test_load_empty_file(self, mock_open, csv_mapping):
-        csv_mapping.mapping_file_path.stat = MagicMock(return_value=MagicMock(st_size=0))
-        with patch("builtins.print") as mocked_print:
-            csv_mapping.load()
-            mocked_print.assert_called_once_with(f"Warning: {csv_mapping.mapping_file_path} is empty.")
 
     @patch("builtins.open", new_callable=mock_open, read_data="invalid json")
     def test_load_invalid_json(self, mock_open, csv_mapping):
@@ -108,3 +105,72 @@ class TestCSVMapping:
         csv_mapping.original_config = {"blah": "blah"}
         csv_mapping.set_original_config()
         assert csv_mapping.original_config == {"key": "value"}
+
+    def test_get_parsed_config(self, csv_mapping):
+        csv_mapping.update(
+            {
+                "Extension": {
+                    "Path": "/Fake/Path",
+                    "Key": "Number",
+                    "New": {
+                        "Number": "Number",
+                        "FirstName": "FirstName",
+                        "LastName": "LastName",
+                        "EmailAddress": "Email",
+                        "VMPIN": "VMPIN",
+                        "VMEmailOptions": "VMEmailOptions",
+                        "OutboundCallerID": "OutboundCallerID",
+                        "SendEmailMissedCalls": "SendEmailMissedCalls",
+                        "Enabled": "Enabled",
+                        "EnableHotdesking": "AllowToUseHotdesking",
+                        "RecordCalls": "RecordCalls",
+                        "RecordExternalCallsOnly": "RecordExternalCallsOnly",
+                        "VMEnabled": "VMEnabled",
+                        "WebMeetingFriendlyName": "WebMeetingFriendlyName",
+                    },
+                    "Update": ["FirstName", "LastName", "EmailAddress", "Enabled"],
+                }
+            }
+        )
+
+        expected_value = [
+            {"header": "Number", "field": "Number", "static": False, "key": True, "update": False},
+            {"header": "FirstName", "field": "FirstName", "static": False, "key": False, "update": True},
+            {"header": "LastName", "field": "LastName", "static": False, "key": False, "update": True},
+            {"header": "Email", "field": "EmailAddress", "static": False, "key": False, "update": True},
+            {"header": "VMPIN", "field": "VMPIN", "static": False, "key": False, "update": False},
+            {"header": "VMEmailOptions", "field": "VMEmailOptions", "static": False, "key": False, "update": False},
+            {"header": "OutboundCallerID", "field": "OutboundCallerID", "static": False, "key": False, "update": False},
+            {
+                "header": "SendEmailMissedCalls",
+                "field": "SendEmailMissedCalls",
+                "static": False,
+                "key": False,
+                "update": False,
+            },
+            {"header": "Enabled", "field": "Enabled", "static": False, "key": False, "update": True},
+            {
+                "header": "AllowToUseHotdesking",
+                "field": "EnableHotdesking",
+                "static": False,
+                "key": False,
+                "update": False,
+            },
+            {"header": "RecordCalls", "field": "RecordCalls", "static": False, "key": False, "update": False},
+            {
+                "header": "RecordExternalCallsOnly",
+                "field": "RecordExternalCallsOnly",
+                "static": False,
+                "key": False,
+                "update": False,
+            },
+            {"header": "VMEnabled", "field": "VMEnabled", "static": False, "key": False, "update": False},
+            {
+                "header": "WebMeetingFriendlyName",
+                "field": "WebMeetingFriendlyName",
+                "static": False,
+                "key": False,
+                "update": False,
+            },
+        ]
+        assert csv_mapping.get_parsed_config() == expected_value

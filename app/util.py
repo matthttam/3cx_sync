@@ -1,6 +1,11 @@
 import os
-import platformdirs
+import functools
 from pathlib import Path
+
+import platformdirs
+import tkinter as tk
+
+from sync.logging import LogLevel
 
 
 def initialize_or_get_user_config_path(app_name, app_author, folder_name) -> Path:
@@ -8,3 +13,17 @@ def initialize_or_get_user_config_path(app_name, app_author, folder_name) -> Pat
     config_file_path = os.path.join(app_data_dir, folder_name)
     os.makedirs(config_file_path, exist_ok=True)
     return Path(config_file_path)
+
+
+def handle_error(func):
+    """Decorator to wrap a method with error handling."""
+
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"An error occurred: {e}")
+            self.logger.log(LogLevel.CRITICAL, f"A critical error has occurred and the application must exit. {e}")
+
+    return wrapper

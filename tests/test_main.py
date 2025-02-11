@@ -1,19 +1,19 @@
 import sys
 from argparse import Namespace
+
 import pytest
-from argparse import ArgumentParser, Namespace
 from unittest.mock import MagicMock, patch
 from app.config import AppConfig
-from main import dir_path, get_app_args, main, run_gui_mode, run_silent_mode, App
-from sync.logging import SyncLogger
+from main import dir_path, get_app_args, run_gui_mode, run_silent_mode, App
+from sync.logging import LogLevel, SyncLogger
 
 
 @pytest.mark.parametrize(
     "silent_mode, expected_called_func",
     [
-        (None, "run_gui_mode"),  # GUI mode → Calls run_gui_mode(logger)
-        (False, "run_gui_mode"),  # GUI mode → Calls run_gui_mode(logger)
-        (True, "run_silent_mode"),  # Silent mode → Calls run_silent_mode(app_args, logger)
+        (None, "run_gui_mode"),  # GUI mode Calls run_gui_mode(logger)
+        (False, "run_gui_mode"),  # GUI mode Calls run_gui_mode(logger)
+        (True, "run_silent_mode"),  # Silent mode Calls run_silent_mode(app_args, logger)
     ],
 )
 @patch("main.run_gui_mode")
@@ -48,6 +48,26 @@ def test_main(
     else:
         mock_run_silent_mode.assert_called_once_with(mock_app_args, mock_sync_logger)
         mock_run_gui_mode.assert_not_called()
+
+
+@patch("main.traceback")
+@patch("main.SyncLogger")
+@patch("main.get_app_args")
+def test_main_error(mock_get_app_args, mock_sync_logger_class, mock_traceback_class):
+    mock_sync_logger = MagicMock()
+    mock_sync_logger_class.return_value = mock_sync_logger
+    mock_get_app_args.side_effect = Exception("An error has occured.")
+
+    mock_traceback = MagicMock()
+    mock_traceback_class.format_exc.return_value = mock_traceback
+    from main import main
+
+    with pytest.raises(Exception) as e:
+        main()
+    mock_sync_logger.log.assert_any_call(
+        LogLevel.CRITICAL, "A critical error has occured and the application must exit. An error has occured."
+    )
+    mock_sync_logger.log.assert_any_call(LogLevel.CRITICAL, f"Traceback: {mock_traceback}")
 
 
 @patch("main.main")

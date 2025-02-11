@@ -1,5 +1,6 @@
 import os
 import keyring
+from pathlib import Path
 from copy import deepcopy
 from configparser import ConfigParser
 from app.util import initialize_or_get_user_config_path
@@ -11,10 +12,11 @@ class AppConfig(ConfigParser):
     def __init__(self, *args, config_path: str = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.original_config = None
-        self.config_path = config_path
-        self.config_file_path = os.path.join(
-            (config_path or initialize_or_get_user_config_path("3cx_sync", "3cx_sync", "conf")), self.DEFAULT_FILENAME
-        )
+        self.config_path = Path(config_path).resolve() if config_path else None
+        self.config_file_path = (
+            self.config_path or initialize_or_get_user_config_path("3cx_sync", "3cx_sync", "conf")
+        ) / self.DEFAULT_FILENAME
+
         self.default_config = {
             "3cx": {
                 "scheme": "https",
