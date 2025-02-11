@@ -43,7 +43,7 @@ class CSVMapping(UserDict):
 
     def initialize(self):
         self.load_defaults()
-        self.load()
+        self.load() if self.mapping_file_path.exists() else None
 
     @property
     def is_dirty(self) -> bool:
@@ -54,21 +54,10 @@ class CSVMapping(UserDict):
 
     def load(self) -> None:
         """Load configuration from the specified file."""
-        try:
-            # Check if the file exists and is not empty
-            if self.mapping_file_path.stat().st_size > 0:
-                # if os.path.getsize(self.mapping_file_path) > 0:
-                with open(self.mapping_file_path, "r") as mapping_file:
-                    self.update(json.load(mapping_file))
-                self.set_original_config()
-            else:
-                print(f"Warning: {self.mapping_file_path} is empty.")
-        except FileNotFoundError:
-            print(f"Warning: {self.mapping_file_path} does not exist")
-            raise
-        except (IOError, json.JSONDecodeError) as e:
-            print(f"Error loading mapping file: {e}")
-            raise
+        # if os.path.getsize(self.mapping_file_path) > 0:
+        with open(self.mapping_file_path, "r") as mapping_file:
+            self.update(json.load(mapping_file))
+        self.set_original_config()
 
     def save(self):
         with open(self.mapping_file_path, "w") as mapping_file:
@@ -82,3 +71,26 @@ class CSVMapping(UserDict):
 
     def set_original_config(self):
         self.original_config = deepcopy(self.data)
+
+    def get_parsed_config(self) -> list[dict]:
+        """
+        Returns an array with a dictionary for each field
+        containing values for what each field has set.
+        """
+        parsed_config = []
+        extension_mapping = self.get("Extension", {})
+        new_mapping = extension_mapping.get("New", {})
+        key_header = extension_mapping.get("Key", None)
+        for field, header in new_mapping.items():
+            update = field in extension_mapping.get("Update", {})
+            static = field in extension_mapping.get("Static", {})
+            parsed_config.append(
+                {
+                    "header": header,
+                    "field": field,
+                    "static": static,
+                    "key": (header == key_header),
+                    "update": update,
+                }
+            )
+        return parsed_config

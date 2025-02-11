@@ -1,4 +1,5 @@
 import os
+import traceback
 from argparse import ArgumentParser, Namespace
 from app.app import App
 from app.config import AppConfig
@@ -58,14 +59,19 @@ def run_gui_mode(logger: SyncLogger, config_path: str = None):
 
 
 def main():
-    app_args = get_app_args()
     logger = SyncLogger()
     logger.add_file_handler()
 
-    if app_args.silent:
-        run_silent_mode(app_args, logger)
-    else:
-        run_gui_mode(logger=logger, config_path=app_args.config_path)
+    try:
+        app_args = get_app_args()
+        if app_args.silent:
+            run_silent_mode(app_args, logger)
+        else:
+            run_gui_mode(logger=logger, config_path=app_args.config_path)
+    except Exception as e:
+        logger.log(LogLevel.CRITICAL, f"A critical error has occured and the application must exit. {e}")
+        logger.log(LogLevel.CRITICAL, f"Traceback: {traceback.format_exc()}")
+        raise
 
 
 if __name__ == "__main__":

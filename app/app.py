@@ -9,9 +9,10 @@ from app.mapping import CSVMapping
 from app.windows import WindowCSVMapping, WindowAppConfig, Window, WindowSync
 from app.config import AppConfig
 from app.widgets import WidgetList
+from app.util import handle_error
 from sync.sync_strategy import SyncCSV
 from sync.sync import run_sync
-from sync.logging import SyncLogger
+from sync.logging import LogLevel, SyncLogger
 
 # from app.themes.Forest-ttk-theme-1.0.example import scale
 
@@ -116,16 +117,20 @@ class App(tk.Tk, Window):
         )
         self.widgets.btn_export_configs.pack(**self.pack_defaults["btn"])
 
+    @handle_error
     def show_WindowAppConfig(self):
         WindowAppConfig(self, self.app_config)
 
+    @handle_error
     def show_WindowCSVMapping(self):
         csv_mapping = CSVMapping(config_path=self.app_config.config_path)
+        csv_mapping.initialize()
         WindowCSVMapping(self, csv_mapping=csv_mapping)
 
     def handle_exit_click(self) -> None:
         self.destroy()
 
+    @handle_error
     def handle_csv_sync_click(self) -> None:
         window_sync = WindowSync(self)
         kwargs = {
@@ -138,6 +143,7 @@ class App(tk.Tk, Window):
         window_sync.periodic_update()
         self.sync_thread.start()
 
+    @handle_error
     def handle_csv_export_configs_click(self) -> None:
         export_directory = askdirectory()
         if not export_directory:

@@ -55,3 +55,31 @@ class TestExtensionMappingFieldSet:
     def test_is_tuple(self):
         assert issubclass(ExtensionMappingFieldSet, tuple)
         assert hasattr(ExtensionMappingFieldSet, "_fields")
+
+    def test_destroy(self, field_set):
+        field_set.destroy()
+        field_set.header.destroy.assert_called_once()
+        field_set.field.destroy.assert_called_once()
+        field_set.static.destroy.assert_called_once()
+        field_set.update.destroy.assert_called_once()
+        field_set.key.destroy.assert_called_once()
+        field_set.delete.destroy.assert_called_once()
+
+    def test_change_row(self, field_set):
+        field_set.change_row(row=500)
+        field_set.header.grid.assert_called_once_with(row=500, column=0)
+        field_set.field.grid.assert_called_once_with(row=500, column=1)
+        field_set.static.grid.assert_called_once_with(row=500, column=2)
+        field_set.update.grid.assert_called_once_with(row=500, column=3)
+        field_set.key.grid.assert_called_once_with(row=500, column=4)
+        field_set.delete.grid.assert_called_once_with(row=500, column=5)
+
+    def test_widgets(self, field_set):
+        assert field_set._widgets() == [
+            field_set.header,
+            field_set.field,
+            field_set.static,
+            field_set.update,
+            field_set.key,
+            field_set.delete,
+        ]
