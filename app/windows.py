@@ -653,7 +653,7 @@ class WindowSync(PopupWindow):
 
     def build_gui(self):
         # Frame: Window
-        self.widgets.frm_window = ttk.Frame(self, width=600, height=1000)
+        self.widgets.frm_window = ttk.Frame(self, width=800, height=1000)
         self.widgets.frm_window.pack(fill="both", anchor="nw", expand=True)
 
         # Text:  Output
