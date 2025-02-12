@@ -1,5 +1,7 @@
 from abc import ABC
-from sync.sync_strategy import SyncSourceStrategy, SyncCSV, create_sync_source
+from sync.strategy.factory import create_sync_source
+from sync.strategy.csv.sync_csv import SyncCSV
+from sync.strategy.strategy import SyncSourceStrategy
 from sync.logging import SyncLogger, LogLevel
 from unittest.mock import MagicMock, patch, mock_open, call
 import pytest

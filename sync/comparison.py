@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, Any, Optional
-from sync.sync_strategy import SyncSourceStrategy
+from sync.strategy.strategy import SyncSourceStrategy
 from threecxapi.components.schemas.pbx import User
 
 

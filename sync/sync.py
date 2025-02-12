@@ -1,7 +1,8 @@
 import threading
 from typing import Callable, Optional
 from app.config import AppConfig
-from sync.sync_strategy import SyncSourceStrategy, create_sync_source
+from sync.strategy.factory import create_sync_source
+from sync.strategy.strategy import SyncSourceStrategy
 from threecxapi.connection import ThreeCXApiConnection
 from threecxapi.resources.users import UsersResource, ListUserParameters
 from threecxapi.components.schemas.pbx import User

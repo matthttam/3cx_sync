@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, PropertyMock, patch, call
 from sync.exceptions import ThreadTermination
 from sync.sync import Sync, initialize_app_config, run_sync, initialize_api_connection
 from sync.logging import SyncLogger, LogLevel
-from sync.sync_strategy import SyncSourceStrategy
+from sync.strategy.strategy import SyncSourceStrategy
 from threecxapi.resources.users import UsersResource
 from sync.comparison import UserChangeDetail, FieldChange
 from threecxapi.components.schemas.pbx import User

@@ -2,7 +2,7 @@ import os
 import json
 import pytest
 from pathlib import Path
-from app.mapping import CSVMapping
+from sync.strategy.csv.mapping import CSVMapping
 from collections import UserDict
 from unittest.mock import patch, MagicMock, mock_open
 

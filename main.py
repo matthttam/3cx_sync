@@ -4,7 +4,7 @@ from argparse import ArgumentParser, Namespace
 from app.app import App
 from app.config import AppConfig
 from sync.sync import run_sync
-from sync.sync_strategy import SyncCSV
+from sync.strategy.csv.sync_csv import SyncCSV
 from sync.logging import LogLevel, SyncLogger
 
 

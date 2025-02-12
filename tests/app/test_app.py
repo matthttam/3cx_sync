@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from pytest import skip
 from app.app import App
 from app.windows import Window
-from sync.sync_strategy import SyncCSV
+from sync.strategy.csv.sync_csv import SyncCSV
 
 
 class TestApp:

@@ -5,12 +5,12 @@ from tkinter import ttk
 from tkinter.filedialog import askdirectory
 from threading import Thread
 
-from app.mapping import CSVMapping
+from sync.strategy.csv.mapping import CSVMapping
 from app.windows import WindowCSVMapping, WindowAppConfig, Window, WindowSync
 from app.config import AppConfig
 from app.widgets import WidgetList
 from app.util import handle_error
-from sync.sync_strategy import SyncCSV
+from sync.strategy.csv.sync_csv import SyncCSV
 from sync.sync import run_sync
 from sync.logging import LogLevel, SyncLogger
 
@@ -63,7 +63,12 @@ class App(tk.Tk, Window):
 
         # Frame: Left Column
         self.widgets.frm_left_column = ttk.Frame(self.widgets.frm_window)
-        self.widgets.frm_left_column.pack(**self.pack_defaults["frm"], fill=tk.Y)
+        self.widgets.frm_left_column.pack(
+            padx=self.defaults.pack.frm.padx,
+            pady=self.defaults.pack.frm.pady,
+            side=self.defaults.pack.frm.side,
+            fill=tk.Y,
+        )
 
         # Button: Configure App
         self.widgets.btn_show_window_app_config = ttk.Button(
@@ -72,7 +77,10 @@ class App(tk.Tk, Window):
             command=self.show_WindowAppConfig,
         )
 
-        self.widgets.btn_show_window_app_config.pack(**self.pack_defaults["btn"])
+        self.widgets.btn_show_window_app_config.pack(
+            padx=self.defaults.pack.btn.padx,
+            pady=self.defaults.pack.btn.pady,
+        )
 
         # Button: Exit
         self.widgets.btn_exit = ttk.Button(
@@ -80,11 +88,17 @@ class App(tk.Tk, Window):
             text="Exit",
             command=self.handle_exit_click,
         )
-        self.widgets.btn_exit.pack(**self.pack_defaults["btn"], side=tk.BOTTOM)
+        self.widgets.btn_exit.pack(padx=self.defaults.pack.btn.padx, pady=self.defaults.pack.btn.pady, side=tk.BOTTOM)
 
         # Frame: Right Frame
         self.widgets.frm_right_column = ttk.Frame(self.widgets.frm_window)
-        self.widgets.frm_right_column.pack(fill="both", expand=True, **self.pack_defaults["frm"])
+        self.widgets.frm_right_column.pack(
+            fill=tk.BOTH,
+            expand=True,
+            padx=self.defaults.pack.frm.padx,
+            pady=self.defaults.pack.frm.pady,
+            side=self.defaults.pack.frm.side,
+        )
 
         # Notebook: Sync Options
         self.widgets.notebook_sync_options = ttk.Notebook(self.widgets.frm_right_column)
@@ -99,7 +113,10 @@ class App(tk.Tk, Window):
             command=self.show_WindowCSVMapping,
         )
 
-        self.widgets.btn_show_window_csv_config.pack(**self.pack_defaults["btn"])
+        self.widgets.btn_show_window_csv_config.pack(
+            padx=self.defaults.pack.btn.padx,
+            pady=self.defaults.pack.btn.pady,
+        )
 
         # Button: Sync CSV
         self.widgets.btn_sync_csv = ttk.Button(
@@ -107,7 +124,10 @@ class App(tk.Tk, Window):
             text="Sync CSV",
             command=self.handle_csv_sync_click,
         )
-        self.widgets.btn_sync_csv.pack(**self.pack_defaults["btn"])
+        self.widgets.btn_sync_csv.pack(
+            padx=self.defaults.pack.btn.padx,
+            pady=self.defaults.pack.btn.pady,
+        )
 
         # Button: Export Configs
         self.widgets.btn_export_configs = ttk.Button(
@@ -115,7 +135,10 @@ class App(tk.Tk, Window):
             text="Export Configs",
             command=self.handle_csv_export_configs_click,
         )
-        self.widgets.btn_export_configs.pack(**self.pack_defaults["btn"])
+        self.widgets.btn_export_configs.pack(
+            padx=self.defaults.pack.btn.padx,
+            pady=self.defaults.pack.btn.pady,
+        )
 
     @handle_error
     def show_WindowAppConfig(self):
@@ -175,5 +198,3 @@ class App(tk.Tk, Window):
             return
         self.sync.terminate()
         self.sync.running_event.set()
-        # if self.sync_thread.is_alive():
-        #    self.sync_thread.join()
