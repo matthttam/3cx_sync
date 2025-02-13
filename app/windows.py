@@ -204,7 +204,14 @@ class WindowAppConfig(PopupWindow):
         self.widgets.frm_window.pack(fill="both", expand=True)
 
         self.widgets.frm_3cx_options = ttk.LabelFrame(self.widgets.frm_window, text="3CX Settings")
+        # self.widgets.frm_3cx_options.grid_columnconfigure(1, weight=1)
         # self.widgets.frm_3cx_options.grid_columnconfigure(2, weight=1)
+        self.widgets.frm_3cx_options.grid_columnconfigure(1, weight=0)  # Scheme dropdown fixed width
+        self.widgets.frm_3cx_options.grid_columnconfigure(2, weight=0)  # '://' label fixed
+        self.widgets.frm_3cx_options.grid_columnconfigure(3, weight=1)  # Expandable domain entry
+        self.widgets.frm_3cx_options.grid_columnconfigure(4, weight=0)  # ':' label fixed
+        self.widgets.frm_3cx_options.grid_columnconfigure(5, weight=0)  # Port entry fixed
+
         self.widgets.frm_3cx_options.pack(
             padx=self.defaults.pack.lblfrm.padx,
             pady=self.defaults.pack.lblfrm.pady,
@@ -222,16 +229,9 @@ class WindowAppConfig(PopupWindow):
             sticky=self.defaults.grid.lbl.sticky,
         )
 
-        # Create a 3cx URL frame in that window
-        self.widgets.frm_3cx_url = ttk.Frame(self.widgets.frm_3cx_options)
-        self.widgets.frm_3cx_url.grid_columnconfigure(2, weight=1)
-        self.widgets.frm_3cx_url.grid(row=self.get_current_row(), column=self.get_next_column(), pady=(0, 5))
-
         # Create the 3CX URL widgets
-        entry_options = {"pady": self.defaults.grid.ent.pady, "sticky": self.defaults.grid.ent.sticky}
-
         self.widgets.opt_3cx_scheme = ttk.OptionMenu(
-            self.widgets.frm_3cx_url,
+            self.widgets.frm_3cx_options,
             self.vars["3cx"]["scheme"],
             self.vars["3cx"]["scheme"].get(),
             *["https", "http"],
@@ -239,35 +239,37 @@ class WindowAppConfig(PopupWindow):
         self.widgets.opt_3cx_scheme.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **entry_options,
+            pady=self.defaults.grid.ent.pady,
+            sticky=self.defaults.grid.ent.sticky,
         )
 
-        self.widgets.lbl_3cx_scheme_ending = ttk.Label(self.widgets.frm_3cx_url, text="://")
+        self.widgets.lbl_3cx_scheme_ending = ttk.Label(self.widgets.frm_3cx_options, text="://")
         self.widgets.lbl_3cx_scheme_ending.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **entry_options,
+            padx=2,
         )
 
         self.widgets.ent_3cx_domain = ttk.Entry(
-            self.widgets.frm_3cx_url,
+            self.widgets.frm_3cx_options,
             textvariable=self.vars["3cx"]["domain"],
         )
         self.widgets.ent_3cx_domain.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **entry_options,
+            pady=self.defaults.grid.ent.pady,
+            sticky=self.defaults.grid.ent.sticky,
         )
 
-        self.widgets.lbl_3cx_server_ending = ttk.Label(self.widgets.frm_3cx_url, text=":")
+        self.widgets.lbl_3cx_server_ending = ttk.Label(self.widgets.frm_3cx_options, text=":")
         self.widgets.lbl_3cx_server_ending.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            **entry_options,
+            padx=2,
         )
 
         self.widgets.ent_3cx_port = ttk.Entry(
-            self.widgets.frm_3cx_url,
+            self.widgets.frm_3cx_options,
             textvariable=self.vars["3cx"]["port"],
             width=5,
         )
@@ -275,7 +277,8 @@ class WindowAppConfig(PopupWindow):
             row=self.get_current_row(),
             column=self.get_next_column(),
             padx=self.defaults.grid.ent.padx,
-            **entry_options,
+            pady=self.defaults.grid.ent.pady,
+            sticky=self.defaults.grid.ent.sticky,
         )
 
         # Create the 3CX username widgets
@@ -300,6 +303,7 @@ class WindowAppConfig(PopupWindow):
             pady=self.defaults.grid.ent.pady,
             padx=self.defaults.grid.ent.padx,
             sticky=self.defaults.grid.ent.sticky,
+            columnspan=5,
         )
 
         # Create the 3CX password widgets
@@ -323,6 +327,7 @@ class WindowAppConfig(PopupWindow):
             pady=self.defaults.grid.ent.pady,
             padx=self.defaults.grid.ent.padx,
             sticky=self.defaults.grid.ent.sticky,
+            columnspan=5,
         )
 
         # Create the Store credential securely widgets
@@ -330,11 +335,6 @@ class WindowAppConfig(PopupWindow):
             self.widgets.frm_3cx_options,
             text="Store Credential Securely:",
         )
-        self.widgets.chk_store_credential_securely = ttk.Checkbutton(
-            self.widgets.frm_3cx_options,
-            variable=self.vars["3cx"]["store_credential_securely"],
-        )
-
         self.increment_row()
         self.widgets.lbl_store_credential_securely.grid(
             row=self.get_current_row(),
@@ -342,10 +342,15 @@ class WindowAppConfig(PopupWindow):
             padx=self.defaults.grid.lbl.padx,
             sticky=self.defaults.grid.lbl.sticky,
         )
+
+        self.widgets.chk_store_credential_securely = ttk.Checkbutton(
+            self.widgets.frm_3cx_options,
+            variable=self.vars["3cx"]["store_credential_securely"],
+        )
         self.widgets.chk_store_credential_securely.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            sticky="w",
+            sticky=tk.W,
             padx=self.defaults.grid.chk.padx,
             pady=self.defaults.grid.chk.pady,
         )
@@ -363,10 +368,10 @@ class WindowAppConfig(PopupWindow):
         self.widgets.btn_test.grid(
             row=self.get_current_row(),
             column=self.get_next_column(),
-            columnspan=2,
             padx=5,
             pady=5,
-            sticky="we",
+            sticky=tk.EW,
+            columnspan=5,
         )
 
         # Create the App Settings header
