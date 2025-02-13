@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import tkinter as tk
 from tkinter import ttk
+import sv_ttk
 from threecxapi.connection import ThreeCXApiConnection
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
@@ -602,19 +603,23 @@ class WindowCSVMapping(PopupWindow):
         self.widgets.lbl_csv_mapping_static = tk.Canvas(
             self.widgets.frm_csv_mapping_fields_scrollable, width=20, height=50
         )
-        self.widgets.lbl_csv_mapping_static.create_text(10, 33, text="Static", angle=90)
+
+        text_color = "Black"
+        if sv_ttk.get_theme() == "dark":
+            text_color = "White"
+        self.widgets.lbl_csv_mapping_static.create_text(10, 33, text="Static", angle=90, fill=text_color)
         self.widgets.lbl_csv_mapping_static.grid(row=0, column=2, sticky="s")
 
         self.widgets.lbl_csv_mapping_update = tk.Canvas(
             self.widgets.frm_csv_mapping_fields_scrollable, width=20, height=50
         )
-        self.widgets.lbl_csv_mapping_update.create_text(10, 29, text="Update", angle=90)
+        self.widgets.lbl_csv_mapping_update.create_text(10, 29, text="Update", angle=90, fill=text_color)
         self.widgets.lbl_csv_mapping_update.grid(row=0, column=3, sticky="s")
 
         self.widgets.lbl_csv_mapping_key = tk.Canvas(
             self.widgets.frm_csv_mapping_fields_scrollable, width=20, height=50
         )
-        self.widgets.lbl_csv_mapping_key.create_text(10, 40, text="Key", angle=90)
+        self.widgets.lbl_csv_mapping_key.create_text(10, 40, text="Key", angle=90, fill=text_color)
         self.widgets.lbl_csv_mapping_key.grid(row=0, column=4, sticky="s")
 
         self.initialize_mapping_field_sets(starting_row=1)

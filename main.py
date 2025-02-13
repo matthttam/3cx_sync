@@ -7,6 +7,8 @@ from sync.sync import run_sync
 from sync.strategy.csv.sync_csv import SyncCSV
 from sync.logging import LogLevel, SyncLogger
 
+import sv_ttk
+
 
 def dir_path(path: str):
     if os.path.isdir(path):
@@ -55,6 +57,7 @@ def run_gui_mode(logger: SyncLogger, config_path: str = None):
     app_config = AppConfig(config_path=config_path)
     app_config.load()
     app = App(logger=logger, app_config=app_config)
+    # sv_ttk.set_theme("dark")
     app.mainloop()
 
 
@@ -67,6 +70,7 @@ def main():
         if app_args.silent:
             run_silent_mode(app_args, logger)
         else:
+
             run_gui_mode(logger=logger, config_path=app_args.config_path)
     except Exception as e:
         logger.log(LogLevel.CRITICAL, f"A critical error has occured and the application must exit. {e}")
