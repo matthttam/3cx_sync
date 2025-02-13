@@ -38,6 +38,7 @@ class App(tk.Tk, Window):
         self.sync = None
         self.sync_thread = None
         self.load_theme()
+        self.set_font()  # Must occur after theme load
         self.build_gui()
 
     def load_theme(self):
@@ -45,21 +46,29 @@ class App(tk.Tk, Window):
 
         # If we are on windows, apply the ttk_sv theme. Otherwise use clam.
         if platform.system() == "Windows":
-            self.set_windows_theme()
-        else:
+            sv_ttk.set_theme(darkdetect.theme())
+        elif "clam" in self.style.theme_names():
             self.style.theme_use("clam")
-        self.style.configure(".", font=(self.get_available_font(), 15))
+        elif "default" in self.style.theme_names():
+            self.style.theme_use("default")
 
-    def set_windows_theme(self):
-        sv_ttk.set_theme(darkdetect.theme())
+    def set_font(self):
+        """Return a platform-appropriate font."""
+        available_fonts = set(tkfont.families())  # Get all available font families
 
-    def get_available_font(self):
-        if "Helvetica" in tkfont.families():
-            return "Helvetica"
-        elif "Arial" in tkfont.families():
-            return "Arial"
-        else:
-            return "DejaVu Sans"
+        # Check availability and assign accordingly
+        if platform.system() == "Windows":
+            font = "Segoe UI"
+        elif platform.system() == "Darwin":  # macOS
+            font = "Helvetica"
+        elif platform.system() == "Linux":
+            font = "Ubuntu"
+
+        # Fallback to Arial if system specific font is not actually available.
+        if not font or font not in available_fonts:
+            font = "Arial"
+
+        self.style.configure(".", font=(font, 15))
 
     def build_gui(self):
         # Frame: Window
@@ -111,10 +120,34 @@ class App(tk.Tk, Window):
         self.widgets.notebook_sync_options.add(self.widgets.tab_sync_csv, text="CSV")
         self.widgets.notebook_sync_options.pack(fill="both", expand=True)
 
+<<<<<<< Updated upstream
         # Button: Configure CSV
         self.widgets.btn_show_window_csv_config = ttk.Button(
             self.widgets.tab_sync_csv,
             text="Configure CSV",
+=======
+        # Parent Frame for Buttons
+        self.widgets.frm_csv_tab = ttk.Frame(self.widgets.tab_sync_csv)
+        self.widgets.frm_csv_tab.pack(pady=10, expand=True, fill=tk.BOTH)  # Keeps everything grouped
+
+        # Configure grid layout
+        self.widgets.frm_csv_tab.grid_columnconfigure(0, weight=1)
+        self.widgets.frm_csv_tab.grid_columnconfigure(1, weight=1)
+        self.widgets.frm_csv_tab.grid_rowconfigure(0, weight=2)
+        self.widgets.frm_csv_tab.grid_rowconfigure(1, weight=1)
+        self.widgets.frm_csv_tab.grid_rowconfigure(2, weight=1)
+
+        # Sync CSV - Primary Action (Spans Two Columns)
+        self.widgets.btn_sync_csv = ttk.Button(
+            self.widgets.frm_csv_tab, text="Run CSV Sync", command=self.handle_csv_sync_click, style="Accent.TButton"
+        )
+        self.widgets.btn_sync_csv.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky=tk.NS)
+
+        # Configure Extensions
+        self.widgets.btn_csv_extension_config = ttk.Button(
+            self.widgets.frm_csv_tab,
+            text="Configure\nExtensions",
+>>>>>>> Stashed changes
             command=self.show_WindowCSVMapping,
         )
 

@@ -57,7 +57,6 @@ def run_gui_mode(logger: SyncLogger, config_path: str = None):
     app_config = AppConfig(config_path=config_path)
     app_config.load()
     app = App(logger=logger, app_config=app_config)
-    # sv_ttk.set_theme("dark")
     app.mainloop()
 
 
