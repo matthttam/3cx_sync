@@ -1,9 +1,12 @@
 import os
 import sys
+import platform
 import tkinter as tk
 from tkinter import ttk
 from tkinter.filedialog import askdirectory
 from threading import Thread
+import tkinter.font as tkfont
+import darkdetect
 
 from sync.strategy.csv.mapping import CSVMapping
 from app.windows import WindowCSVMapping, WindowAppConfig, Window, WindowSync
@@ -14,15 +17,19 @@ from sync.strategy.csv.sync_csv import SyncCSV
 from sync.sync import run_sync
 from sync.logging import LogLevel, SyncLogger
 
+import sv_ttk
+
 # from app.themes.Forest-ttk-theme-1.0.example import scale
 
 
 class App(tk.Tk, Window):
-
     def __init__(self, *args, logger: SyncLogger, app_config: AppConfig, **kwargs):
-        tk.Tk.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)  # This ensures both tk.Tk and Window are initialized properly
+
         self.title("3cx Sync")
         self.resizable(height=True, width=True)
+        self.geometry("600x400")
+        self.style = ttk.Style(self)
 
         self.widgets = WidgetList()
         self.is_paused = False
@@ -30,31 +37,46 @@ class App(tk.Tk, Window):
         self.logger = logger
         self.sync = None
         self.sync_thread = None
-
-        # Load the theme and apply styles
         self.load_theme()
         self.build_gui()
 
     def load_theme(self):
         """Load and apply the custom theme."""
-        self.option_add("*tearOff", False)
-        self.style = ttk.Style(self)
 
-        self.tk.call("source", self.get_theme_path())
-        self.style.theme_use("forest-light")
-        self.style.configure(".", font=("Helvetica", 15))
-        self.geometry("600x400")
-
-    def get_theme_path(self):
-        # Detect if running from EXE or source
-        default_theme_path = ("themes", "Forest-ttk-theme-1.0", "forest-light.tcl")
-        if getattr(sys, "_MEIPASS", False):
-            # Running in a PyInstaller bundle
-            theme_path = os.path.join(sys._MEIPASS, *default_theme_path)
+        # If we are on windows, apply the ttk_sv theme. Otherwise use clam.
+        if platform.system() == "Windows":
+            self.set_windows_theme()
         else:
-            # Running as a script
-            theme_path = os.path.join(os.path.dirname(__file__), *default_theme_path)
-        return theme_path
+            self.style.theme_use("clam")
+        self.style.configure(".", font=(self.get_available_font(), 15))
+
+    def set_windows_theme(self):
+        sv_ttk.set_theme(darkdetect.theme())
+
+    def get_available_font(self):
+        if "Helvetica" in tkfont.families():
+            return "Helvetica"
+        elif "Arial" in tkfont.families():
+            return "Arial"
+        else:
+            return "DejaVu Sans"
+        # self.option_add("*tearOff", False)
+        # self.style = ttk.Style(self)
+        # self.tk.call("source", self.get_theme_path())
+        # self.style.theme_use("forest-light")
+        # self.style.configure(".", font=("Helvetica", 15))
+        #
+
+    # def get_theme_path(self):
+    #    # Detect if running from EXE or source
+    #    default_theme_path = ("themes", "Forest-ttk-theme-1.0", "forest-light.tcl")
+    #    if getattr(sys, "_MEIPASS", False):
+    #        # Running in a PyInstaller bundle
+    #        theme_path = os.path.join(sys._MEIPASS, *default_theme_path)
+    #    else:
+    #        # Running as a script
+    #        theme_path = os.path.join(os.path.dirname(__file__), *default_theme_path)
+    #    return theme_path
 
     def build_gui(self):
         # Frame: Window
