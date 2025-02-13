@@ -60,23 +60,6 @@ class App(tk.Tk, Window):
             return "Arial"
         else:
             return "DejaVu Sans"
-        # self.option_add("*tearOff", False)
-        # self.style = ttk.Style(self)
-        # self.tk.call("source", self.get_theme_path())
-        # self.style.theme_use("forest-light")
-        # self.style.configure(".", font=("Helvetica", 15))
-        #
-
-    # def get_theme_path(self):
-    #    # Detect if running from EXE or source
-    #    default_theme_path = ("themes", "Forest-ttk-theme-1.0", "forest-light.tcl")
-    #    if getattr(sys, "_MEIPASS", False):
-    #        # Running in a PyInstaller bundle
-    #        theme_path = os.path.join(sys._MEIPASS, *default_theme_path)
-    #    else:
-    #        # Running as a script
-    #        theme_path = os.path.join(os.path.dirname(__file__), *default_theme_path)
-    #    return theme_path
 
     def build_gui(self):
         # Frame: Window
