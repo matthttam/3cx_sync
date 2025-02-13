@@ -5,6 +5,7 @@ cffi==1.17.1
 charset-normalizer==3.4.1
 coverage==7.6.12
 cryptography==44.0.1
+darkdetect==0.8.0
 git-filter-repo==2.47.0
 idna==3.10
 iniconfig==2.0.0
@@ -25,6 +26,7 @@ pytest==8.3.4
 pytest-cov==6.0.0
 requests==2.32.3
 SecretStorage==3.3.3
+sv-ttk==2.6.0
 threecxapi==1.0.5.post1
 typing_extensions==4.12.2
 urllib3==2.3.0
