@@ -493,7 +493,7 @@ class WindowAppConfig(PopupWindow):
             messagebox.showerror(title="Error!", message=f"{e}")
 
 
-class WindowCSVMapping(PopupWindow):
+class WindowCSVExtensionMapping(PopupWindow):
 
     def __init__(self, master, *args, csv_mapping: CSVMapping, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
@@ -834,15 +834,15 @@ class WindowSync(PopupWindow):
     def build_gui(self):
         # Frame: Window
         self.widgets.frm_window = ttk.Frame(self)
-        self.widgets.frm_window.pack(fill="both", anchor="nw", expand=True)
+        self.widgets.frm_window.pack(fill=tk.BOTH, anchor=tk.NW, expand=True)
 
         # Text:  Output
-        self.widgets.txt_output = ScrolledText(self.widgets.frm_window, relief="sunken", name="output")
-        self.widgets.txt_output.pack(fill="both", expand=True)
+        self.widgets.txt_output = ScrolledText(self.widgets.frm_window, relief=tk.SUNKEN, name="output")
+        self.widgets.txt_output.pack(fill=tk.BOTH, expand=True)
 
         # Form: Sync Buttons
         self.widgets.frm_sync_buttons = ttk.Frame(self.widgets.frm_window)
-        self.widgets.frm_sync_buttons.pack(side="bottom")
+        self.widgets.frm_sync_buttons.pack(side=tk.BOTTOM)
 
         # Button: Pause/Resume
         self.widgets.btn_pause_resume = ttk.Button(
@@ -850,11 +850,11 @@ class WindowSync(PopupWindow):
             text="Pause",
             command=self.handle_pause_resume,
         )
-        self.widgets.btn_pause_resume.pack(side="left", anchor="s")
+        self.widgets.btn_pause_resume.pack(side=tk.LEFT, anchor=tk.S)
 
         # Form: Navigation Buttons
         self.widgets.frm_navigation = ttk.Frame(self)
-        self.widgets.frm_navigation.pack(side="bottom", anchor="e", pady=5)
+        self.widgets.frm_navigation.pack(side=tk.BOTTOM, anchor=tk.E, pady=5)
 
     def handle_pause_resume(self):
         if not self.master.sync:

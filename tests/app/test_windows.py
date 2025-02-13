@@ -8,7 +8,7 @@ from app.windows import (
     PopupWindow,
     WindowSync,
     Window,
-    WindowCSVMapping,
+    WindowCSVExtensionMapping,
 )
 from tkinter.scrolledtext import ScrolledText
 from tkinter import Button
@@ -207,7 +207,7 @@ class TestWindowAppConfig:
         )
         mock_messagebox_showinfo.assert_called_once_with(title="Failure", message=f"Test Failed. {e}")
 
-    @patch.object(WindowCSVMapping, "on_destroy")
+    @patch.object(WindowCSVExtensionMapping, "on_destroy")
     def test_handle_cancel_click(self, mock_on_destroy, window_csv_mapping):
         window_csv_mapping.handle_cancel_click()
         mock_on_destroy.assert_called_once()
@@ -275,9 +275,9 @@ class TestWindowAppConfig:
 class TestWindowCSVMapping:
 
     @patch("app.windows.WidgetList")
-    @patch.object(WindowCSVMapping, "initialize_variables")
-    @patch.object(WindowCSVMapping, "build_gui")
-    @patch.object(WindowCSVMapping, "protocol")
+    @patch.object(WindowCSVExtensionMapping, "initialize_variables")
+    @patch.object(WindowCSVExtensionMapping, "build_gui")
+    @patch.object(WindowCSVExtensionMapping, "protocol")
     def test_init(
         self,
         mock_protocol,
@@ -289,7 +289,7 @@ class TestWindowCSVMapping:
         mock_widget_list = MagicMock()
         mock_widget_list_class.return_value = mock_widget_list
         mock_csv_mapping = MagicMock()
-        window_csv_mapping = WindowCSVMapping(master=root, csv_mapping=mock_csv_mapping)
+        window_csv_mapping = WindowCSVExtensionMapping(master=root, csv_mapping=mock_csv_mapping)
         mock_protocol.assert_any_call("WM_DELETE_WINDOW", window_csv_mapping.on_destroy)
         assert window_csv_mapping.widgets == mock_widget_list
         assert window_csv_mapping.mapping == mock_csv_mapping
@@ -297,8 +297,8 @@ class TestWindowCSVMapping:
         mock_build_gui.assert_called_once()
 
     @patch("app.windows.messagebox")
-    @patch.object(WindowCSVMapping, "set_mapping_values", return_value=MagicMock())
-    @patch.object(WindowCSVMapping, "destroy")
+    @patch.object(WindowCSVExtensionMapping, "set_mapping_values", return_value=MagicMock())
+    @patch.object(WindowCSVExtensionMapping, "destroy")
     def test_handle_save_click(self, mock_destroy, mock_set_mapping_values, mock_messagebox, window_csv_mapping):
         window_csv_mapping.widgets.btn_save.invoke()
 
@@ -347,14 +347,14 @@ class TestWindowCSVMapping:
 
         assert window_csv_mapping.mapping == expected_mapping
 
-    @patch.object(WindowCSVMapping, "on_destroy")
+    @patch.object(WindowCSVExtensionMapping, "on_destroy")
     def test_handle_cancel_click(self, mock_on_destroy, window_csv_mapping):
         window_csv_mapping.handle_cancel_click()
         mock_on_destroy.assert_called_once()
 
-    @patch.object(WindowCSVMapping, "set_mapping_values")
-    @patch.object(WindowCSVMapping, "confirm_discard_changes")
-    @patch.object(WindowCSVMapping, "destroy")
+    @patch.object(WindowCSVExtensionMapping, "set_mapping_values")
+    @patch.object(WindowCSVExtensionMapping, "confirm_discard_changes")
+    @patch.object(WindowCSVExtensionMapping, "destroy")
     def test_on_destroy_dirty_confirm_discard_changes(
         self,
         mock_destroy,
@@ -369,9 +369,9 @@ class TestWindowCSVMapping:
         window_csv_mapping.mapping.load.assert_called_once()
         mock_destroy.assert_called_once()
 
-    @patch.object(WindowCSVMapping, "set_mapping_values")
-    @patch.object(WindowCSVMapping, "confirm_discard_changes")
-    @patch.object(WindowCSVMapping, "destroy")
+    @patch.object(WindowCSVExtensionMapping, "set_mapping_values")
+    @patch.object(WindowCSVExtensionMapping, "confirm_discard_changes")
+    @patch.object(WindowCSVExtensionMapping, "destroy")
     def test_on_destroy_dirty_dont_discard_changes(
         self,
         mock_destroy,
@@ -387,9 +387,9 @@ class TestWindowCSVMapping:
         window_csv_mapping.mapping.load.assert_not_called()
         mock_destroy.assert_not_called()
 
-    @patch.object(WindowCSVMapping, "set_mapping_values")
-    @patch.object(WindowCSVMapping, "confirm_discard_changes")
-    @patch.object(WindowCSVMapping, "destroy")
+    @patch.object(WindowCSVExtensionMapping, "set_mapping_values")
+    @patch.object(WindowCSVExtensionMapping, "confirm_discard_changes")
+    @patch.object(WindowCSVExtensionMapping, "destroy")
     def test_on_destroy_not_dirty(
         self,
         mock_destroy,
@@ -419,7 +419,7 @@ class TestWindowCSVMapping:
         mock_askopenfilename.assert_called_once_with(filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
         window_csv_mapping.var_csv_mapping_import_file_path.set.assert_called_once_with(test_filename)
 
-    @patch.object(WindowCSVMapping, "add_mapping_field_set")
+    @patch.object(WindowCSVExtensionMapping, "add_mapping_field_set")
     def test_initialize_mapping_field_sets(self, mock_add_mapping_field_set, window_csv_mapping):
         window_csv_mapping.mapping.get_parsed_config.return_value = [
             {"test": "test_data_1"},
@@ -432,8 +432,8 @@ class TestWindowCSVMapping:
             [call(row=1, test="test_data_1"), call(row=2, test="test_data_2"), call(row=3, test="test_data_3")]
         )
 
-    @patch.object(WindowCSVMapping, "add_mapping_field_set")
-    @patch.object(WindowCSVMapping, "resize")
+    @patch.object(WindowCSVExtensionMapping, "add_mapping_field_set")
+    @patch.object(WindowCSVExtensionMapping, "resize")
     def test_handle_button_add_mapping_field_set(self, mock_resize, mock_add_mapping_field_set, window_csv_mapping):
         window_csv_mapping.mapping_fields = [1, 2, 3]
         window_csv_mapping.handle_button_add_mapping_field_set()
@@ -484,8 +484,8 @@ class TestWindowCSVMapping:
         mock_extension_mapping_field_set_class.assert_called_once()
         assert window_csv_mapping.mapping_fields == [mock_extension_mapping_field_set]
 
-    @patch.object(WindowCSVMapping, "delete_mapping_field_set_by_row_index")
-    @patch.object(WindowCSVMapping, "resize")
+    @patch.object(WindowCSVExtensionMapping, "delete_mapping_field_set_by_row_index")
+    @patch.object(WindowCSVExtensionMapping, "resize")
     def test_handle_button_delete_mapping_field_set(
         self, mock_resize, mock_delete_mapping_field_set_by_row_index, window_csv_mapping
     ):
@@ -494,7 +494,7 @@ class TestWindowCSVMapping:
         mock_delete_mapping_field_set_by_row_index.assert_called_once_with(2)
         mock_resize.assert_called_once()
 
-    @patch.object(WindowCSVMapping, "delete_mapping_field_set_by_row_index")
+    @patch.object(WindowCSVExtensionMapping, "delete_mapping_field_set_by_row_index")
     def test_handle_button_delete_specific_mapping_field_set(
         self, mock_delete_mapping_field_set_by_row_index, window_csv_mapping
     ):
@@ -529,8 +529,8 @@ class TestWindowCSVMapping:
         window_csv_mapping.handle_button_delete_specific_mapping_field_set(mock_delete_button2)
         mock_delete_mapping_field_set_by_row_index.assert_called_once_with(2)
 
-    @patch.object(WindowCSVMapping, "enable_key_checkboxes")
-    @patch.object(WindowCSVMapping, "shift_rows_up")
+    @patch.object(WindowCSVExtensionMapping, "enable_key_checkboxes")
+    @patch.object(WindowCSVExtensionMapping, "shift_rows_up")
     def test_delete_mapping_field_set_by_row_index(
         self, mock_shift_rows_up, mock_enable_key_checkboxes, window_csv_mapping
     ):
@@ -559,8 +559,8 @@ class TestWindowCSVMapping:
         mock_field_2.change_row.assert_called_once_with(row=2)
         mock_field_3.change_row.assert_called_once_with(row=3)
 
-    @patch.object(WindowCSVMapping, "geometry")
-    @patch.object(WindowCSVMapping, "winfo_width")
+    @patch.object(WindowCSVExtensionMapping, "geometry")
+    @patch.object(WindowCSVExtensionMapping, "winfo_width")
     def test_resize(self, mock_winfo_width, mock_gemoetry, window_csv_mapping):
         window_csv_mapping.widgets = MagicMock()
         mock_winfo_width.return_value = 100
@@ -570,8 +570,8 @@ class TestWindowCSVMapping:
         mock_winfo_width.assert_called_once()
         mock_gemoetry.assert_called_once_with("100x2020")
 
-    @patch.object(WindowCSVMapping, "disable_key_checkboxes")
-    @patch.object(WindowCSVMapping, "enable_key_checkboxes")
+    @patch.object(WindowCSVExtensionMapping, "disable_key_checkboxes")
+    @patch.object(WindowCSVExtensionMapping, "enable_key_checkboxes")
     def test_handle_checkbox_key_change_normal(
         self, mock_enable_key_checkboxes, mock_disable_key_checkboxes, window_csv_mapping
     ):
@@ -583,8 +583,8 @@ class TestWindowCSVMapping:
         mock_disable_key_checkboxes.assert_called_once()
         mock_enable_key_checkboxes.assert_not_called()
 
-    @patch.object(WindowCSVMapping, "disable_key_checkboxes")
-    @patch.object(WindowCSVMapping, "enable_key_checkboxes")
+    @patch.object(WindowCSVExtensionMapping, "disable_key_checkboxes")
+    @patch.object(WindowCSVExtensionMapping, "enable_key_checkboxes")
     def test_handle_checkbox_key_change_disable(
         self, mock_enable_key_checkboxes, mock_disable_key_checkboxes, window_csv_mapping
     ):

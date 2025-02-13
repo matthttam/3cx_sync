@@ -6,7 +6,7 @@ from tkinter.filedialog import askdirectory
 from threading import Thread
 
 from sync.strategy.csv.mapping import CSVMapping
-from app.windows import WindowCSVMapping, WindowAppConfig, Window, WindowSync
+from app.windows import WindowCSVExtensionMapping, WindowAppConfig, Window, WindowSync
 from app.config import AppConfig
 from app.widgets import WidgetList
 from app.util import handle_error
@@ -106,39 +106,48 @@ class App(tk.Tk, Window):
         self.widgets.notebook_sync_options.add(self.widgets.tab_sync_csv, text="CSV")
         self.widgets.notebook_sync_options.pack(fill="both", expand=True)
 
-        # Button: Configure CSV
-        self.widgets.btn_show_window_csv_config = ttk.Button(
-            self.widgets.tab_sync_csv,
-            text="Configure CSV",
-            command=self.show_WindowCSVMapping,
-        )
+        # Parent Frame for Buttons
+        self.widgets.frm_csv_tab = ttk.Frame(self.widgets.tab_sync_csv)
+        self.widgets.frm_csv_tab.pack(pady=10, expand=True, fill=tk.BOTH)  # Keeps everything grouped
 
-        self.widgets.btn_show_window_csv_config.pack(
-            padx=self.defaults.pack.btn.padx,
-            pady=self.defaults.pack.btn.pady,
-        )
+        # Configure grid layout
+        self.widgets.frm_csv_tab.grid_columnconfigure(0, weight=1)
+        self.widgets.frm_csv_tab.grid_columnconfigure(1, weight=1)
+        self.widgets.frm_csv_tab.grid_rowconfigure(0, weight=2)
+        self.widgets.frm_csv_tab.grid_rowconfigure(1, weight=1)
+        self.widgets.frm_csv_tab.grid_rowconfigure(2, weight=1)
 
-        # Button: Sync CSV
+        # Sync CSV - Primary Action (Spans Two Columns)
         self.widgets.btn_sync_csv = ttk.Button(
-            self.widgets.tab_sync_csv,
-            text="Sync CSV",
+            self.widgets.frm_csv_tab,
+            text="Run CSV Sync",
             command=self.handle_csv_sync_click,
         )
-        self.widgets.btn_sync_csv.pack(
-            padx=self.defaults.pack.btn.padx,
-            pady=self.defaults.pack.btn.pady,
-        )
+        self.widgets.btn_sync_csv.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky=tk.NS)
 
-        # Button: Export Configs
+        # Configure Extensions
+        self.widgets.btn_csv_extension_config = ttk.Button(
+            self.widgets.frm_csv_tab,
+            text="Configure\nExtensions",
+            command=self.show_WindowCSVMapping,
+        )
+        self.widgets.btn_csv_extension_config.grid(row=1, column=0, padx=5, pady=5, sticky=tk.EW)
+
+        # Configure Groups
+        self.widgets.btn_configure_groups = ttk.Button(
+            self.widgets.frm_csv_tab,
+            text="Configure\nGroups",
+            # command=self.handle_configure_groups_click,  # Placeholder for actual method
+        )
+        self.widgets.btn_configure_groups.grid(row=1, column=1, padx=5, pady=5, sticky=tk.EW)
+
+        # Export Configs
         self.widgets.btn_export_configs = ttk.Button(
-            self.widgets.tab_sync_csv,
+            self.widgets.frm_csv_tab,
             text="Export Configs",
             command=self.handle_csv_export_configs_click,
         )
-        self.widgets.btn_export_configs.pack(
-            padx=self.defaults.pack.btn.padx,
-            pady=self.defaults.pack.btn.pady,
-        )
+        self.widgets.btn_export_configs.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky=tk.EW)
 
     @handle_error
     def show_WindowAppConfig(self):
@@ -148,7 +157,7 @@ class App(tk.Tk, Window):
     def show_WindowCSVMapping(self):
         csv_mapping = CSVMapping(config_path=self.app_config.config_path)
         csv_mapping.initialize()
-        WindowCSVMapping(self, csv_mapping=csv_mapping)
+        WindowCSVExtensionMapping(self, csv_mapping=csv_mapping)
 
     def handle_exit_click(self) -> None:
         self.destroy()
