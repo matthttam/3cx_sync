@@ -272,7 +272,7 @@ class TestWindowAppConfig:
         mock_messagebox.showerror.assert_called_once_with(title="Error!", message=f"{e}")
 
 
-class TestWindowCSVMapping:
+class TestWindowCSVExtensionMapping:
 
     @patch("app.windows.WidgetList")
     @patch.object(WindowCSVExtensionMapping, "initialize_variables")

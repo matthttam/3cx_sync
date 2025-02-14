@@ -2,12 +2,12 @@ import os
 import json
 import pytest
 from pathlib import Path
-from sync.strategy.csv.mapping import CSVMapping
+from sync.strategy.csv.mapping import CSVExtensionMapping
 from collections import UserDict
 from unittest.mock import patch, MagicMock, mock_open
 
 
-class TestCSVMapping:
+class TestCSVExtensionMapping:
 
     # test_path = Path("/test/path")
 
@@ -18,25 +18,25 @@ class TestCSVMapping:
 
     @pytest.fixture
     def csv_mapping(self, mock_path):
-        yield CSVMapping(config_path=mock_path)
+        yield CSVExtensionMapping(config_path=mock_path)
 
     def test_init(self):
         test_path = Path("/test/path")
-        csv_mapping = CSVMapping(config_path=test_path)
-        assert issubclass(CSVMapping, UserDict)
-        assert csv_mapping.mapping_file_path == test_path / CSVMapping.DEFAULT_FILENAME
+        csv_mapping = CSVExtensionMapping(config_path=test_path)
+        assert issubclass(CSVExtensionMapping, UserDict)
+        assert csv_mapping.mapping_file_path == test_path / CSVExtensionMapping.DEFAULT_FILENAME
         assert csv_mapping.default_config is not None
         assert csv_mapping.original_config == {}
 
-    @patch.object(CSVMapping, "load_defaults")
-    @patch.object(CSVMapping, "load")
+    @patch.object(CSVExtensionMapping, "load_defaults")
+    @patch.object(CSVExtensionMapping, "load")
     def test_initialize(self, mock_load, mock_load_defaults, csv_mapping):
         csv_mapping.initialize()
         mock_load_defaults.assert_called_once()
         mock_load.assert_called_once()
 
-    @patch.object(CSVMapping, "load_defaults")
-    @patch.object(CSVMapping, "load")
+    @patch.object(CSVExtensionMapping, "load_defaults")
+    @patch.object(CSVExtensionMapping, "load")
     def test_initialize_no_file_does_not_loa(self, mock_load, mock_load_defaults, csv_mapping):
         csv_mapping.mapping_file_path.exists.return_value = False
         csv_mapping.initialize()

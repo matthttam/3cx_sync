@@ -7,7 +7,7 @@ from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
 from app.widgets import Checkbox, ExtensionMappingFieldSet, WidgetList
 from app.config import AppConfig
-from sync.strategy.csv.mapping import CSVMapping
+from sync.strategy.csv.mapping import CSVExtensionMapping
 from tkinter.scrolledtext import ScrolledText
 
 
@@ -481,11 +481,7 @@ class WindowAppConfig(PopupWindow):
         self.destroy()
 
     def confirm_discard_changes(self) -> bool:
-        return messagebox.askyesno(
-            "Unsaved Changes",
-            "Discard unsaved changes?",
-            parent=self
-        )
+        return messagebox.askyesno("Unsaved Changes", "Discard unsaved changes?", parent=self)
 
     def save_config(self):
         try:
@@ -497,13 +493,13 @@ class WindowAppConfig(PopupWindow):
 
 class WindowCSVExtensionMapping(PopupWindow):
 
-    def __init__(self, master, *args, csv_mapping: CSVMapping, **kwargs) -> None:
+    def __init__(self, master, *args, csv_mapping: CSVExtensionMapping, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
         self.geometry("600x920")
         self.widgets = WidgetList()
         self.mapping = csv_mapping
-        self.title("CSV Mapping Settings")
+        self.title("CSV Extension Mapping Settings")
         self.initialize_variables()
         self.build_gui()
 
@@ -516,7 +512,7 @@ class WindowCSVExtensionMapping(PopupWindow):
 
     def build_gui(self) -> None:
         # Frame: window
-        self.widgets.frm_window = ttk.Frame(self, name="csv_mapping")
+        self.widgets.frm_window = ttk.Frame(self)
         self.widgets.frm_window.grid_rowconfigure(0, weight=1)
         self.widgets.frm_window.grid_columnconfigure(0, weight=1)
         self.widgets.frm_window.pack(
@@ -702,11 +698,7 @@ class WindowCSVExtensionMapping(PopupWindow):
         self.destroy()
 
     def confirm_discard_changes(self) -> bool:
-        return messagebox.askyesno(
-            "Unsaved Changes",
-            "Discard unsaved changes?",
-            parent=self
-        )
+        return messagebox.askyesno("Unsaved Changes", "Discard unsaved changes?", parent=self)
 
     def browse_file_csv(self):
         filename = askopenfilename(filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
@@ -819,6 +811,57 @@ class WindowCSVExtensionMapping(PopupWindow):
         self.checkbox_key_state.set("normal")
         for row in self.mapping_fields:
             row.key.configure(state="normal")
+
+
+class WindowCSVGroupMapping(PopupWindow):
+    def __init__(self, master, *args, csv_mapping: CSVExtensionMapping, **kwargs) -> None:
+        super().__init__(master, *args, **kwargs)
+        self.protocol("WM_DELETE_WINDOW", self.on_destroy)
+        self.geometry("600x920")
+        self.widgets = WidgetList()
+        self.mapping = csv_mapping
+        self.title("CSV Group Mapping Settings")
+        self.initialize_variables()
+        self.build_gui()
+
+    def initialize_variables(self): ...
+
+    def build_gui(self):
+        # Frame: window
+        self.widgets.frm_window = ttk.Frame(self)
+        self.widgets.frm_window.grid_rowconfigure(0, weight=1)
+        self.widgets.frm_window.grid_columnconfigure(0, weight=1)
+        self.widgets.frm_window.pack(
+            padx=self.defaults.pack.frm.padx,
+            pady=self.defaults.pack.frm.pady,
+            side=self.defaults.pack.frm.side,
+            fill=self.defaults.pack.frm.fill,
+            expand=True,
+        )
+        # Field: Group Path
+        self.widgets.lblfrm_import_file_path = ttk.LabelFrame(self.widgets.frm_window, text="Extension CSV File Path")
+        self.widgets.lblfrm_import_file_path.pack(
+            padx=self.defaults.pack.lblfrm.padx,
+            pady=self.defaults.pack.lblfrm.pady,
+            fill=self.defaults.pack.lblfrm.fill,
+            expand=False,
+        )
+
+        self.widgets.ent_import_file_path = ttk.Entry(
+            self.widgets.lblfrm_import_file_path,
+            textvariable=self.var_csv_mapping_import_file_path,
+        )
+        self.widgets.ent_import_file_path.pack(
+            pady=self.defaults.pack.ent.pady, fill=self.defaults.pack.ent.fill, padx=(25, 1), side=tk.LEFT, expand=True
+        )
+
+        self.widgets.btn_import_file_path_browse = ttk.Button(
+            self.widgets.lblfrm_import_file_path, text=">", command=self.browse_file_csv, width=2
+        )
+        self.widgets.btn_import_file_path_browse.pack(padx=(1, 25), pady=5, side=tk.LEFT)
+
+    def on_destroy(self):
+        self.destroy()
 
 
 class WindowSync(PopupWindow):

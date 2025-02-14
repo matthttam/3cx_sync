@@ -82,14 +82,14 @@ class TestApp:
         app.show_WindowAppConfig()
         window_app_config.assert_called_once_with(app, app.app_config)
 
-    @patch("app.app.CSVMapping")
-    @patch("app.app.WindowCSVMapping")
+    @patch("app.app.CSVExtensionMapping")
+    @patch("app.app.WindowCSVExtensionMapping")
     def test_show_window_csv_mapping(self, window_csv_mapping, mock_csv_mapping_class, app):
         app.app_config.config_path = "/test/path"
         mock_csv_mapping = MagicMock()
         mock_csv_mapping_class.return_value = mock_csv_mapping
 
-        app.show_WindowCSVMapping()
+        app.show_WindowCSVExtensionMapping()
         mock_csv_mapping_class.assert_called_once_with(config_path="/test/path")
         window_csv_mapping.assert_called_once_with(app, csv_mapping=mock_csv_mapping)
 
@@ -127,7 +127,7 @@ class TestApp:
         app._export_app_config("fake_dir")
         app.app_config.save_to.assert_called_once_with("fake_dir")
 
-    @patch("app.app.CSVMapping")
+    @patch("app.app.CSVExtensionMapping")
     def test_export_csv_mapping(self, mock_csv_mapping_class, app):
         app.app_config.config_path.return_value = None
         mock_csv_mapping = MagicMock()

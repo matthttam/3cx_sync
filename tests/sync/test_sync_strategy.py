@@ -32,7 +32,7 @@ class TestSyncCSV:
             mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing CSV Source")
 
     def test_load_csv_mapping(self, sync_csv):
-        with patch("sync.sync_strategy.CSVMapping") as mock_csv_mapping:
+        with patch("sync.sync_strategy.CSVExtensionMapping") as mock_csv_mapping:
             sync_csv._load_csv_mapping()
             mock_csv_mapping.assert_called_once()
             mock_csv_mapping.return_value.initialize.assert_called_once()

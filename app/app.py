@@ -8,7 +8,7 @@ from threading import Thread
 import tkinter.font as tkfont
 import darkdetect
 
-from sync.strategy.csv.mapping import CSVMapping
+from sync.strategy.csv.mapping import CSVExtensionMapping
 from app.windows import WindowCSVExtensionMapping, WindowAppConfig, Window, WindowSync
 from app.config import AppConfig
 from app.widgets import WidgetList
@@ -156,7 +156,7 @@ class App(tk.Tk, Window):
         self.widgets.btn_csv_extension_config = ttk.Button(
             self.widgets.frm_csv_tab,
             text="Configure\nExtensions",
-            command=self.show_WindowCSVMapping,
+            command=self.show_WindowCSVExtensionMapping,
         )
         self.widgets.btn_csv_extension_config.grid(row=1, column=0, padx=5, pady=5, sticky=tk.EW)
 
@@ -181,10 +181,14 @@ class App(tk.Tk, Window):
         WindowAppConfig(self, self.app_config)
 
     @handle_error
-    def show_WindowCSVMapping(self):
-        csv_mapping = CSVMapping(config_path=self.app_config.config_path)
+    def show_WindowCSVExtensionMapping(self):
+        csv_mapping = CSVExtensionMapping(config_path=self.app_config.config_path)
         csv_mapping.initialize()
         WindowCSVExtensionMapping(self, csv_mapping=csv_mapping)
+
+    @handle_error
+    def show_WindowCSVGroupMapping(self):
+        csv_mapping = CSVGroupMapping(config_path=self.app_config.config_path)
 
     def handle_exit_click(self) -> None:
         self.destroy()
@@ -214,7 +218,7 @@ class App(tk.Tk, Window):
         self.app_config.save_to(export_directory)
 
     def _export_csv_mapping(self, export_directory: str) -> None:
-        csv_mapping = CSVMapping(config_path=self.app_config.config_path)
+        csv_mapping = CSVExtensionMapping(config_path=self.app_config.config_path)
         csv_mapping.load()
         csv_mapping.save_to(export_directory)
 

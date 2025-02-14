@@ -6,39 +6,19 @@ import platformdirs
 from app.util import initialize_or_get_user_config_path
 
 
-class CSVMapping(UserDict):
-    DEFAULT_FILENAME = "csv_mapping.json"
+class JSONMapping(UserDict):
+    DEFAULT_FILENAME = ""
+    DEFAULT_CONFIG = {}
 
     def __init__(self, config_path: Path = None) -> None:
         super().__init__()
+        assert self.DEFAULT_FILENAME != ""
+        assert self.DEFAULT_CONFIG != {}
+
         self.set_original_config()
         self.mapping_file_path = (
             config_path or initialize_or_get_user_config_path("3cx_sync", "3cx_sync", "conf")
         ) / self.DEFAULT_FILENAME
-
-        self.default_config = {
-            "Extension": {
-                "Path": platformdirs.user_documents_dir(),
-                "Key": "Number",
-                "New": {
-                    "Number": "Number",
-                    "FirstName": "FirstName",
-                    "LastName": "LastName",
-                    "EmailAddress": "Email",
-                    "VMPIN": "VMPIN",
-                    "VMEmailOptions": "VMEmailOptions",
-                    "OutboundCallerID": "OutboundCallerID",
-                    "SendEmailMissedCalls": "SendEmailMissedCalls",
-                    "Enabled": "Enabled",
-                    "EnableHotdesking": "AllowToUseHotdesking",
-                    "RecordCalls": "RecordCalls",
-                    "RecordExternalCallsOnly": "RecordExternalCallsOnly",
-                    "VMEnabled": "VMEnabled",
-                    "WebMeetingFriendlyName": "WebMeetingFriendlyName",
-                },
-                "Update": ["FirstName", "LastName", "EmailAddress", "Enabled"],
-            }
-        }
 
     def initialize(self):
         self.load_defaults()
@@ -49,7 +29,7 @@ class CSVMapping(UserDict):
         return self.original_config != self.data
 
     def load_defaults(self) -> None:
-        self.update(self.default_config)
+        self.update()
 
     def load(self) -> None:
         """Load configuration from the specified file."""
@@ -70,6 +50,33 @@ class CSVMapping(UserDict):
 
     def set_original_config(self):
         self.original_config = deepcopy(self.data)
+
+
+class CSVExtensionMapping(JSONMapping):
+    DEFAULT_FILENAME = "csv_extension_mapping.json"
+    DEFAULT_CONFIG = {
+        "Extension": {
+            "Path": platformdirs.user_documents_dir(),
+            "Key": "Number",
+            "New": {
+                "Number": "Number",
+                "FirstName": "FirstName",
+                "LastName": "LastName",
+                "EmailAddress": "Email",
+                "VMPIN": "VMPIN",
+                "VMEmailOptions": "VMEmailOptions",
+                "OutboundCallerID": "OutboundCallerID",
+                "SendEmailMissedCalls": "SendEmailMissedCalls",
+                "Enabled": "Enabled",
+                "EnableHotdesking": "AllowToUseHotdesking",
+                "RecordCalls": "RecordCalls",
+                "RecordExternalCallsOnly": "RecordExternalCallsOnly",
+                "VMEnabled": "VMEnabled",
+                "WebMeetingFriendlyName": "WebMeetingFriendlyName",
+            },
+            "Update": ["FirstName", "LastName", "EmailAddress", "Enabled"],
+        }
+    }
 
     def get_parsed_config(self) -> list[dict]:
         """
@@ -93,3 +100,7 @@ class CSVMapping(UserDict):
                 }
             )
         return parsed_config
+
+
+class CSVGroupMapping(JSONMapping):
+    DEFAULT_FILENAME = "csv_group_mapping.json"

@@ -1,4 +1,4 @@
-from sync.strategy.csv.mapping import CSVMapping
+from sync.strategy.csv.mapping import CSVExtensionMapping
 from sync.logging import LogLevel, SyncLogger
 from sync.schema import CSVUser
 from sync.strategy.strategy import SyncSourceStrategy
@@ -35,7 +35,7 @@ class SyncCSV(SyncSourceStrategy):
 
     def _load_csv_mapping(self):
         self.logger.log(LogLevel.INFO, "Loading CSV Mapping")
-        self.mapping = CSVMapping(self.config_path)
+        self.mapping = CSVExtensionMapping(self.config_path)
         self.mapping.initialize()
         self.logger.log(LogLevel.INFO, f"CSV Mapping Loaded from '{self.mapping.mapping_file_path}'")
 
