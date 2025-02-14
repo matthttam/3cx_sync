@@ -96,6 +96,17 @@ class App(tk.Tk, Window):
             pady=self.defaults.pack.btn.pady,
         )
 
+        self.widgets.btn_toggle_theme = ttk.Button(
+            self.widgets.frm_left_column,
+            text="Toggle Theme",
+            command=sv_ttk.toggle_theme
+        )
+
+        self.widgets.btn_toggle_theme.pack(
+            padx=self.defaults.pack.btn.padx,
+            pady=self.defaults.pack.btn.pady,
+        )
+
         # Button: Exit
         self.widgets.btn_exit = ttk.Button(
             self.widgets.frm_left_column,

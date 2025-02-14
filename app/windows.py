@@ -459,9 +459,9 @@ class WindowAppConfig(PopupWindow):
                 username=self.app_config["3cx"]["username"],
                 password=self.app_config["3cx"]["password"],
             )
-            messagebox.showinfo(title="Success", message="Test Successful")
+            messagebox.showinfo(title="Success", message="Test Successful", parent=self)
         except Exception as e:
-            messagebox.showinfo(title="Failure", message=f"Test Failed. {e}")
+            messagebox.showinfo(title="Failure", message=f"Test Failed. {e}", parent=self)
 
     def handle_apply_click(self):
         self.save_config()
@@ -484,14 +484,15 @@ class WindowAppConfig(PopupWindow):
         return messagebox.askyesno(
             "Unsaved Changes",
             "Discard unsaved changes?",
+            parent=self
         )
 
     def save_config(self):
         try:
             self.app_config.save()
-            messagebox.showinfo(title="Saved!", message="Config saved!")
+            messagebox.showinfo(title="Saved!", message="Config saved!", parent=self)
         except Exception as e:
-            messagebox.showerror(title="Error!", message=f"{e}")
+            messagebox.showerror(title="Error!", message=f"{e}", parent=self)
 
 
 class WindowCSVMapping(PopupWindow):
@@ -665,7 +666,7 @@ class WindowCSVMapping(PopupWindow):
     def handle_save_click(self):
         self.set_mapping_values()
         self.mapping.save()
-        messagebox.showinfo(title="Saved!", message="Config saved!")
+        messagebox.showinfo(title="Saved!", message="Config saved!", parent=self)
         self.destroy()
 
     def set_mapping_values(self):
@@ -704,6 +705,7 @@ class WindowCSVMapping(PopupWindow):
         return messagebox.askyesno(
             "Unsaved Changes",
             "Discard unsaved changes?",
+            parent=self
         )
 
     def browse_file_csv(self):

@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 import tkinter as tk
+from tkinter import ttk
 from typing import NamedTuple
 
 
-class Checkbox(tk.Checkbutton):
+class Checkbox(ttk.Checkbutton):
 
     def __init__(self, *args, value=False, **kwargs):
         super().__init__(*args, **kwargs)
