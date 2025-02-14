@@ -120,34 +120,10 @@ class App(tk.Tk, Window):
         self.widgets.notebook_sync_options.add(self.widgets.tab_sync_csv, text="CSV")
         self.widgets.notebook_sync_options.pack(fill="both", expand=True)
 
-<<<<<<< Updated upstream
         # Button: Configure CSV
         self.widgets.btn_show_window_csv_config = ttk.Button(
             self.widgets.tab_sync_csv,
             text="Configure CSV",
-=======
-        # Parent Frame for Buttons
-        self.widgets.frm_csv_tab = ttk.Frame(self.widgets.tab_sync_csv)
-        self.widgets.frm_csv_tab.pack(pady=10, expand=True, fill=tk.BOTH)  # Keeps everything grouped
-
-        # Configure grid layout
-        self.widgets.frm_csv_tab.grid_columnconfigure(0, weight=1)
-        self.widgets.frm_csv_tab.grid_columnconfigure(1, weight=1)
-        self.widgets.frm_csv_tab.grid_rowconfigure(0, weight=2)
-        self.widgets.frm_csv_tab.grid_rowconfigure(1, weight=1)
-        self.widgets.frm_csv_tab.grid_rowconfigure(2, weight=1)
-
-        # Sync CSV - Primary Action (Spans Two Columns)
-        self.widgets.btn_sync_csv = ttk.Button(
-            self.widgets.frm_csv_tab, text="Run CSV Sync", command=self.handle_csv_sync_click, style="Accent.TButton"
-        )
-        self.widgets.btn_sync_csv.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky=tk.NS)
-
-        # Configure Extensions
-        self.widgets.btn_csv_extension_config = ttk.Button(
-            self.widgets.frm_csv_tab,
-            text="Configure\nExtensions",
->>>>>>> Stashed changes
             command=self.show_WindowCSVMapping,
         )
 
