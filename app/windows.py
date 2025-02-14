@@ -459,9 +459,9 @@ class WindowAppConfig(PopupWindow):
                 username=self.app_config["3cx"]["username"],
                 password=self.app_config["3cx"]["password"],
             )
-            messagebox.showinfo(title="Success", message="Test Successful")
+            messagebox.showinfo(title="Success", message="Test Successful", parent=self)
         except Exception as e:
-            messagebox.showinfo(title="Failure", message=f"Test Failed. {e}")
+            messagebox.showinfo(title="Failure", message=f"Test Failed. {e}", parent=self)
 
     def handle_apply_click(self):
         self.save_config()
@@ -484,14 +484,15 @@ class WindowAppConfig(PopupWindow):
         return messagebox.askyesno(
             "Unsaved Changes",
             "Discard unsaved changes?",
+            parent=self
         )
 
     def save_config(self):
         try:
             self.app_config.save()
-            messagebox.showinfo(title="Saved!", message="Config saved!")
+            messagebox.showinfo(title="Saved!", message="Config saved!", parent=self)
         except Exception as e:
-            messagebox.showerror(title="Error!", message=f"{e}")
+            messagebox.showerror(title="Error!", message=f"{e}", parent=self)
 
 
 class WindowCSVExtensionMapping(PopupWindow):
@@ -665,7 +666,7 @@ class WindowCSVExtensionMapping(PopupWindow):
     def handle_save_click(self):
         self.set_mapping_values()
         self.mapping.save()
-        messagebox.showinfo(title="Saved!", message="Config saved!")
+        messagebox.showinfo(title="Saved!", message="Config saved!", parent=self)
         self.destroy()
 
     def set_mapping_values(self):
@@ -704,6 +705,7 @@ class WindowCSVExtensionMapping(PopupWindow):
         return messagebox.askyesno(
             "Unsaved Changes",
             "Discard unsaved changes?",
+            parent=self
         )
 
     def browse_file_csv(self):
@@ -730,20 +732,20 @@ class WindowCSVExtensionMapping(PopupWindow):
         # 3cx Field
         ent_csv_mapping_3cx_field = ttk.Entry(parent)
         ent_csv_mapping_3cx_field.insert(0, field)
-        ent_csv_mapping_3cx_field.grid(row=row, column=0, sticky="ew")
+        ent_csv_mapping_3cx_field.grid(row=row, column=0, sticky=tk.NSEW)
 
         # CSV Header Field
         ent_csv_mapping_header = ttk.Entry(parent)
         ent_csv_mapping_header.insert(0, header)
-        ent_csv_mapping_header.grid(row=row, column=1, sticky="ew")
+        ent_csv_mapping_header.grid(row=row, column=1, sticky=tk.NSEW)
 
         # Static Value Checkbox
         chk_csv_mapping_static_value = Checkbox(parent, value=static)
-        chk_csv_mapping_static_value.grid(row=row, column=2, sticky="w")
+        chk_csv_mapping_static_value.grid(row=row, column=2)
 
         # Update Checkbox
         chk_csv_mapping_update = Checkbox(parent, value=update)
-        chk_csv_mapping_update.grid(row=row, column=3, sticky="w")
+        chk_csv_mapping_update.grid(row=row, column=3)
 
         # Key Checkbox
         chk_csv_mapping_key = Checkbox(
@@ -751,14 +753,10 @@ class WindowCSVExtensionMapping(PopupWindow):
             state=self.checkbox_key_state.get(),
             command=self.handle_checkbox_key_change,
         )
-        chk_csv_mapping_key.grid(row=row, column=4, sticky="w")
+        chk_csv_mapping_key.grid(row=row, column=4)
 
         # Remove Button
-        btn_csv_mapping_remove = ttk.Button(
-            parent,
-            width=2,
-            text="−",
-        )
+        btn_csv_mapping_remove = ttk.Button(parent, text="−", width=1)
         btn_csv_mapping_remove.config(
             command=lambda btn=btn_csv_mapping_remove: self.handle_button_delete_specific_mapping_field_set(btn)
         )
