@@ -52,7 +52,7 @@ class App(tk.Tk, Window):
         elif "default" in self.style.theme_names():
             self.style.theme_use("default")
 
-    def set_font(self):
+    def set_font(self, size=15):
         """Return a platform-appropriate font."""
         available_fonts = set(tkfont.families())  # Get all available font families
 
@@ -68,7 +68,7 @@ class App(tk.Tk, Window):
         if not font or font not in available_fonts:
             font = "Arial"
 
-        self.style.configure(".", font=(font, 15))
+        self.style.configure(".", font=(font, size))
 
     def build_gui(self):
         # Frame: Window
@@ -92,17 +92,6 @@ class App(tk.Tk, Window):
         )
 
         self.widgets.btn_show_window_app_config.pack(
-            padx=self.defaults.pack.btn.padx,
-            pady=self.defaults.pack.btn.pady,
-        )
-
-        self.widgets.btn_toggle_theme = ttk.Button(
-            self.widgets.frm_left_column,
-            text="Toggle Theme",
-            command=sv_ttk.toggle_theme
-        )
-
-        self.widgets.btn_toggle_theme.pack(
             padx=self.defaults.pack.btn.padx,
             pady=self.defaults.pack.btn.pady,
         )
@@ -206,6 +195,10 @@ class App(tk.Tk, Window):
         csv_mapping = CSVMapping(config_path=self.app_config.config_path)
         csv_mapping.load()
         csv_mapping.save_to(export_directory)
+
+    def handle_toggle_theme_click(self):
+        sv_ttk.toggle_theme()
+        self.set_font(size=30)
 
     def on_sync_initialized(self, sync):
         self.sync = sync
