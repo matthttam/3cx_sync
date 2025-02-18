@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 import tkinter as tk
 from tkinter import ttk
+from pydantic import BaseModel
 import sv_ttk
 from threecxapi.connection import ThreeCXApiConnection
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
+from app.util import get_variable_for_model_field
 from app.widgets import Checkbox, ExtensionMappingFieldSet, WidgetList
 from app.config import AppConfig
-from sync.strategy.csv.mapping import CSVExtensionMapping
+from sync.strategy.csv.mapping import CSVExtensionMapping, ExtensionMapping
 from tkinter.scrolledtext import ScrolledText
 
 
@@ -495,20 +497,13 @@ class WindowCSVExtensionMapping(PopupWindow):
 
     def __init__(self, master, *args, csv_mapping: CSVExtensionMapping, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
+        self.mapping_fields = []
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
         self.geometry("600x920")
         self.widgets = WidgetList()
         self.mapping = csv_mapping
         self.title("CSV Extension Mapping Settings")
-        self.initialize_variables()
         self.build_gui()
-
-    def initialize_variables(self) -> None:
-        self.mapping_fields = []
-        self.checkbox_key_state = tk.StringVar(self, "normal")
-        extension = self.mapping.get("Extension", {})
-        self.var_csv_mapping_import_file_path = tk.StringVar(self, value=extension.get("Path", ""))
-        self.key_checked = False
 
     def build_gui(self) -> None:
         # Frame: window
@@ -532,6 +527,7 @@ class WindowCSVExtensionMapping(PopupWindow):
             expand=False,
         )
 
+        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping.model, "path")
         self.widgets.ent_import_file_path = ttk.Entry(
             self.widgets.lblfrm_import_file_path,
             textvariable=self.var_csv_mapping_import_file_path,
@@ -660,37 +656,16 @@ class WindowCSVExtensionMapping(PopupWindow):
         self.widgets.btn_cancel.grid(row=0, column=1, padx=5)
 
     def handle_save_click(self):
-        self.set_mapping_values()
+        # self.set_mapping_values()
         self.mapping.save()
         messagebox.showinfo(title="Saved!", message="Config saved!", parent=self)
         self.destroy()
-
-    def set_mapping_values(self):
-        # This needs to be replaced with the trace method like in the app config.
-        """Update the mapping config with values from the form"""
-        self.mapping["Extension"] = {
-            "Path": self.var_csv_mapping_import_file_path.get(),
-        }
-        mapping_new = {}
-        mapping_update = []
-        mapping_static = []
-        for mapping_row in self.mapping_fields:
-            if mapping_row.key.checked:
-                self.mapping["Extension"]["Key"] = mapping_row.header.get()
-            mapping_new[mapping_row.field.get()] = mapping_row.header.get()
-            if mapping_row.update.checked:
-                mapping_update.append(mapping_row.field.get())
-            if mapping_row.static.checked:
-                mapping_static.append(mapping_row.field.get())
-        self.mapping["Extension"]["New"] = mapping_new
-        self.mapping["Extension"]["Update"] = mapping_update
-        self.mapping["Extension"]["Static"] = mapping_static
 
     def handle_cancel_click(self):
         self.on_destroy()
 
     def on_destroy(self):
-        self.set_mapping_values()
+        # self.set_mapping_values()
         if self.mapping.is_dirty:
             if not self.confirm_discard_changes():
                 return
@@ -705,46 +680,72 @@ class WindowCSVExtensionMapping(PopupWindow):
         self.var_csv_mapping_import_file_path.set(filename)
 
     def initialize_mapping_field_sets(self, starting_row: int):
-        parsed_config = self.mapping.get_parsed_config()
+        # parsed_config = self.mapping.get_parsed_config()
         row = starting_row
-        for field_info in parsed_config:
-            self.add_mapping_field_set(row=row, **field_info)
+        for field_info in self.mapping.model.mappings:
+            self.add_mapping_field_set(
+                row=row,
+                mapping=field_info,
+            )
             row += 1
 
     def handle_button_add_mapping_field_set(self):
-        self.add_mapping_field_set(row=len(self.mapping_fields) + 1)
+        mapping = ExtensionMapping()
+        self.mapping.model.mappings.append(mapping)
+        self.add_mapping_field_set(row=len(self.mapping_fields) + 1, mapping=mapping)
         self.update_scrollbar()
 
     def update_scrollbar(self):
         canvas = self.widgets.canvas_csv_mapping_fields_scroll_bar
         canvas.configure(scrollregion=canvas.bbox("all"))
+        canvas.yview_moveto(1)
 
-    def add_mapping_field_set(self, row: int, header="", field="", static=False, update=False, key=False, **kwargs):
+    def add_mapping_field_set(self, row: int, mapping: ExtensionMapping):
+        field = mapping.field
+        header = mapping.header
+        update = mapping.update
+        key = mapping.key
+        static = mapping.static
+
         parent = self.widgets.frm_csv_mapping_fields_scrollable
         # 3cx Field
-        ent_csv_mapping_3cx_field = ttk.Entry(parent)
-        ent_csv_mapping_3cx_field.insert(0, field)
+        ent_csv_mapping_3cx_field_variable = get_variable_for_model_field(self, mapping, "field")
+        ent_csv_mapping_3cx_field = ttk.Entry(parent, textvariable=ent_csv_mapping_3cx_field_variable)
+        # ent_csv_mapping_3cx_field.insert(0, field)
+        ent_csv_mapping_3cx_field_variable.set(field)
         ent_csv_mapping_3cx_field.grid(row=row, column=0, sticky=tk.NSEW)
 
         # CSV Header Field
-        ent_csv_mapping_header = ttk.Entry(parent)
-        ent_csv_mapping_header.insert(0, header)
+        ent_csv_mapping_header_variable = get_variable_for_model_field(self, mapping, "header")
+        ent_csv_mapping_header = ttk.Entry(parent, textvariable=ent_csv_mapping_header_variable)
+        ent_csv_mapping_header_variable.set(header)
+        # ent_csv_mapping_header.insert(0, header)
         ent_csv_mapping_header.grid(row=row, column=1, sticky=tk.NSEW)
 
         # Static Value Checkbox
-        chk_csv_mapping_static_value = Checkbox(parent, value=static)
+        chk_csv_mapping_static_value_variable = get_variable_for_model_field(self, mapping, "static")
+        # chk_csv_mapping_static_value = Checkbox(parent, value=static, variable=chk_csv_mapping_static_value_variable)
+        chk_csv_mapping_static_value = Checkbox(parent, variable=chk_csv_mapping_static_value_variable)
+        chk_csv_mapping_static_value_variable.set(static)
         chk_csv_mapping_static_value.grid(row=row, column=2)
 
         # Update Checkbox
-        chk_csv_mapping_update = Checkbox(parent, value=update)
+        chk_csv_mapping_update_variable = get_variable_for_model_field(self, mapping, "update")
+        # chk_csv_mapping_update = Checkbox(parent, value=update, variable=chk_csv_mapping_update_variable)
+        chk_csv_mapping_update = Checkbox(parent, variable=chk_csv_mapping_update_variable)
+        chk_csv_mapping_update_variable.set(update)
         chk_csv_mapping_update.grid(row=row, column=3)
 
         # Key Checkbox
+        chk_csv_mapping_key_variable = get_variable_for_model_field(self, mapping, "key")
         chk_csv_mapping_key = Checkbox(
             parent,
-            state=self.checkbox_key_state.get(),
             command=self.handle_checkbox_key_change,
+            variable=chk_csv_mapping_key_variable,
         )
+        chk_csv_mapping_key_variable.set(key)
+        self.handle_checkbox_key_change()
+
         chk_csv_mapping_key.grid(row=row, column=4)
 
         # Remove Button
@@ -754,8 +755,8 @@ class WindowCSVExtensionMapping(PopupWindow):
         )
         btn_csv_mapping_remove.grid(row=row, column=5, padx=2, pady=2)
 
-        if key:
-            chk_csv_mapping_key.invoke()
+        # if key:
+        #    chk_csv_mapping_key.invoke()
         self.mapping_fields.append(
             ExtensionMappingFieldSet(
                 field=ent_csv_mapping_3cx_field,
@@ -783,7 +784,10 @@ class WindowCSVExtensionMapping(PopupWindow):
         # If this row has key checked, enable keys
         if row.key.checked:
             self.enable_key_checkboxes()
-        # for widget in row:
+        # Remove entry from the mapping config
+        self.mapping.model.mappings.pop(row_index)
+
+        # destroy row of widgets
         row.destroy()
         # Reindex the rows
         self.shift_rows_up(starting_row=row_index)
@@ -794,21 +798,22 @@ class WindowCSVExtensionMapping(PopupWindow):
             x.change_row(row=idx + 1)
 
     def handle_checkbox_key_change(self):
-        if self.checkbox_key_state.get() == "normal":
+        checked_boxes = [row.key for row in self.mapping_fields if row.key.checked]
+        if len(checked_boxes) == 1:
             self.disable_key_checkboxes()
         else:
             self.enable_key_checkboxes()
 
     def disable_key_checkboxes(self):
         """Disable any key checkboxes that are not checked"""
-        self.checkbox_key_state.set("disable")
+        # self.checkbox_key_state.set("disable")
         for row in self.mapping_fields:
             if not row.key.checked:
                 row.key.configure(state="disable")
 
     def enable_key_checkboxes(self):
         """Enable all key checkboxes"""
-        self.checkbox_key_state.set("normal")
+        # self.checkbox_key_state.set("normal")
         for row in self.mapping_fields:
             row.key.configure(state="normal")
 
@@ -821,10 +826,7 @@ class WindowCSVGroupMapping(PopupWindow):
         self.widgets = WidgetList()
         self.mapping = csv_mapping
         self.title("CSV Group Mapping Settings")
-        self.initialize_variables()
         self.build_gui()
-
-    def initialize_variables(self): ...
 
     def build_gui(self):
         # Frame: window
@@ -847,6 +849,7 @@ class WindowCSVGroupMapping(PopupWindow):
             expand=False,
         )
 
+        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping.model, "path")
         self.widgets.ent_import_file_path = ttk.Entry(
             self.widgets.lblfrm_import_file_path,
             textvariable=self.var_csv_mapping_import_file_path,
@@ -859,6 +862,10 @@ class WindowCSVGroupMapping(PopupWindow):
             self.widgets.lblfrm_import_file_path, text=">", command=self.browse_file_csv, width=2
         )
         self.widgets.btn_import_file_path_browse.pack(padx=(1, 25), pady=5, side=tk.LEFT)
+
+    def browse_file_csv(self):
+        filename = askopenfilename(filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
+        self.var_csv_mapping_import_file_path.set(filename)
 
     def on_destroy(self):
         self.destroy()

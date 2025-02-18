@@ -6,9 +6,9 @@ from typing import NamedTuple
 
 class Checkbox(ttk.Checkbutton):
 
-    def __init__(self, *args, value=False, **kwargs):
+    def __init__(self, *args, variable: tk.BooleanVar | None = None, value=False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.variable = tk.BooleanVar(self, value)
+        self.variable = variable if variable else tk.BooleanVar(self, value)
         self.config(variable=self.variable)
 
     @property

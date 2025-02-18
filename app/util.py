@@ -5,6 +5,8 @@ from pathlib import Path
 import platformdirs
 import tkinter as tk
 
+from pydantic import BaseModel
+
 from sync.logging import LogLevel
 
 
@@ -27,3 +29,22 @@ def handle_error(func):
             self.logger.log(LogLevel.CRITICAL, f"A critical error has occurred and the application must exit. {e}")
 
     return wrapper
+
+
+def get_variable_for_model_field(master: tk.Tk, mapping: BaseModel, field_key: str) -> tk.Variable:
+    field_info = mapping.model_fields[field_key]
+    current_value = getattr(mapping, field_key)
+
+    if issubclass(field_info.annotation, str):
+        var = tk.StringVar(master, current_value)
+    elif issubclass(field_info.annotation, bool):
+        var = tk.BooleanVar(master, current_value)
+    else:
+        raise TypeError("Field type not valid for mapping configuration.")
+
+    # Trace to update the mapping when the variable changes
+    def update_model(*_):
+        setattr(mapping, field_key, var.get())
+
+    var.trace_add("write", update_model)
+    return var

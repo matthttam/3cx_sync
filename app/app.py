@@ -8,8 +8,8 @@ from threading import Thread
 import tkinter.font as tkfont
 import darkdetect
 
-from sync.strategy.csv.mapping import CSVExtensionMapping
-from app.windows import WindowCSVExtensionMapping, WindowAppConfig, Window, WindowSync
+from sync.strategy.csv.mapping import CSVExtensionMapping, CSVGroupMapping
+from app.windows import WindowCSVExtensionMapping, WindowAppConfig, Window, WindowCSVGroupMapping, WindowSync
 from app.config import AppConfig
 from app.widgets import WidgetList
 from app.util import handle_error
@@ -88,7 +88,7 @@ class App(tk.Tk, Window):
         self.widgets.btn_show_window_app_config = ttk.Button(
             self.widgets.frm_left_column,
             text="Configure App",
-            command=self.show_WindowAppConfig,
+            command=self.handle_button_app_config_click,
         )
 
         self.widgets.btn_show_window_app_config.pack(
@@ -100,7 +100,7 @@ class App(tk.Tk, Window):
         self.widgets.btn_exit = ttk.Button(
             self.widgets.frm_left_column,
             text="Exit",
-            command=self.handle_exit_click,
+            command=self.handle_button_exit_click,
         )
         self.widgets.btn_exit.pack(padx=self.defaults.pack.btn.padx, pady=self.defaults.pack.btn.pady, side=tk.BOTTOM)
 
@@ -133,7 +133,10 @@ class App(tk.Tk, Window):
 
         # Sync CSV - Primary Action (Spans Two Columns)
         self.widgets.btn_sync_csv = ttk.Button(
-            self.widgets.frm_csv_tab, text="Run CSV Sync", command=self.handle_csv_sync_click, style="Accent.TButton"
+            self.widgets.frm_csv_tab,
+            text="Run CSV Sync",
+            command=self.handle_button_csv_sync_click,
+            style="Accent.TButton",
         )
         self.widgets.btn_sync_csv.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky=tk.NS)
 
@@ -148,7 +151,7 @@ class App(tk.Tk, Window):
         self.widgets.btn_sync_csv = ttk.Button(
             self.widgets.frm_csv_tab,
             text="Run CSV Sync",
-            command=self.handle_csv_sync_click,
+            command=self.handle_button_csv_sync_click,
         )
         self.widgets.btn_sync_csv.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky=tk.NS)
 
@@ -156,7 +159,7 @@ class App(tk.Tk, Window):
         self.widgets.btn_csv_extension_config = ttk.Button(
             self.widgets.frm_csv_tab,
             text="Configure\nExtensions",
-            command=self.show_WindowCSVExtensionMapping,
+            command=self.handle_button_csv_extension_mapping_click,
         )
         self.widgets.btn_csv_extension_config.grid(row=1, column=0, padx=5, pady=5, sticky=tk.EW)
 
@@ -164,7 +167,7 @@ class App(tk.Tk, Window):
         self.widgets.btn_configure_groups = ttk.Button(
             self.widgets.frm_csv_tab,
             text="Configure\nGroups",
-            # command=self.handle_configure_groups_click,  # Placeholder for actual method
+            command=self.handle_button_csv_group_mapping_click,
         )
         self.widgets.btn_configure_groups.grid(row=1, column=1, padx=5, pady=5, sticky=tk.EW)
 
@@ -177,24 +180,26 @@ class App(tk.Tk, Window):
         self.widgets.btn_export_configs.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky=tk.EW)
 
     @handle_error
-    def show_WindowAppConfig(self):
+    def handle_button_app_config_click(self):
         WindowAppConfig(self, self.app_config)
 
     @handle_error
-    def show_WindowCSVExtensionMapping(self):
-        csv_mapping = CSVExtensionMapping(config_path=self.app_config.config_path)
-        csv_mapping.initialize()
-        WindowCSVExtensionMapping(self, csv_mapping=csv_mapping)
+    def handle_button_csv_extension_mapping_click(self):
+        csv_extension_mapping = CSVExtensionMapping(config_path=self.app_config.config_path)
+        csv_extension_mapping.initialize()
+        WindowCSVExtensionMapping(self, csv_mapping=csv_extension_mapping)
 
     @handle_error
-    def show_WindowCSVGroupMapping(self):
-        csv_mapping = CSVGroupMapping(config_path=self.app_config.config_path)
+    def handle_button_csv_group_mapping_click(self):
+        csv_group_mapping = CSVGroupMapping(config_path=self.app_config.config_path)
+        csv_group_mapping.initialize()
+        WindowCSVGroupMapping(self, csv_mapping=csv_group_mapping)
 
-    def handle_exit_click(self) -> None:
+    def handle_button_exit_click(self) -> None:
         self.destroy()
 
     @handle_error
-    def handle_csv_sync_click(self) -> None:
+    def handle_button_csv_sync_click(self) -> None:
         window_sync = WindowSync(self)
         kwargs = {
             "sync_source_class": SyncCSV,

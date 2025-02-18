@@ -1,106 +1,59 @@
-import json
-from pathlib import Path
-from collections import UserDict
-from copy import deepcopy
 import platformdirs
-from app.util import initialize_or_get_user_config_path
+from pydantic import BaseModel, Field
+from sync.strategy.mapping import JSONMapping, JSONMappingNew
 
 
-class JSONMapping(UserDict):
-    DEFAULT_FILENAME = ""
-    DEFAULT_CONFIG = {}
-
-    def __init__(self, config_path: Path = None) -> None:
-        super().__init__()
-        assert self.DEFAULT_FILENAME != ""
-        assert self.DEFAULT_CONFIG != {}
-
-        self.set_original_config()
-        self.mapping_file_path = (
-            config_path or initialize_or_get_user_config_path("3cx_sync", "3cx_sync", "conf")
-        ) / self.DEFAULT_FILENAME
-
-    def initialize(self):
-        self.load_defaults()
-        self.load() if self.mapping_file_path.exists() else None
-
-    @property
-    def is_dirty(self) -> bool:
-        return self.original_config != self.data
-
-    def load_defaults(self) -> None:
-        self.update()
-
-    def load(self) -> None:
-        """Load configuration from the specified file."""
-        # if os.path.getsize(self.mapping_file_path) > 0:
-        with open(self.mapping_file_path, "r") as mapping_file:
-            self.update(json.load(mapping_file))
-        self.set_original_config()
-
-    def save(self):
-        with open(self.mapping_file_path, "w") as mapping_file:
-            json.dump(self.data, mapping_file)
-        self.set_original_config()
-
-    def save_to(self, path: str):
-        file_path = Path(path) / self.DEFAULT_FILENAME
-        with file_path.open("w") as mapping_file:
-            json.dump(self.data, mapping_file)
-
-    def set_original_config(self):
-        self.original_config = deepcopy(self.data)
+class ExtensionMapping(BaseModel):
+    field: str = Field(default="", description="3CX field for the mapped field")
+    header: str = Field(default="", description="CSV header for the mapped field")
+    key: bool = Field(default=False, description="Whether this field is a unique key")
+    update: bool = Field(default=False, description="Whether this field should be updated")
+    static: bool = Field(default=False, description="Whether this field should use a static.")
+    static_value: str = Field(default="", description="Value to use if set to static.")
 
 
-class CSVExtensionMapping(JSONMapping):
+class CSVExtensionMappingModel(BaseModel):
+    path: str = Field(default=platformdirs.user_documents_dir(), description="Path to the CSV file")
+    mappings: list[ExtensionMapping] = Field(
+        default_factory=lambda: CSVExtensionMappingModel.default_mappings(), description="List of Field mappings"
+    )
+
+    @classmethod
+    def default_mappings(cls):
+        return [
+            ExtensionMapping(field="Number", header="Number", key=True),
+            ExtensionMapping(field="FirstName", header="FirstName", update=True),
+            ExtensionMapping(field="LastName", header="LastName", update=True),
+            ExtensionMapping(field="EmailAddress", header="EmailAddress", update=True),
+            ExtensionMapping(field="VMPIN", header="FirVMPINVMPINtName", update=False),
+            ExtensionMapping(field="VMEmailOptions", header="VMEmailOptions", update=False),
+            ExtensionMapping(field="OutboundCallerID", header="OutboundCallerID", update=False),
+            ExtensionMapping(field="SendEmailMissedCalls", header="SendEmailMissedCalls", update=False),
+            ExtensionMapping(field="Enabled", header="Enabled", update=True),
+            ExtensionMapping(field="EnableHotdesking", header="EnableHotdesking", update=False),
+            ExtensionMapping(field="RecordCalls", header="RecordCalls", update=False),
+            ExtensionMapping(field="RecordExternalCallsOnly", header="RecordExternalCallsOnly", update=False),
+            ExtensionMapping(field="VMEnabled", header="VMEnabled", update=False),
+            ExtensionMapping(field="WebMeetingFriendlyName", header="WebMeetingFriendlyName", update=False),
+        ]
+
+
+class CSVExtensionMapping(JSONMappingNew):
     DEFAULT_FILENAME = "csv_extension_mapping.json"
-    DEFAULT_CONFIG = {
-        "Extension": {
-            "Path": platformdirs.user_documents_dir(),
-            "Key": "Number",
-            "New": {
-                "Number": "Number",
-                "FirstName": "FirstName",
-                "LastName": "LastName",
-                "EmailAddress": "Email",
-                "VMPIN": "VMPIN",
-                "VMEmailOptions": "VMEmailOptions",
-                "OutboundCallerID": "OutboundCallerID",
-                "SendEmailMissedCalls": "SendEmailMissedCalls",
-                "Enabled": "Enabled",
-                "EnableHotdesking": "AllowToUseHotdesking",
-                "RecordCalls": "RecordCalls",
-                "RecordExternalCallsOnly": "RecordExternalCallsOnly",
-                "VMEnabled": "VMEnabled",
-                "WebMeetingFriendlyName": "WebMeetingFriendlyName",
-            },
-            "Update": ["FirstName", "LastName", "EmailAddress", "Enabled"],
-        }
-    }
-
-    def get_parsed_config(self) -> list[dict]:
-        """
-        Returns an array with a dictionary for each field
-        containing values for what each field has set.
-        """
-        parsed_config = []
-        extension_mapping = self.get("Extension", {})
-        new_mapping = extension_mapping.get("New", {})
-        key_header = extension_mapping.get("Key", None)
-        for field, header in new_mapping.items():
-            update = field in extension_mapping.get("Update", {})
-            static = field in extension_mapping.get("Static", {})
-            parsed_config.append(
-                {
-                    "header": header,
-                    "field": field,
-                    "static": static,
-                    "key": (header == key_header),
-                    "update": update,
-                }
-            )
-        return parsed_config
+    DEFAULT_MODEL = CSVExtensionMappingModel
 
 
-class CSVGroupMapping(JSONMapping):
+class GroupMapping(BaseModel):
+    group_id: int = Field(default=None, description="3CX group id for the mapping")
+    group_name: str = Field(defaults="3CX group name for the mapping")
+    header: str = Field(default="", description="CSV header for the mapping")
+
+
+class GroupMappingModel(BaseModel):
+    path: str = Field(default=platformdirs.user_documents_dir(), description="Path to the CSV file")
+    mappings: list[GroupMapping] = Field(default_factory=list, description="List of Field mappings")
+
+
+class CSVGroupMapping(JSONMappingNew):
     DEFAULT_FILENAME = "csv_group_mapping.json"
+    DEFAULT_MODEL = GroupMappingModel
