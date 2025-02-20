@@ -56,7 +56,7 @@ class GroupMapping(MappingField):
 
 
 class GroupMappingConfig(MappingModel):
-    path: str = Field(default="", description="Path to the CSV file")
+    csv_path: Path = Field(default=None, description="Path to the CSV file")
     mappings: list[GroupMapping] = Field(default_factory=list, description="List of Field mappings")
 
 
