@@ -36,7 +36,7 @@ class SyncCSV(SyncSourceStrategy):
     def _load_extension_mapping_config(self):
         self.logger.log(LogLevel.INFO, "Loading CSV Mapping")
         self.extension_mapping_config = ExtensionMappingConfig(self.config_path)
-        self.logger.log(LogLevel.INFO, f"CSV Mapping Loaded from '{self.extension_mapping_config.config_path}'")
+        self.logger.log(LogLevel.INFO, f"CSV Mapping Loaded from '{self.extension_mapping_config._config_path}'")
 
     def _set_comparison_properties(self):
         CSVUser.set_comparison_properties(self.extension_mapping_config.get_update_fields())
@@ -52,8 +52,8 @@ class SyncCSV(SyncSourceStrategy):
 
     def _get_csv_data_path(self) -> Path:
         """Retrieve and validate the CSV data file path."""
-        csv_data_path = self.extension_mapping_config.path
-        if not csv_data_path.is_file():
+        csv_data_path = self.extension_mapping_config.csv_path
+        if not csv_data_path or not csv_data_path.is_file():
             self.logger.log(LogLevel.ERROR, f"Unable to find file at: {csv_data_path}")
             raise FileNotFoundError(f"CSV file not found at: {csv_data_path}")
         return csv_data_path
@@ -80,7 +80,7 @@ class SyncCSV(SyncSourceStrategy):
         return TypeAdapter(list[CSVUser]).validate_python(user_data)
 
     def get_user_update_fields(self) -> list:
-        return self.extension_mapping_config["Extension"]["Update"]
+        return self.extension_mapping_config.get_update_fields()
 
     def get_source_groups(self):
         return None

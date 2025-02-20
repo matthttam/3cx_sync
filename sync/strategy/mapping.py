@@ -1,5 +1,5 @@
 import json
-from typing import Type
+from typing import Any, Type
 
 from pydantic import BaseModel, Field
 
@@ -18,13 +18,14 @@ class MappingModel(BaseModel, ABC):
 class JSONMappingConfig(ABC):
     DEFAULT_FILENAME: str
     MAPPING_MODEL: Type[MappingModel]  # This will be overridden by subclasses
+    _config_path: str
 
     def __init__(self, config_path: Path = None) -> None:
-        self.config_path = (
+        self._config_path = (
             config_path or initialize_or_get_user_config_path("3cx_sync", "3cx_sync", "conf")
         ) / self.DEFAULT_FILENAME
 
-        self.model = self.load()  # Load existing config or use default
+        self._model = self.load()  # Load existing config or use default
         self.set_original_config()
 
     def __init_subclass__(cls, **kwargs):
@@ -36,26 +37,41 @@ class JSONMappingConfig(ABC):
         if not hasattr(cls, "DEFAULT_FILENAME") or not isinstance(cls.DEFAULT_FILENAME, str) or not cls.DEFAULT_FILENAME:
             raise TypeError(f"{cls.__name__ } must define a valid DEFAULT_FILENAME")
 
+    def __getattr__(self, name):
+        return getattr(self._model, name)
+    
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            super().__setattr__(name, value)
+        else:
+            setattr(self._model, name, value)
+    
+    def __delattr__(self, name):
+        if name.startswith('_'):
+            super().__delattr__(name)
+        else:
+            delattr(self._model, name)
+
     @property
     def is_dirty(self) -> bool:
-        return self.original_config != self.model.model_dump()
+        return self._original_config != self._model.model_dump()
 
     def load_defaults(self) -> None:
         """Reset to default values."""
-        self.model = self.MAPPING_MODEL()  # Create a fresh default instance
+        self._model = self.MAPPING_MODEL()  # Create a fresh default instance
         self.set_original_config()
 
     def load(self) -> BaseModel:
         """Load configuration from file or return defaults."""
-        if self.config_path.exists():
-            data = json.loads(self.config_path.read_text())
+        if self._config_path.exists():
+            data = json.loads(self._config_path.read_text())
             return self.MAPPING_MODEL(**data)  # Validate and create model instance
         return self.MAPPING_MODEL()  # Default values if file is missing
 
     def save(self):
         """Save model to JSON file."""
-        with open(self.config_path, "w") as mapping_file:
-            json.dump(self.model.model_dump(), mapping_file, indent=4)
+        with open(self._config_path, "w") as mapping_file:
+            json.dump(self._model.model_dump(), mapping_file, indent=4)
         self.set_original_config()
 
     def save_to(self, path: str):
@@ -67,8 +83,8 @@ class JSONMappingConfig(ABC):
 
     def set_original_config(self):
         """Track the original config for change detection."""
-        self.original_config = deepcopy(self.model.model_dump())
+        self._original_config = deepcopy(self._model.model_dump())
 
     def update(self, **kwargs):
         """Update model fields dynamically while maintaining type safety."""
-        self.model = self.model.model_copy(update=kwargs)
+        self._model = self._model.model_copy(update=kwargs)

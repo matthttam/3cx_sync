@@ -527,7 +527,7 @@ class WindowCSVExtensionMapping(PopupWindow):
             expand=False,
         )
 
-        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping.model, "csv_path")
+        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping._model, "csv_path")
         self.widgets.ent_import_file_path = ttk.Entry(
             self.widgets.lblfrm_import_file_path,
             textvariable=self.var_csv_mapping_import_file_path,
@@ -682,7 +682,7 @@ class WindowCSVExtensionMapping(PopupWindow):
     def initialize_mapping_field_sets(self, starting_row: int):
         # parsed_config = self.mapping.get_parsed_config()
         row = starting_row
-        for field_info in self.mapping.model.mappings:
+        for field_info in self.mapping._model.mappings:
             self.add_mapping_field_set(
                 row=row,
                 mapping=field_info,
@@ -691,7 +691,7 @@ class WindowCSVExtensionMapping(PopupWindow):
 
     def handle_button_add_mapping_field_set(self):
         mapping = ExtensionMappingField()
-        self.mapping.model.mappings.append(mapping)
+        self.mapping._model.mappings.append(mapping)
         self.add_mapping_field_set(row=len(self.mapping_fields) + 1, mapping=mapping)
         self.update_scrollbar()
 
@@ -785,7 +785,7 @@ class WindowCSVExtensionMapping(PopupWindow):
         if row.key.checked:
             self.enable_key_checkboxes()
         # Remove entry from the mapping config
-        self.mapping.model.mappings.pop(row_index)
+        self.mapping._model.mappings.pop(row_index)
 
         # destroy row of widgets
         row.destroy()
@@ -849,7 +849,7 @@ class WindowCSVGroupMapping(PopupWindow):
             expand=False,
         )
 
-        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping.model, "path")
+        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping._model, "path")
         self.widgets.ent_import_file_path = ttk.Entry(
             self.widgets.lblfrm_import_file_path,
             textvariable=self.var_csv_mapping_import_file_path,

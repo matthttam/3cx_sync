@@ -35,7 +35,7 @@ def get_variable_for_model_field(master: tk.Tk, mapping: BaseModel, field_key: s
     field_info = mapping.model_fields[field_key]
     current_value = getattr(mapping, field_key)
 
-    if issubclass(field_info.annotation, str):
+    if issubclass(field_info.annotation, (str, Path)):
         var = tk.StringVar(master, current_value)
     elif issubclass(field_info.annotation, bool):
         var = tk.BooleanVar(master, current_value)

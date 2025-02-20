@@ -24,9 +24,9 @@ class TestCSVExtensionMapping:
         test_path = Path("/test/path")
         csv_mapping = ExtensionMappingConfig(config_path=test_path)
         assert issubclass(ExtensionMappingConfig, UserDict)
-        assert csv_mapping.config_path == test_path / ExtensionMappingConfig.DEFAULT_FILENAME
+        assert csv_mapping._config_path == test_path / ExtensionMappingConfig.DEFAULT_FILENAME
         assert csv_mapping.default_config is not None
-        assert csv_mapping.original_config == {}
+        assert csv_mapping._original_config == {}
 
     @patch.object(ExtensionMappingConfig, "load_defaults")
     @patch.object(ExtensionMappingConfig, "load")

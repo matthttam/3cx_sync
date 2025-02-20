@@ -1,3 +1,4 @@
+from pathlib import Path
 import platformdirs
 from pydantic import BaseModel, Field
 from sync.strategy.mapping import MappingField, JSONMappingConfig, JSONMappingConfig, MappingModel
@@ -13,7 +14,7 @@ class ExtensionMappingField(MappingField):
 
 
 class ExtensionMappingModel(MappingModel):
-    csv_path: str = Field(default="", description="Path to the CSV file")
+    csv_path: Path = Field(default=None, description="Path to the CSV file")
     mappings: list[ExtensionMappingField] = Field(
         default_factory=lambda: ExtensionMappingModel.default_mappings.copy(), description="List of Field mappings"
     )
@@ -42,11 +43,11 @@ class ExtensionMappingConfig(JSONMappingConfig):
 
     def get_update_fields(self) -> list[str]:
         """Returns all ExtensionMappingField field values that are set to update."""
-        return [mapping.field for mapping in self.model.mappings if mapping.update]
+        return [mapping.field for mapping in self._model.mappings if mapping.update]
 
     def get_mapping_dictionary(self) -> dict:
         """Returns a dictionary of 3CX field with the CSV header"""
-        return {mapping.field: mapping.header for mapping in self.model.mappings}
+        return {mapping.field: mapping.header for mapping in self._model.mappings}
 
 class GroupMapping(MappingField):
     group_id: int = Field(default=None, description="3CX group id for the mapping")
