@@ -1,4 +1,4 @@
-from sync.strategy.csv.mapping import CSVExtensionMapping
+from sync.strategy.csv.mapping import ExtensionMappingConfig
 from sync.logging import LogLevel, SyncLogger
 from sync.schema import CSVUser
 from sync.strategy.strategy import SyncSourceStrategy
@@ -22,25 +22,24 @@ class SyncCSV(SyncSourceStrategy):
 
     def initialize(self):
         self.logger.log(LogLevel.INFO, "Initializing CSV Source")
-        self._load_csv_mapping()
+        self._load_extension_mapping_config()
         self._set_comparison_properties()
 
     @property
-    def mapping(self):
-        return self._mapping
+    def extension_mapping_config(self):
+        return self._extension_mapping_config
 
-    @mapping.setter
-    def mapping(self, value):
-        self._mapping = value
+    @extension_mapping_config.setter
+    def extension_mapping_config(self, value):
+        self._extension_mapping_config = value
 
-    def _load_csv_mapping(self):
+    def _load_extension_mapping_config(self):
         self.logger.log(LogLevel.INFO, "Loading CSV Mapping")
-        self.mapping = CSVExtensionMapping(self.config_path)
-        self.mapping.initialize()
-        self.logger.log(LogLevel.INFO, f"CSV Mapping Loaded from '{self.mapping.mapping_file_path}'")
+        self.extension_mapping_config = ExtensionMappingConfig(self.config_path)
+        self.logger.log(LogLevel.INFO, f"CSV Mapping Loaded from '{self.extension_mapping_config.config_path}'")
 
     def _set_comparison_properties(self):
-        CSVUser.set_comparison_properties(self.mapping.get("Extension", {}).get("Update", []))
+        CSVUser.set_comparison_properties(self.extension_mapping_config.get_update_fields())
         self.logger.log(LogLevel.INFO, "Comparison Properties Set")
 
     def get_source_users(self) -> list[User] | None:
@@ -51,13 +50,14 @@ class SyncCSV(SyncSourceStrategy):
         self.logger.log(LogLevel.INFO, f"Loaded {len(csv_user_list)} Users from CSV File")
         return csv_user_list
 
-    def _get_csv_data_path(self) -> str:
+    def _get_csv_data_path(self) -> Path:
         """Retrieve and validate the CSV data file path."""
-        csv_data_path = self.mapping.get("Extension", {}).get("Path", "")
-        if not os.path.isfile(csv_data_path):
+        csv_data_path = self.extension_mapping_config.path
+        if not csv_data_path.is_file():
             self.logger.log(LogLevel.ERROR, f"Unable to find file at: {csv_data_path}")
             raise FileNotFoundError(f"CSV file not found at: {csv_data_path}")
         return csv_data_path
+
 
     def _parse_csv_file(self, csv_data_path: str) -> list[dict]:
         """Parse the CSV file and return a list of user dictionaries."""
@@ -65,7 +65,7 @@ class SyncCSV(SyncSourceStrategy):
         with open(csv_data_path) as csv_file:
             csv_reader = csv.reader(csv_file)
             headers = next(csv_reader)
-            user_mapping = self.mapping.get("Extension").get("New", {})
+            user_mapping = self.extension_mapping_config.get_mapping_dictionary()
 
             for row in csv_reader:
                 row_dict = dict(zip(headers, row))
@@ -80,7 +80,7 @@ class SyncCSV(SyncSourceStrategy):
         return TypeAdapter(list[CSVUser]).validate_python(user_data)
 
     def get_user_update_fields(self) -> list:
-        return self.mapping["Extension"]["Update"]
+        return self.extension_mapping_config["Extension"]["Update"]
 
     def get_source_groups(self):
         return None

@@ -8,7 +8,7 @@ from threading import Thread
 import tkinter.font as tkfont
 import darkdetect
 
-from sync.strategy.csv.mapping import CSVExtensionMapping, CSVGroupMapping
+from sync.strategy.csv.mapping import ExtensionMappingConfig, GroupMapping
 from app.windows import WindowCSVExtensionMapping, WindowAppConfig, Window, WindowCSVGroupMapping, WindowSync
 from app.config import AppConfig
 from app.widgets import WidgetList
@@ -185,14 +185,12 @@ class App(tk.Tk, Window):
 
     @handle_error
     def handle_button_csv_extension_mapping_click(self):
-        csv_extension_mapping = CSVExtensionMapping(config_path=self.app_config.config_path)
-        csv_extension_mapping.initialize()
+        csv_extension_mapping = ExtensionMappingConfig(config_path=self.app_config.config_path)
         WindowCSVExtensionMapping(self, csv_mapping=csv_extension_mapping)
 
     @handle_error
     def handle_button_csv_group_mapping_click(self):
-        csv_group_mapping = CSVGroupMapping(config_path=self.app_config.config_path)
-        csv_group_mapping.initialize()
+        csv_group_mapping = GroupMapping(config_path=self.app_config.config_path)
         WindowCSVGroupMapping(self, csv_mapping=csv_group_mapping)
 
     def handle_button_exit_click(self) -> None:
@@ -223,7 +221,7 @@ class App(tk.Tk, Window):
         self.app_config.save_to(export_directory)
 
     def _export_csv_mapping(self, export_directory: str) -> None:
-        csv_mapping = CSVExtensionMapping(config_path=self.app_config.config_path)
+        csv_mapping = ExtensionMappingConfig(config_path=self.app_config.config_path)
         csv_mapping.load()
         csv_mapping.save_to(export_directory)
 

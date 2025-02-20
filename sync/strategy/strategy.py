@@ -7,7 +7,7 @@ from sync.logging import SyncLogger
 class SyncSourceStrategy(ABC):
     @property
     @abstractmethod
-    def mapping(self): ...
+    def extension_mapping_config(self): ...
 
     def __init__(self, logger: SyncLogger):
         self.logger = logger

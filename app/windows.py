@@ -9,7 +9,7 @@ from tkinter import messagebox
 from app.util import get_variable_for_model_field
 from app.widgets import Checkbox, ExtensionMappingFieldSet, WidgetList
 from app.config import AppConfig
-from sync.strategy.csv.mapping import CSVExtensionMapping, ExtensionMapping
+from sync.strategy.csv.mapping import ExtensionMappingConfig, ExtensionMappingField
 from tkinter.scrolledtext import ScrolledText
 
 
@@ -495,7 +495,7 @@ class WindowAppConfig(PopupWindow):
 
 class WindowCSVExtensionMapping(PopupWindow):
 
-    def __init__(self, master, *args, csv_mapping: CSVExtensionMapping, **kwargs) -> None:
+    def __init__(self, master, *args, csv_mapping: ExtensionMappingConfig, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
         self.mapping_fields = []
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
@@ -527,7 +527,7 @@ class WindowCSVExtensionMapping(PopupWindow):
             expand=False,
         )
 
-        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping.model, "path")
+        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping.model, "csv_path")
         self.widgets.ent_import_file_path = ttk.Entry(
             self.widgets.lblfrm_import_file_path,
             textvariable=self.var_csv_mapping_import_file_path,
@@ -690,7 +690,7 @@ class WindowCSVExtensionMapping(PopupWindow):
             row += 1
 
     def handle_button_add_mapping_field_set(self):
-        mapping = ExtensionMapping()
+        mapping = ExtensionMappingField()
         self.mapping.model.mappings.append(mapping)
         self.add_mapping_field_set(row=len(self.mapping_fields) + 1, mapping=mapping)
         self.update_scrollbar()
@@ -700,7 +700,7 @@ class WindowCSVExtensionMapping(PopupWindow):
         canvas.configure(scrollregion=canvas.bbox("all"))
         canvas.yview_moveto(1)
 
-    def add_mapping_field_set(self, row: int, mapping: ExtensionMapping):
+    def add_mapping_field_set(self, row: int, mapping: ExtensionMappingField):
         field = mapping.field
         header = mapping.header
         update = mapping.update
@@ -819,7 +819,7 @@ class WindowCSVExtensionMapping(PopupWindow):
 
 
 class WindowCSVGroupMapping(PopupWindow):
-    def __init__(self, master, *args, csv_mapping: CSVExtensionMapping, **kwargs) -> None:
+    def __init__(self, master, *args, csv_mapping: ExtensionMappingConfig, **kwargs) -> None:
         super().__init__(master, *args, **kwargs)
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
         self.geometry("600x920")
