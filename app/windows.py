@@ -744,8 +744,6 @@ class WindowCSVExtensionMapping(PopupWindow):
             variable=chk_csv_mapping_key_variable,
         )
         chk_csv_mapping_key_variable.set(key)
-        self.handle_checkbox_key_change()
-
         chk_csv_mapping_key.grid(row=row, column=4)
 
         # Remove Button
@@ -767,6 +765,9 @@ class WindowCSVExtensionMapping(PopupWindow):
                 delete=btn_csv_mapping_remove,
             )
         )
+
+        # Update key check boxes
+        self.handle_checkbox_key_change()
 
     def handle_button_delete_mapping_field_set(self):
         # Delete the last mapping field set
@@ -849,7 +850,7 @@ class WindowCSVGroupMapping(PopupWindow):
             expand=False,
         )
 
-        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping._model, "path")
+        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping._model, "csv_path")
         self.widgets.ent_import_file_path = ttk.Entry(
             self.widgets.lblfrm_import_file_path,
             textvariable=self.var_csv_mapping_import_file_path,
