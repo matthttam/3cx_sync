@@ -8,12 +8,16 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from pathlib import Path
 
-class MappingField(BaseModel, ABC):
-    ...
+
+class MappingField(BaseModel, ABC): ...
+
 
 class MappingModel(BaseModel, ABC):
     mappings: list[MappingField] = Field(default_factory=list, description="List of MappingField inherited instances")
-    default_mappings: list[MappingField] = Field(default_factory=list, description="List of MappingFIeld inherited instances set if no other config loadeds")
+    default_mappings: list[MappingField] = Field(
+        default_factory=list, description="List of MappingFIeld inherited instances set if no other config loadeds"
+    )
+
 
 class JSONMappingConfig(ABC):
     DEFAULT_FILENAME: str
@@ -33,24 +37,31 @@ class JSONMappingConfig(ABC):
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, "MAPPING_MODEL") or cls.MAPPING_MODEL is None:
             raise TypeError(f"{cls.__name__} must define a valid MAPPING_MODEL.")
-        
-        if not hasattr(cls, "DEFAULT_FILENAME") or not isinstance(cls.DEFAULT_FILENAME, str) or not cls.DEFAULT_FILENAME:
+
+        if (
+            not hasattr(cls, "DEFAULT_FILENAME")
+            or not isinstance(cls.DEFAULT_FILENAME, str)
+            or not cls.DEFAULT_FILENAME
+        ):
             raise TypeError(f"{cls.__name__ } must define a valid DEFAULT_FILENAME")
 
     def __getattr__(self, name):
         return getattr(self._model, name)
-    
+
     def __setattr__(self, name, value):
-        if name.startswith('_'):
+        if name.startswith("_"):
             super().__setattr__(name, value)
         else:
             setattr(self._model, name, value)
-    
+
     def __delattr__(self, name):
-        if name.startswith('_'):
+        if name.startswith("_"):
             super().__delattr__(name)
         else:
             delattr(self._model, name)
+
+    def get_field_type(self, field_key):
+        return self._model.model_fields[field_key].annotation
 
     @property
     def is_dirty(self) -> bool:
@@ -79,7 +90,6 @@ class JSONMappingConfig(ABC):
         file_path = Path(path) / self.DEFAULT_FILENAME
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(json.dumps(self.mapping_model.model_dump(), indent=4))
-        
 
     def set_original_config(self):
         """Track the original config for change detection."""

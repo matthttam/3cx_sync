@@ -1,16 +1,19 @@
 from dataclasses import dataclass
+from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
-from pydantic import BaseModel
+from types import NoneType, UnionType
+from typing import get_args, get_origin
 import sv_ttk
 from threecxapi.connection import ThreeCXApiConnection
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
-from app.util import get_variable_for_model_field
 from app.widgets import Checkbox, ExtensionMappingFieldSet, WidgetList
 from app.config import AppConfig
 from sync.strategy.csv.mapping import ExtensionMappingConfig, ExtensionMappingField
 from tkinter.scrolledtext import ScrolledText
+
+from sync.strategy.mapping import MappingField
 
 
 # Pack Defaults
@@ -527,7 +530,7 @@ class WindowCSVExtensionMapping(PopupWindow):
             expand=False,
         )
 
-        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping._model, "csv_path")
+        self.var_csv_mapping_import_file_path = get_variable_for_model_field(self, self.mapping, "csv_path")
         self.widgets.ent_import_file_path = ttk.Entry(
             self.widgets.lblfrm_import_file_path,
             textvariable=self.var_csv_mapping_import_file_path,
@@ -935,3 +938,26 @@ class WindowSync(PopupWindow):
         self.master.logger.remove_text_window_handler(self.widgets.txt_output)
         self.wait_for_sync_thread()
         self.destroy()
+
+
+def get_variable_for_model_field(master: tk.Tk, mapping: MappingField, field_key: str) -> tk.Variable:
+    field_type = mapping.model_fields[field_key].annotation
+    current_value = getattr(mapping, field_key)
+
+    if get_origin(field_type) is UnionType:
+        # Extract a tuple of classes if it is Union excluding the NoneType
+        field_type = next(t for t in get_args(field_type) if t is not NoneType)
+
+    if issubclass(field_type, (str, Path)):
+        var = tk.StringVar(master, current_value)
+    elif issubclass(field_type, bool):
+        var = tk.BooleanVar(master, current_value)
+    else:
+        raise TypeError("Field type not valid for mapping configuration.")
+
+    # Trace to update the mapping when the variable changes
+    def update_model(*_):
+        setattr(mapping, field_key, var.get())
+
+    var.trace_add("write", update_model)
+    return var
