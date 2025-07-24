@@ -1,5 +1,3 @@
-import os
-import sys
 import platform
 import tkinter as tk
 from tkinter import ttk
@@ -7,6 +5,7 @@ from tkinter.filedialog import askdirectory
 from threading import Thread
 import tkinter.font as tkfont
 import darkdetect
+import sv_ttk
 
 from sync.strategy.csv.mapping import CSVMapping
 from app.windows import WindowCSVMapping, WindowAppConfig, Window, WindowSync
@@ -16,10 +15,6 @@ from app.util import handle_error
 from sync.strategy.csv.sync_csv import SyncCSV
 from sync.sync import run_sync
 from sync.logging import SyncLogger
-
-import sv_ttk
-
-# from app.themes.Forest-ttk-theme-1.0.example import scale
 
 
 class App(tk.Tk, Window):
@@ -55,7 +50,7 @@ class App(tk.Tk, Window):
     def set_font(self, size=15):
         """Return a platform-appropriate font."""
         available_fonts = set(tkfont.families())  # Get all available font families
-
+        font = None
         # Check availability and assign accordingly
         if platform.system() == "Windows":
             font = "Segoe UI"

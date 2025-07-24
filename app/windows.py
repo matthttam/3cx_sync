@@ -9,7 +9,7 @@ from app.widgets import Checkbox, ExtensionMappingFieldSet, WidgetList
 from app.config import AppConfig
 from sync.strategy.csv.mapping import CSVMapping
 from tkinter.scrolledtext import ScrolledText
-
+from app.util import get_text_color
 
 # Pack Defaults
 @dataclass(frozen=True)
@@ -605,9 +605,8 @@ class WindowCSVMapping(PopupWindow):
             self.widgets.frm_csv_mapping_fields_scrollable, width=20, height=50
         )
 
-        text_color = "Black"
-        if sv_ttk.get_theme() == "dark":
-            text_color = "White"
+        text_color = get_text_color()
+
         self.widgets.lbl_csv_mapping_static.create_text(10, 33, text="Static", angle=90, fill=text_color)
         self.widgets.lbl_csv_mapping_static.grid(row=0, column=2, sticky="s")
 

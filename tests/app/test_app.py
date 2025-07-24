@@ -1,5 +1,3 @@
-import os
-import sys
 import tkinter as tk
 from unittest.mock import MagicMock, patch
 from app.app import App
@@ -33,47 +31,50 @@ class TestApp:
         mock_load_theme.assert_called_once()
         mock_build_gui.assert_called_once()
 
-    @patch("app.app.ttk.Style")
-    @patch.object(App, "get_theme_path")
-    def test_load_theme(self, mock_get_theme_pack, mock_style_class, app):
-        mock_style = MagicMock()
-        mock_style_class.return_value = mock_style
-        mock_theme_pack = MagicMock()
-        mock_get_theme_pack.return_value = mock_theme_pack
-        app.tk = MagicMock()
+
+    @patch("app.app.sv_ttk")
+    @patch("app.app.darkdetect")
+    @patch("app.app.platform")
+    def test_load_theme_windows(self, mock_platform, mock_darkdetect, mock_sv_ttk, app):
+        mock_platform.system = MagicMock(return_value="Windows")
+        mock_darkdetect.theme = MagicMock(return_value="dark")
+        
         app.load_theme()
-        app.tk.call.assert_any_call("source", mock_theme_pack)
-        mock_style.theme_use.assert_called_once()
-        mock_style.configure.assert_called_once()
 
-    def test_get_theme_path_pyinstaller(self, app):
-        """Test get_theme_path when running in a PyInstaller bundle."""
-        # Add _MEIPASS attribute temporarily
-        setattr(sys, "_MEIPASS", "/mock/pyinstaller/path")
-        try:
-            theme_path = app.get_theme_path()
-            expected_path = os.path.join(
-                "/mock/pyinstaller/path",
-                "themes",
-                "Forest-ttk-theme-1.0",
-                "forest-light.tcl",
-            )
-            assert theme_path == expected_path
-        finally:
-            # Clean up the attribute to avoid side effects
-            delattr(sys, "_MEIPASS")
+        mock_sv_ttk.set_theme.assert_called_once_with("dark")
 
-    def test_get_theme_path_script(self, app):
-        """Test get_theme_path when running as a script."""
-        with patch("os.path.dirname", return_value="/mock/script/path"):
-            theme_path = app.get_theme_path()
-            expected_path = os.path.join(
-                "/mock/script/path",
-                "themes",
-                "Forest-ttk-theme-1.0",
-                "forest-light.tcl",
-            )
-            assert theme_path == expected_path
+
+    @patch("app.app.platform")
+    def test_load_theme_clam(self, mock_platform, app):
+        mock_platform.system = MagicMock(side_effect="Linux")
+
+        app.style = MagicMock()
+        app.style.theme_names.return_value = ["clam", "alt"]
+        app.load_theme()
+
+        app.style.theme_use.assert_called_once_with("clam")
+
+
+    @patch("app.app.platform")
+    def test_load_theme_default(self, mock_platform, app):
+        mock_platform.system = MagicMock(side_effect="Linux")
+        app.style = MagicMock()
+        app.style.theme_names.return_value = ["default"]
+
+        app.load_theme()
+
+        app.style.theme_use.assert_called_once_with("default")
+
+    @patch("app.app.platform")
+    def test_load_theme_none_available(self, mock_platform, app):
+        mock_platform.system = MagicMock(side_effect="Linux")
+        app.style = MagicMock()
+        app.style.theme_names.return_value = ["alt", "classic"]
+        
+        app.load_theme()
+
+        app.style.theme_use.assert_not_called()
+
 
     @patch("app.app.WindowAppConfig")
     def test_show_window_app_config(self, window_app_config, app):

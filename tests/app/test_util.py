@@ -1,5 +1,5 @@
 from unittest.mock import patch, MagicMock
-from app.util import initialize_or_get_user_config_path, handle_error
+from app.util import initialize_or_get_user_config_path, handle_error, get_text_color
 from sync.logging import LogLevel
 
 
@@ -34,3 +34,10 @@ class TestUtil:
         mock_logger.log.assert_called_once_with(
             LogLevel.CRITICAL, "A critical error has occurred and the application must exit. Test error"
         )
+
+    def test_get_text_color(self):
+        with patch("app.util.sv_ttk.get_theme", return_value="dark"):
+            assert get_text_color() == "White"
+
+        with patch("app.util.sv_ttk.get_theme", return_value="light"):
+            assert get_text_color() == "Black"
