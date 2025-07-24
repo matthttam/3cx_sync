@@ -46,7 +46,7 @@ class TestApp:
 
     @patch("app.app.platform")
     def test_load_theme_clam(self, mock_platform, app):
-        mock_platform.system = MagicMock(side_effect="Linux")
+        mock_platform.system = MagicMock(return_value="Linux")
 
         app.style = MagicMock()
         app.style.theme_names.return_value = ["clam", "alt"]
@@ -57,7 +57,7 @@ class TestApp:
 
     @patch("app.app.platform")
     def test_load_theme_default(self, mock_platform, app):
-        mock_platform.system = MagicMock(side_effect="Linux")
+        mock_platform.system = MagicMock(return_value="Linux")
         app.style = MagicMock()
         app.style.theme_names.return_value = ["default"]
 
@@ -67,7 +67,7 @@ class TestApp:
 
     @patch("app.app.platform")
     def test_load_theme_none_available(self, mock_platform, app):
-        mock_platform.system = MagicMock(side_effect="Linux")
+        mock_platform.system = MagicMock(return_value="Linux")
         app.style = MagicMock()
         app.style.theme_names.return_value = ["alt", "classic"]
         
@@ -75,6 +75,61 @@ class TestApp:
 
         app.style.theme_use.assert_not_called()
 
+    @patch("app.app.tkfont")
+    @patch("app.app.platform")
+    def test_set_font_for_windows(self, mock_platform, mock_tkfont, app):
+        mock_platform.system = MagicMock(return_value="Windows")
+        mock_tkfont.families = MagicMock(return_value=["Segoe UI", "Arial"])
+        app.style = MagicMock()
+
+        app.set_font(size=22)
+
+        app.style.configure.assert_called_once_with(".", font=("Segoe UI", 22))
+    
+
+    @patch("app.app.tkfont")
+    @patch("app.app.platform")
+    def test_set_font_for_mac(self, mock_platform, mock_tkfont, app):
+        mock_platform.system = MagicMock(return_value="Darwin")
+        mock_tkfont.families = MagicMock(return_value=["Helvetica", "Arial"])
+        app.style = MagicMock()
+
+        app.set_font(size=22)
+
+        app.style.configure.assert_called_once_with(".", font=("Helvetica", 22))
+
+    @patch("app.app.tkfont")
+    @patch("app.app.platform")
+    def test_set_font_for_linux(self, mock_platform, mock_tkfont, app):
+        mock_platform.system = MagicMock(return_value="Linux")
+        mock_tkfont.families = MagicMock(return_value=["Ubuntu", "Arial"])
+        app.style = MagicMock()
+
+        app.set_font(size=22)
+
+        app.style.configure.assert_called_once_with(".", font=("Ubuntu", 22))
+
+    @patch("app.app.tkfont")
+    @patch("app.app.platform")
+    def test_set_font_for_arial_when_font_not_avialable(self, mock_platform, mock_tkfont, app):
+        mock_platform.system = MagicMock(return_value="Windows")
+        mock_tkfont.families = MagicMock(return_value=["Arial"])
+        app.style = MagicMock()
+
+        app.set_font(size=11)
+
+        app.style.configure.assert_called_once_with(".", font=("Arial", 11))
+    
+    @patch("app.app.tkfont")
+    @patch("app.app.platform")
+    def test_set_font_for_arial_when_platform_unknown(self, mock_platform, mock_tkfont, app):
+        mock_platform.system = MagicMock(return_value="UnknownOS")
+        mock_tkfont.families = MagicMock(return_value=["Arial"])
+        app.style = MagicMock()
+
+        app.set_font(size=11)
+
+        app.style.configure.assert_called_once_with(".", font=("Arial", 11))
 
     @patch("app.app.WindowAppConfig")
     def test_show_window_app_config(self, window_app_config, app):
