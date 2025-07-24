@@ -15,7 +15,7 @@ from app.widgets import WidgetList
 from app.util import handle_error
 from sync.strategy.csv.sync_csv import SyncCSV
 from sync.sync import run_sync
-from sync.logging import LogLevel, SyncLogger
+from sync.logging import SyncLogger
 
 import sv_ttk
 

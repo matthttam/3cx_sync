@@ -1,10 +1,5 @@
-from app.util import initialize_or_get_user_config_path
-from unittest.mock import patch, call
+from unittest.mock import patch, MagicMock
 from app.util import initialize_or_get_user_config_path, handle_error
-from unittest.mock import patch, call, MagicMock
-import pytest
-import tkinter as tk
-
 from sync.logging import LogLevel
 
 

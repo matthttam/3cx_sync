@@ -2,8 +2,6 @@ import os
 import sys
 import tkinter as tk
 from unittest.mock import MagicMock, patch
-
-from pytest import skip
 from app.app import App
 from app.windows import Window
 from sync.strategy.csv.sync_csv import SyncCSV

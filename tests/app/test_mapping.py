@@ -1,4 +1,3 @@
-import os
 import json
 import pytest
 from pathlib import Path
@@ -73,7 +72,8 @@ class TestCSVMapping:
         with pytest.raises(json.JSONDecodeError):
             csv_mapping.load()
 
-    @patch("app.mapping.json")
+    #@patch("app.mapping.json")
+    @patch("sync.strategy.csv.mapping.json")
     @patch("builtins.open", new_callable=mock_open)
     def test_save(self, mock_open, mock_json, csv_mapping):
         fake_data = {"key": "value"}
@@ -85,8 +85,8 @@ class TestCSVMapping:
         mock_json.dump.assert_called_once_with(fake_data, mock_open())
         csv_mapping.set_original_config.assert_called_once()
 
-    @patch("app.mapping.json")
-    @patch("app.mapping.Path.open")
+    @patch("sync.strategy.csv.mapping.json")
+    @patch("sync.strategy.csv.mapping.Path.open")
     def test_save_to(self, mock_path_open, mock_json, csv_mapping):
         path = "/another/test/path"
 

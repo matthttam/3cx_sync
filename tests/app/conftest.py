@@ -3,7 +3,6 @@ import tkinter as tk
 from unittest.mock import MagicMock, patch
 from app.windows import WindowAppConfig, WindowSync, Window, WindowCSVMapping
 from app.config import AppConfig
-from sync.logging import SyncLogger
 from app.app import App
 
 

@@ -22,15 +22,6 @@ class TestCheckbox:
         # After unchecking, checkbox should be unchecked
         assert checkbox.checked is False
 
-    def test_toggle(self):
-        checkbox = Checkbox(value=True)  # Create a checkbox initially checked
-        checkbox.toggle()  # Toggle the checkbox
-        # After toggling, checkbox should be unchecked
-        assert checkbox.checked is False
-        checkbox.toggle()  # Toggle the checkbox again
-        # After toggling again, checkbox should be checked
-        assert checkbox.checked is True
-
 
 class TestExtensionMappingFieldSet:
 

@@ -84,6 +84,7 @@ class Sync:
             LogLevel.INFO,
             f"Fetched {len(user_collection_response.value)} Users From 3CX",
         )
+
         return user_collection_response.value
 
     @handle_interupts
