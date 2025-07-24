@@ -6,7 +6,6 @@ from sync.strategy.strategy import SyncSourceStrategy
 from threecxapi.connection import ThreeCXApiConnection
 from threecxapi.resources.users import UsersResource, ListUserParameters
 from threecxapi.components.schemas.pbx import User
-from threecxapi.components.responses.pbx import UserCollectionResponse
 from threecxapi.exceptions import APIAuthenticationError
 from sync.comparison import UserChangeDetail, UserComparer
 from threecxapi.resources.groups import GroupsResource
