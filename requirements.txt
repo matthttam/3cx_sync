@@ -26,7 +26,7 @@ pytest==8.3.4
 pytest-cov==6.0.0
 requests==2.32.3
 SecretStorage==3.3.3
-sv-ttk==2.6.0
-threecxapi==1.0.5.post1
+sv_ttk==2.6.1
+threecxapi==1.0.6
 typing_extensions==4.12.2
 urllib3==2.3.0
