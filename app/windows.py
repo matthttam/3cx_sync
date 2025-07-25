@@ -697,7 +697,7 @@ class WindowCSVMapping(PopupWindow):
         if self.mapping.is_dirty:
             if not self.confirm_discard_changes():
                 return
-        self.mapping.load()
+        self.mapping.restore_original_config()
         self.destroy()
 
     def confirm_discard_changes(self) -> bool:
