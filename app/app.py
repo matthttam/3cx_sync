@@ -41,7 +41,8 @@ class App(tk.Tk, Window):
 
         # If we are on windows, apply the ttk_sv theme. Otherwise use clam.
         if platform.system() == "Windows":
-            sv_ttk.set_theme(darkdetect.theme())
+            theme_mode = darkdetect.theme() or "dark"
+            sv_ttk.set_theme(theme_mode)
         elif "clam" in self.style.theme_names():
             self.style.theme_use("clam")
         elif "default" in self.style.theme_names():
