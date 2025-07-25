@@ -1,8 +1,7 @@
 import os
 from pathlib import Path
 from app.config import AppConfig
-from unittest.mock import MagicMock, call, patch, PropertyMock, mock_open
-import pytest
+from unittest.mock import MagicMock, patch, PropertyMock, mock_open
 
 
 class TestAppConfig:

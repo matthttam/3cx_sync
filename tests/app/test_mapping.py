@@ -1,4 +1,3 @@
-import os
 import json
 import pytest
 from pathlib import Path
@@ -66,14 +65,28 @@ class TestCSVMapping:
         csv_mapping.load()
         csv_mapping.update.assert_called_once_with({"key": "value"})
         csv_mapping.set_original_config.assert_called_once()
+        mock_open.assert_called_once_with(csv_mapping.mapping_file_path, "r")
 
     @patch("builtins.open", new_callable=mock_open, read_data="invalid json")
     def test_load_invalid_json(self, mock_open, csv_mapping):
         csv_mapping.mapping_file_path.stat = MagicMock(return_value=MagicMock(st_size=10))
         with pytest.raises(json.JSONDecodeError):
             csv_mapping.load()
+        mock_open.assert_called_once_with(csv_mapping.mapping_file_path, "r")
 
-    @patch("app.mapping.json")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_load_file_not_found(self, mock_open, csv_mapping):
+        csv_mapping.set_original_config = MagicMock()
+        csv_mapping.mapping_file_path.exists = MagicMock(return_value=False)
+        
+        csv_mapping.load()
+
+        assert csv_mapping.data == {}
+        csv_mapping.set_original_config.assert_not_called()
+        mock_open.assert_not_called()
+
+    #@patch("app.mapping.json")
+    @patch("sync.strategy.csv.mapping.json")
     @patch("builtins.open", new_callable=mock_open)
     def test_save(self, mock_open, mock_json, csv_mapping):
         fake_data = {"key": "value"}
@@ -85,8 +98,8 @@ class TestCSVMapping:
         mock_json.dump.assert_called_once_with(fake_data, mock_open())
         csv_mapping.set_original_config.assert_called_once()
 
-    @patch("app.mapping.json")
-    @patch("app.mapping.Path.open")
+    @patch("sync.strategy.csv.mapping.json")
+    @patch("sync.strategy.csv.mapping.Path.open")
     def test_save_to(self, mock_path_open, mock_json, csv_mapping):
         path = "/another/test/path"
 
@@ -174,3 +187,10 @@ class TestCSVMapping:
             },
         ]
         assert csv_mapping.get_parsed_config() == expected_value
+
+    def test_restore_original_config(self, csv_mapping):
+        csv_mapping.data = {"key": "value"}
+        csv_mapping.original_config = {"original_key": "original_value"}
+        csv_mapping.restore_original_config()
+        assert csv_mapping.data == {"original_key": "original_value"}
+        assert csv_mapping.original_config == {"original_key": "original_value"}

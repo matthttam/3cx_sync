@@ -31,20 +31,20 @@ class TestSyncCSV:
             mock_set_comparison_properties.assert_called_once()
             mock_logger.log.assert_any_call(LogLevel.INFO, "Initializing CSV Source")
 
-    def test_load_csv_mapping(self, sync_csv):
-        with patch("sync.sync_strategy.CSVMapping") as mock_csv_mapping:
-            sync_csv._load_csv_mapping()
-            mock_csv_mapping.assert_called_once()
-            mock_csv_mapping.return_value.initialize.assert_called_once()
-            sync_csv.logger.log.assert_has_calls(
-                [
-                    call(LogLevel.INFO, "Loading CSV Mapping"),
-                    call(LogLevel.INFO, f"CSV Mapping Loaded from '{sync_csv.mapping.mapping_file_path}'"),
-                ]
-            )
+    @patch("sync.strategy.csv.sync_csv.CSVMapping")
+    def test_load_csv_mapping(self, mock_csv_mapping, sync_csv):
+        sync_csv._load_csv_mapping()
+        mock_csv_mapping.assert_called_once()
+        mock_csv_mapping.return_value.initialize.assert_called_once()
+        sync_csv.logger.log.assert_has_calls(
+            [
+                call(LogLevel.INFO, "Loading CSV Mapping"),
+                call(LogLevel.INFO, f"CSV Mapping Loaded from '{sync_csv.mapping.mapping_file_path}'"),
+            ]
+        )
 
     def test_set_comparison_properties(self, sync_csv, mock_logger):
-        with patch("sync.sync_strategy.CSVUser.set_comparison_properties") as mock_set_comparison_properties:
+        with patch("sync.schema.CSVUser.set_comparison_properties") as mock_set_comparison_properties:
             sync_csv.mapping = {"Extension": {"Update": ["field1", "field2"]}}
             sync_csv._set_comparison_properties()
             mock_set_comparison_properties.assert_called_once_with(["field1", "field2"])
@@ -122,15 +122,12 @@ class TestSyncCSV:
             ]
             assert result == expected
 
-    def test_validate_csv_users(self, sync_csv):
+    @patch("sync.strategy.csv.sync_csv.TypeAdapter.validate_python", return_value=["validated_user"])
+    def test_validate_csv_users(self, mock_validate, sync_csv):
         user_data = [{"field1": "value1", "field2": "value2"}]
-        with patch(
-            "sync.sync_strategy.TypeAdapter.validate_python",
-            return_value=["validated_user"],
-        ) as mock_validate:
-            result = sync_csv._validate_csv_users(user_data)
-            mock_validate.assert_called_once_with(user_data)
-            assert result == ["validated_user"]
+        result = sync_csv._validate_csv_users(user_data)
+        mock_validate.assert_called_once_with(user_data)
+        assert result == ["validated_user"]
 
     def test_get_user_update_fields(self, sync_csv):
         sync_csv.mapping = {"Extension": {"Update": ["field1", "field2"]}}
@@ -138,25 +135,3 @@ class TestSyncCSV:
 
     def test_get_source_groups(self, sync_csv):
         assert sync_csv.get_source_groups() is None
-
-
-@patch("sync.sync_strategy.SyncCSV", spec=SyncCSV)
-def test_create_sync_source_sync_csv(mock_sync_cvs_class, mock_logger):
-    mock_sync_csv = MagicMock()
-    mock_sync_cvs_class.return_value = mock_sync_csv
-    response = create_sync_source(strategy_class=mock_sync_cvs_class, logger=mock_logger)
-    assert response == mock_sync_csv
-    mock_sync_cvs_class.assert_called_once_with(config_path=None, logger=mock_logger)
-
-
-@patch("sync.sync_strategy.SyncCSV", spec=SyncCSV)
-def test_create_sync_source_sync_csv_with_config_path(mock_sync_cvs_class, mock_logger):
-    mock_sync_csv = MagicMock()
-    mock_sync_cvs_class.return_value = mock_sync_csv
-    response = create_sync_source(strategy_class=mock_sync_cvs_class, logger=mock_logger, config_path="/test/path")
-    assert response == mock_sync_csv
-    mock_sync_cvs_class.assert_called_once_with(config_path="/test/path", logger=mock_logger)
-
-
-def test_create_sync_source_other(mock_logger):
-    response = create_sync_source(strategy_class=MagicMock, logger=mock_logger)

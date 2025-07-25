@@ -4,7 +4,7 @@ from pathlib import Path
 
 import platformdirs
 import tkinter as tk
-
+import sv_ttk
 from sync.logging import LogLevel
 
 
@@ -27,3 +27,8 @@ def handle_error(func):
             self.logger.log(LogLevel.CRITICAL, f"A critical error has occurred and the application must exit. {e}")
 
     return wrapper
+
+def get_text_color():
+    if sv_ttk.get_theme() == "dark": 
+        return "White" 
+    return "Black" 

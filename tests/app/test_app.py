@@ -1,9 +1,5 @@
-import os
-import sys
 import tkinter as tk
 from unittest.mock import MagicMock, patch
-
-from pytest import skip
 from app.app import App
 from app.windows import Window
 from sync.strategy.csv.sync_csv import SyncCSV
@@ -35,47 +31,115 @@ class TestApp:
         mock_load_theme.assert_called_once()
         mock_build_gui.assert_called_once()
 
-    @patch("app.app.ttk.Style")
-    @patch.object(App, "get_theme_path")
-    def test_load_theme(self, mock_get_theme_pack, mock_style_class, app):
-        mock_style = MagicMock()
-        mock_style_class.return_value = mock_style
-        mock_theme_pack = MagicMock()
-        mock_get_theme_pack.return_value = mock_theme_pack
-        app.tk = MagicMock()
+
+    @patch("app.app.sv_ttk")
+    @patch("app.app.darkdetect")
+    @patch("app.app.platform")
+    def test_load_theme_windows(self, mock_platform, mock_darkdetect, mock_sv_ttk, app):
+        mock_platform.system = MagicMock(return_value="Windows")
+        mock_darkdetect.theme = MagicMock(return_value="dark")
+        
         app.load_theme()
-        app.tk.call.assert_any_call("source", mock_theme_pack)
-        mock_style.theme_use.assert_called_once()
-        mock_style.configure.assert_called_once()
 
-    def test_get_theme_path_pyinstaller(self, app):
-        """Test get_theme_path when running in a PyInstaller bundle."""
-        # Add _MEIPASS attribute temporarily
-        setattr(sys, "_MEIPASS", "/mock/pyinstaller/path")
-        try:
-            theme_path = app.get_theme_path()
-            expected_path = os.path.join(
-                "/mock/pyinstaller/path",
-                "themes",
-                "Forest-ttk-theme-1.0",
-                "forest-light.tcl",
-            )
-            assert theme_path == expected_path
-        finally:
-            # Clean up the attribute to avoid side effects
-            delattr(sys, "_MEIPASS")
+        mock_sv_ttk.set_theme.assert_called_once_with("dark")
+    
+    @patch("app.app.sv_ttk")
+    @patch("app.app.darkdetect")
+    @patch("app.app.platform")
+    def test_load_theme_darkdetect_none_uses_dark(self, mock_platform, mock_darkdetect, mock_sv_ttk, app):
+        mock_platform.system = MagicMock(return_value="Windows")
+        mock_darkdetect.theme = MagicMock(return_value=None)
+        
+        app.load_theme()
 
-    def test_get_theme_path_script(self, app):
-        """Test get_theme_path when running as a script."""
-        with patch("os.path.dirname", return_value="/mock/script/path"):
-            theme_path = app.get_theme_path()
-            expected_path = os.path.join(
-                "/mock/script/path",
-                "themes",
-                "Forest-ttk-theme-1.0",
-                "forest-light.tcl",
-            )
-            assert theme_path == expected_path
+        mock_sv_ttk.set_theme.assert_called_once_with("dark")
+
+    @patch("app.app.platform")
+    def test_load_theme_clam(self, mock_platform, app):
+        mock_platform.system = MagicMock(return_value="Linux")
+
+        app.style = MagicMock()
+        app.style.theme_names.return_value = ["clam", "alt"]
+        app.load_theme()
+
+        app.style.theme_use.assert_called_once_with("clam")
+
+
+    @patch("app.app.platform")
+    def test_load_theme_default(self, mock_platform, app):
+        mock_platform.system = MagicMock(return_value="Linux")
+        app.style = MagicMock()
+        app.style.theme_names.return_value = ["default"]
+
+        app.load_theme()
+
+        app.style.theme_use.assert_called_once_with("default")
+
+    @patch("app.app.platform")
+    def test_load_theme_none_available(self, mock_platform, app):
+        mock_platform.system = MagicMock(return_value="Linux")
+        app.style = MagicMock()
+        app.style.theme_names.return_value = ["alt", "classic"]
+        
+        app.load_theme()
+
+        app.style.theme_use.assert_not_called()
+
+    @patch("app.app.tkfont")
+    @patch("app.app.platform")
+    def test_set_font_for_windows(self, mock_platform, mock_tkfont, app):
+        mock_platform.system = MagicMock(return_value="Windows")
+        mock_tkfont.families = MagicMock(return_value=["Segoe UI", "Arial"])
+        app.style = MagicMock()
+
+        app.set_font(size=22)
+
+        app.style.configure.assert_called_once_with(".", font=("Segoe UI", 22))
+    
+
+    @patch("app.app.tkfont")
+    @patch("app.app.platform")
+    def test_set_font_for_mac(self, mock_platform, mock_tkfont, app):
+        mock_platform.system = MagicMock(return_value="Darwin")
+        mock_tkfont.families = MagicMock(return_value=["Helvetica", "Arial"])
+        app.style = MagicMock()
+
+        app.set_font(size=22)
+
+        app.style.configure.assert_called_once_with(".", font=("Helvetica", 22))
+
+    @patch("app.app.tkfont")
+    @patch("app.app.platform")
+    def test_set_font_for_linux(self, mock_platform, mock_tkfont, app):
+        mock_platform.system = MagicMock(return_value="Linux")
+        mock_tkfont.families = MagicMock(return_value=["Ubuntu", "Arial"])
+        app.style = MagicMock()
+
+        app.set_font(size=22)
+
+        app.style.configure.assert_called_once_with(".", font=("Ubuntu", 22))
+
+    @patch("app.app.tkfont")
+    @patch("app.app.platform")
+    def test_set_font_for_arial_when_font_not_avialable(self, mock_platform, mock_tkfont, app):
+        mock_platform.system = MagicMock(return_value="Windows")
+        mock_tkfont.families = MagicMock(return_value=["Arial"])
+        app.style = MagicMock()
+
+        app.set_font(size=11)
+
+        app.style.configure.assert_called_once_with(".", font=("Arial", 11))
+    
+    @patch("app.app.tkfont")
+    @patch("app.app.platform")
+    def test_set_font_for_arial_when_platform_unknown(self, mock_platform, mock_tkfont, app):
+        mock_platform.system = MagicMock(return_value="UnknownOS")
+        mock_tkfont.families = MagicMock(return_value=["Arial"])
+        app.style = MagicMock()
+
+        app.set_font(size=11)
+
+        app.style.configure.assert_called_once_with(".", font=("Arial", 11))
 
     @patch("app.app.WindowAppConfig")
     def test_show_window_app_config(self, window_app_config, app):
@@ -199,3 +263,10 @@ class TestApp:
         mock_sync = MagicMock()
         app.on_sync_initialized(mock_sync)
         assert app.sync == mock_sync
+
+    @patch("app.app.sv_ttk")
+    def test_handle_toggle_theme_click(self, mock_sv_ttk, app):
+        app.set_font = MagicMock()
+        app.handle_toggle_theme_click()
+        mock_sv_ttk.toggle_theme.assert_called_once()
+        app.set_font.assert_called_once_with(size=30)

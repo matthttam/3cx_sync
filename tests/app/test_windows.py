@@ -192,7 +192,7 @@ class TestWindowAppConfig:
             username=window_app_config.app_config["3cx"]["username"],
             password=window_app_config.app_config["3cx"]["password"],
         )
-        mock_messagebox_showinfo.assert_called_once_with(title="Success", message="Test Successful")
+        mock_messagebox_showinfo.assert_called_once_with(title="Success", message="Test Successful", parent=window_app_config)
 
     @patch("app.windows.messagebox.showinfo")
     @patch("app.windows.ThreeCXApiConnection")
@@ -205,7 +205,7 @@ class TestWindowAppConfig:
             username=window_app_config.app_config["3cx"]["username"],
             password=window_app_config.app_config["3cx"]["password"],
         )
-        mock_messagebox_showinfo.assert_called_once_with(title="Failure", message=f"Test Failed. {e}")
+        mock_messagebox_showinfo.assert_called_once_with(title="Failure", message=f"Test Failed. {e}", parent=window_app_config)
 
     @patch.object(WindowCSVMapping, "on_destroy")
     def test_handle_cancel_click(self, mock_on_destroy, window_csv_mapping):
@@ -243,7 +243,7 @@ class TestWindowAppConfig:
     @patch("app.windows.messagebox")
     def test_confirm_discard_changes_messagebox(self, mock_messagebox, window_app_config):
         window_app_config.confirm_discard_changes()
-        mock_messagebox.askyesno.assert_called_once_with("Unsaved Changes", "Discard unsaved changes?")
+        mock_messagebox.askyesno.assert_called_once_with("Unsaved Changes", "Discard unsaved changes?", parent=window_app_config)
 
     def test_btn_apply_click(self, window_app_config):
         window_app_config.save_config = MagicMock()
@@ -261,7 +261,7 @@ class TestWindowAppConfig:
     def test_save_config_success(self, mock_messagebox, window_app_config):
         window_app_config.save_config()
         window_app_config.app_config.save.assert_called_once()
-        mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!")
+        mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!", parent=window_app_config)
 
     @patch("app.windows.messagebox")
     def test_save_config_failure(self, mock_messagebox, window_app_config):
@@ -269,7 +269,7 @@ class TestWindowAppConfig:
         window_app_config.app_config.save.side_effect = e
         window_app_config.save_config()
         window_app_config.app_config.save.assert_called_once()
-        mock_messagebox.showerror.assert_called_once_with(title="Error!", message=f"{e}")
+        mock_messagebox.showerror.assert_called_once_with(title="Error!", message=f"{e}", parent=window_app_config)
 
 
 class TestWindowCSVMapping:
@@ -303,7 +303,7 @@ class TestWindowCSVMapping:
         window_csv_mapping.widgets.btn_save.invoke()
 
         mock_set_mapping_values.assert_called_once()
-        mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!")
+        mock_messagebox.showinfo.assert_called_once_with(title="Saved!", message="Config saved!", parent=window_csv_mapping)
         mock_destroy.assert_called_once()
 
     def test_set_mapping_values(self, window_csv_mapping):
@@ -366,7 +366,7 @@ class TestWindowCSVMapping:
         mock_confirm_discard_changes.return_value = True
         window_csv_mapping.on_destroy()
         mock_set_mapping_values.assert_called_once()
-        window_csv_mapping.mapping.load.assert_called_once()
+        window_csv_mapping.mapping.restore_original_config.assert_called_once()
         mock_destroy.assert_called_once()
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
@@ -382,9 +382,11 @@ class TestWindowCSVMapping:
         window_csv_mapping.mapping = MagicMock()
         window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = False
+
         window_csv_mapping.on_destroy()
+
         mock_set_mapping_values.assert_called_once()
-        window_csv_mapping.mapping.load.assert_not_called()
+        window_csv_mapping.mapping.restore_original_config.assert_not_called()
         mock_destroy.assert_not_called()
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
@@ -402,13 +404,13 @@ class TestWindowCSVMapping:
         window_csv_mapping.on_destroy()
         mock_confirm_discard_changes.assert_not_called()
         mock_set_mapping_values.assert_called_once()
-        window_csv_mapping.mapping.load.assert_called_once()
+        window_csv_mapping.mapping.restore_original_config.assert_called_once()
         mock_destroy.assert_called_once()
 
     @patch("app.windows.messagebox")
     def test_confirm_discard_changes(self, mock_messagebox, window_csv_mapping):
         window_csv_mapping.confirm_discard_changes()
-        mock_messagebox.askyesno.assert_called_once_with("Unsaved Changes", "Discard unsaved changes?")
+        mock_messagebox.askyesno.assert_called_once_with("Unsaved Changes", "Discard unsaved changes?", parent=window_csv_mapping)
 
     @patch("app.windows.askopenfilename")
     def test_browse_file_csv(self, mock_askopenfilename, window_csv_mapping):
@@ -433,12 +435,10 @@ class TestWindowCSVMapping:
         )
 
     @patch.object(WindowCSVMapping, "add_mapping_field_set")
-    @patch.object(WindowCSVMapping, "resize")
-    def test_handle_button_add_mapping_field_set(self, mock_resize, mock_add_mapping_field_set, window_csv_mapping):
+    def test_handle_button_add_mapping_field_set(self, mock_add_mapping_field_set, window_csv_mapping):
         window_csv_mapping.mapping_fields = [1, 2, 3]
         window_csv_mapping.handle_button_add_mapping_field_set()
         mock_add_mapping_field_set.assert_called_once_with(row=4)
-        mock_resize.assert_called_once()
 
     @patch("app.windows.ttk")
     @patch("app.windows.Checkbox")
@@ -448,8 +448,10 @@ class TestWindowCSVMapping:
     ):
         mock_extension_mapping_field_set = MagicMock()
         mock_extension_mapping_field_set_class.return_value = mock_extension_mapping_field_set
-        mock_lblfrm = MagicMock()
-        window_csv_mapping.widgets.lblfrm_csv_mapping_fields = mock_lblfrm
+        #mock_lblfrm = MagicMock()
+        #window_csv_mapping.widgets.lblfrm_csv_mapping_fields = mock_lblfrm
+        mock_frm_csv_mapping_fields_scrollable = MagicMock()
+        window_csv_mapping.widgets.frm_csv_mapping_fields_scrollable = mock_frm_csv_mapping_fields_scrollable
         mock_entry = MagicMock()
         mock_button = MagicMock()
         mock_checkbox = MagicMock()
@@ -464,35 +466,34 @@ class TestWindowCSVMapping:
         # Check if widgets were created and grid called with correct row/column
         assert len(window_csv_mapping.mapping_fields) == 1
 
-        mock_ttk_class.Entry.assert_any_call(mock_lblfrm)
-        mock_entry.grid.assert_any_call(row=2, column=0, sticky="ew")
-        mock_entry.grid.assert_any_call(row=2, column=1, sticky="ew")
+        mock_ttk_class.Entry.assert_any_call(mock_frm_csv_mapping_fields_scrollable)
+        mock_entry.grid.assert_any_call(row=2, column=1, sticky="nsew")
+        mock_entry.grid.assert_any_call(row=2, column=1, sticky="nsew")
         mock_entry.insert.assert_any_call(0, "Header1")
         mock_entry.insert.assert_any_call(0, "Field1")
 
-        mock_checkbox_class.assert_any_call(mock_lblfrm, value=True)
-        mock_checkbox_class.assert_any_call(mock_lblfrm, value=False)
+        mock_checkbox_class.assert_any_call(mock_frm_csv_mapping_fields_scrollable, value=True)
+        mock_checkbox_class.assert_any_call(mock_frm_csv_mapping_fields_scrollable, value=False)
 
-        mock_checkbox.grid.assert_any_call(row=2, column=2, sticky="w")
-        mock_checkbox.grid.assert_any_call(row=2, column=3, sticky="w")
-        mock_checkbox.grid.assert_any_call(row=2, column=4, sticky="w")
+        mock_checkbox.grid.assert_any_call(row=2, column=2)
+        mock_checkbox.grid.assert_any_call(row=2, column=3)
+        mock_checkbox.grid.assert_any_call(row=2, column=4)
         mock_checkbox.invoke.assert_called_once_with()
 
-        mock_ttk_class.Button.assert_called_once_with(mock_lblfrm, width=2, text="−")
+        mock_ttk_class.Button.assert_called_once_with(mock_frm_csv_mapping_fields_scrollable, width=1, text="−")
         mock_button.grid.assert_any_call(row=2, column=5, padx=2, pady=2)
 
         mock_extension_mapping_field_set_class.assert_called_once()
         assert window_csv_mapping.mapping_fields == [mock_extension_mapping_field_set]
 
     @patch.object(WindowCSVMapping, "delete_mapping_field_set_by_row_index")
-    @patch.object(WindowCSVMapping, "resize")
     def test_handle_button_delete_mapping_field_set(
-        self, mock_resize, mock_delete_mapping_field_set_by_row_index, window_csv_mapping
+        self, mock_delete_mapping_field_set_by_row_index, window_csv_mapping
     ):
         window_csv_mapping.mapping_fields = [1, 2, 3]
         window_csv_mapping.handle_button_delete_mapping_field_set()
         mock_delete_mapping_field_set_by_row_index.assert_called_once_with(2)
-        mock_resize.assert_called_once()
+
 
     @patch.object(WindowCSVMapping, "delete_mapping_field_set_by_row_index")
     def test_handle_button_delete_specific_mapping_field_set(
@@ -558,17 +559,6 @@ class TestWindowCSVMapping:
         mock_field_1.change_row.assert_not_called()
         mock_field_2.change_row.assert_called_once_with(row=2)
         mock_field_3.change_row.assert_called_once_with(row=3)
-
-    @patch.object(WindowCSVMapping, "geometry")
-    @patch.object(WindowCSVMapping, "winfo_width")
-    def test_resize(self, mock_winfo_width, mock_gemoetry, window_csv_mapping):
-        window_csv_mapping.widgets = MagicMock()
-        mock_winfo_width.return_value = 100
-        window_csv_mapping.widgets.frm_window.winfo_reqheight.return_value = 2000
-        window_csv_mapping.resize()
-        window_csv_mapping.widgets.frm_window.update_idletasks.assert_called_once()
-        mock_winfo_width.assert_called_once()
-        mock_gemoetry.assert_called_once_with("100x2020")
 
     @patch.object(WindowCSVMapping, "disable_key_checkboxes")
     @patch.object(WindowCSVMapping, "enable_key_checkboxes")
@@ -722,3 +712,4 @@ class TestWindowSync:
         window_sync.destroy.assert_called_once()
         window_sync.master.terminate_sync.assert_called_once()
         window_sync.wait_for_sync_thread.assert_called_once()
+
