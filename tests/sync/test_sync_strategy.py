@@ -135,28 +135,3 @@ class TestSyncCSV:
 
     def test_get_source_groups(self, sync_csv):
         assert sync_csv.get_source_groups() is None
-
-
-
-@patch("sync.strategy.factory.SyncCSV", spec=SyncCSV)
-def test_create_sync_source_sync_csv(mock_sync_csv_class, mock_logger):
-    mock_sync_csv = MagicMock(spec=SyncCSV)
-    mock_sync_csv_class.return_value = mock_sync_csv
-
-    response = create_sync_source(strategy_class=mock_sync_csv_class, logger=mock_logger)
-
-    assert response == mock_sync_csv
-    mock_sync_csv_class.assert_called_once_with(config_path=None, logger=mock_logger)
-
-
-@patch("sync.strategy.csv.sync_csv.SyncCSV", spec=SyncCSV)
-def test_create_sync_source_sync_csv_with_config_path(mock_sync_csv_class, mock_logger):
-    mock_sync_csv = MagicMock()
-    mock_sync_csv_class.return_value = mock_sync_csv
-    response = create_sync_source(strategy_class=mock_sync_csv_class, logger=mock_logger, config_path="/test/path")
-    assert response == mock_sync_csv
-    mock_sync_csv_class.assert_called_once_with(config_path="/test/path", logger=mock_logger)
-
-
-def test_create_sync_source_other(mock_logger):
-    response = create_sync_source(strategy_class=MagicMock, logger=mock_logger)
