@@ -253,3 +253,10 @@ class TestApp:
         mock_sync = MagicMock()
         app.on_sync_initialized(mock_sync)
         assert app.sync == mock_sync
+
+    @patch("app.app.sv_ttk")
+    def test_handle_toggle_theme_click(self, mock_sv_ttk, app):
+        app.set_font = MagicMock()
+        app.handle_toggle_theme_click()
+        mock_sv_ttk.toggle_theme.assert_called_once()
+        app.set_font.assert_called_once_with(size=30)
