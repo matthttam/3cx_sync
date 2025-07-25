@@ -42,7 +42,17 @@ class TestApp:
         app.load_theme()
 
         mock_sv_ttk.set_theme.assert_called_once_with("dark")
+    
+    @patch("app.app.sv_ttk")
+    @patch("app.app.darkdetect")
+    @patch("app.app.platform")
+    def test_load_theme_darkdetect_none_uses_dark(self, mock_platform, mock_darkdetect, mock_sv_ttk, app):
+        mock_platform.system = MagicMock(return_value="Windows")
+        mock_darkdetect.theme = MagicMock(return_value=None)
+        
+        app.load_theme()
 
+        mock_sv_ttk.set_theme.assert_called_once_with("dark")
 
     @patch("app.app.platform")
     def test_load_theme_clam(self, mock_platform, app):

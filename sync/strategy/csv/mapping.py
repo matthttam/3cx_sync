@@ -53,7 +53,8 @@ class CSVMapping(UserDict):
 
     def load(self) -> None:
         """Load configuration from the specified file."""
-        # if os.path.getsize(self.mapping_file_path) > 0:
+        if not self.mapping_file_path.exists():
+            return
         with open(self.mapping_file_path, "r") as mapping_file:
             self.update(json.load(mapping_file))
         self.set_original_config()
@@ -70,6 +71,10 @@ class CSVMapping(UserDict):
 
     def set_original_config(self):
         self.original_config = deepcopy(self.data)
+    
+    def restore_original_config(self):
+        """Restore the original configuration."""
+        self.data = deepcopy(self.original_config)
 
     def get_parsed_config(self) -> list[dict]:
         """

@@ -1,7 +1,7 @@
 # Changelog
 ## [1.0.4](https://github.com/matthttam/3cx_sync/releases/tag/v1.0.4) - 2025-07-24
 ### Changed
-- Warnings are now logged instead of failur when an invalid enum string is provided for a User object.
+- Warnings are now logged instead of failure when an invalid enum string is provided for a User object.
 - Updated threecxapi Package to support 3.0.4 openapi with 3cx.
 
 ## [1.0.3](https://github.com/matthttam/3cx_sync/releases/tag/v1.0.3) - 2025-01-29

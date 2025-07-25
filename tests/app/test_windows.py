@@ -366,7 +366,7 @@ class TestWindowCSVMapping:
         mock_confirm_discard_changes.return_value = True
         window_csv_mapping.on_destroy()
         mock_set_mapping_values.assert_called_once()
-        window_csv_mapping.mapping.load.assert_called_once()
+        window_csv_mapping.mapping.restore_original_config.assert_called_once()
         mock_destroy.assert_called_once()
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
@@ -382,9 +382,11 @@ class TestWindowCSVMapping:
         window_csv_mapping.mapping = MagicMock()
         window_csv_mapping.mapping.is_dirty = True
         mock_confirm_discard_changes.return_value = False
+
         window_csv_mapping.on_destroy()
+
         mock_set_mapping_values.assert_called_once()
-        window_csv_mapping.mapping.load.assert_not_called()
+        window_csv_mapping.mapping.restore_original_config.assert_not_called()
         mock_destroy.assert_not_called()
 
     @patch.object(WindowCSVMapping, "set_mapping_values")
@@ -402,7 +404,7 @@ class TestWindowCSVMapping:
         window_csv_mapping.on_destroy()
         mock_confirm_discard_changes.assert_not_called()
         mock_set_mapping_values.assert_called_once()
-        window_csv_mapping.mapping.load.assert_called_once()
+        window_csv_mapping.mapping.restore_original_config.assert_called_once()
         mock_destroy.assert_called_once()
 
     @patch("app.windows.messagebox")
@@ -710,3 +712,4 @@ class TestWindowSync:
         window_sync.destroy.assert_called_once()
         window_sync.master.terminate_sync.assert_called_once()
         window_sync.wait_for_sync_thread.assert_called_once()
+
