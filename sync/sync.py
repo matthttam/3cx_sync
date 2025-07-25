@@ -198,6 +198,10 @@ class Sync:
         self.source_user_list = self.sync_source.get_source_users()
         self.tcx_user_list = self.get_users()
 
+        # Log any warnings generated when creating users
+        self.log_user_warnings(self.source_user_list, self.sync_source.__class__.__name__)
+        self.log_user_warnings(self.tcx_user_list, "3CX")
+
         # Create a UserComparer object to compare users from the source and 3CX
         user_comparer = self.initialize_user_comparer()
         user_change_details = user_comparer.get_user_change_details()
@@ -220,6 +224,12 @@ class Sync:
         if self.is_paused:
             self.logger.log(LogLevel.INFO, "Paused by user")
         self.running_event.wait()  # Block thread if False
+    
+    def log_user_warnings(self, users: list[User], source: str) -> None:
+        for user in users:
+            for warning in getattr(user, "warnings", []):
+                self.logger.log(LogLevel.WARNING, f"{source} user {getattr(user, 'Id', 'Unknown')}: {warning}")
+
 
 
 def run_sync(
@@ -291,3 +301,4 @@ def initialize_api_connection(app_config, logger):
         logger.log(LogLevel.ERROR, f"Failed to authenticate: {str(e)}")
         raise
     return api_connection
+

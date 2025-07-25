@@ -361,11 +361,15 @@ class TestSync:
     def test_run(self, sync):
         # Mock the methods
         sync.initialize_sync_source = MagicMock()
-        sync.sync_source.get_source_users = MagicMock(return_value=[])
+        sync.sync_source = MagicMock()
+        sync.sync_source.__class__ = type("ExampleSync", (), {})
+        mock_source_users = MagicMock(return_value=[])
+        sync.sync_source.get_source_users = MagicMock(return_value=mock_source_users)
         sync.get_users = MagicMock(return_value=[])
         sync.initialize_user_comparer = MagicMock()
         sync.handle_users_to_update = MagicMock()
         sync.handle_users_to_create = MagicMock()
+        sync.log_user_warnings = MagicMock()
 
         # Call the sync method
         sync.run()
@@ -377,6 +381,7 @@ class TestSync:
         sync.initialize_user_comparer.assert_called_once()
         sync.handle_users_to_update.assert_called_once()
         sync.handle_users_to_create.assert_called_once()
+        sync.log_user_warnings.assert_has_calls([call(mock_source_users, "ExampleSync"),call([], "3CX")])
 
         # Assert that the log is called with the expected message
         sync.logger.log.assert_any_call(LogLevel.INFO, "Sync Complete")
@@ -430,6 +435,20 @@ class TestSync:
         sync.logger.log.assert_called_once_with(LogLevel.INFO, "Paused by user")
         sync.running_event.wait.assert_called_once()
 
+
+    def test_log_user_warnings(self, sync, mock_logger):
+        mock_users = [
+            MagicMock(spec=User, Id=1, warnings=["Warning 1"]),
+            MagicMock(spec=User, Id=2, warnings=["Warning 2"]),
+            MagicMock(spec=User, Id=3, warnings=[]),  # No warnings
+            MagicMock(spec=User, Id=4, warnings=["Warning 3.a","Warning 3.b","Warning 3.c"]),  # No Id
+        ]
+        sync.log_user_warnings(mock_users, "TestSource")
+        mock_logger.log.assert_any_call(LogLevel.WARNING, "TestSource user 1: Warning 1")
+        mock_logger.log.assert_any_call(LogLevel.WARNING, "TestSource user 2: Warning 2")
+        mock_logger.log.assert_any_call(LogLevel.WARNING, "TestSource user 4: Warning 3.a")
+        mock_logger.log.assert_any_call(LogLevel.WARNING, "TestSource user 4: Warning 3.b")
+        mock_logger.log.assert_any_call(LogLevel.WARNING, "TestSource user 4: Warning 3.c")
 
 @patch("sync.sync.initialize_app_config")
 @patch("sync.sync.initialize_api_connection")
