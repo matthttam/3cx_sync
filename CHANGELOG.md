@@ -8,12 +8,12 @@
 ### Added
 - Theme Support (OS Dependant)
 - Silent Flags
-- Update Packages
-- Better testing
+- Updated Packages
+- Better Testing
 
 ### Fixed
-- Refactored several process to improve performance
-- Correct some graphical bugs
+- Refactored to improve performance
+- Corrected some graphical bugs
 
 
 ## [1.0.2](https://github.com/matthttam/3cx_sync/tree/v1.0.2) - 2025-01-28
